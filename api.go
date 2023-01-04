@@ -1,0 +1,145 @@
+package humanitec
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+
+	"github.com/humanitec/humanitec-go-autogen/client"
+)
+
+const (
+	DefaultAPIHost = "https://api.humanitec.io/"
+)
+
+type Config struct {
+	Token string
+	URL   string
+
+	RequestLogger  func(r *RequestDetails)
+	ResponseLogger func(r *ResponseDetails)
+}
+
+type RequestDetails struct {
+	Method string
+	URL    *url.URL
+	Body   []byte
+}
+
+type ResponseDetails struct {
+	StatusCode int
+	Body       []byte
+}
+
+type Client = client.ClientWithResponses
+
+func NewClient(config *Config) (*Client, error) {
+	if config.Token == "" {
+		return nil, fmt.Errorf("empty token")
+	}
+
+	if config.URL == "" {
+		config.URL = DefaultAPIHost
+	}
+
+	client, err := client.NewClientWithResponses(config.URL, func(c *client.Client) error {
+		c.Client = &DoWithLog{&http.Client{}, config.RequestLogger, config.ResponseLogger}
+		c.RequestEditors = append(c.RequestEditors, func(_ context.Context, req *http.Request) error {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", config.Token))
+
+			return nil
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func copyBody(body io.ReadCloser) (io.ReadCloser, []byte, error) {
+	if body == nil {
+		return nil, nil, nil
+	}
+
+	var buf bytes.Buffer
+	tee := io.TeeReader(body, &buf)
+	bodyBytes, err := io.ReadAll(tee)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return io.NopCloser(bytes.NewReader(buf.Bytes())), bodyBytes, nil
+}
+
+func copyReqBody(req *http.Request) ([]byte, error) {
+	if req.Body == nil {
+		return nil, nil
+	}
+
+	body, bodyBytes, err := copyBody(req.Body)
+	if err != nil {
+		return nil, err
+	}
+	req.Body = body
+
+	return bodyBytes, nil
+}
+
+func copyResBody(res *http.Response) ([]byte, error) {
+	if res.Body == nil {
+		return nil, nil
+	}
+
+	body, bodyBytes, err := copyBody(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	res.Body = body
+
+	return bodyBytes, nil
+}
+
+type DoWithLog struct {
+	client         client.HttpRequestDoer
+	requestLogger  func(r *RequestDetails)
+	responseLogger func(r *ResponseDetails)
+}
+
+func (d *DoWithLog) Do(req *http.Request) (*http.Response, error) {
+	if d.requestLogger != nil {
+		reqBody, err := copyReqBody(req)
+		if err != nil {
+			return nil, err
+		}
+
+		d.requestLogger(&RequestDetails{
+			Method: req.Method,
+			URL:    req.URL,
+			Body:   reqBody,
+		})
+	}
+
+	res, err := d.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if d.responseLogger != nil {
+		resBody, err := copyResBody(res)
+		if err != nil {
+			return nil, err
+		}
+
+		d.responseLogger(&ResponseDetails{
+			StatusCode: res.StatusCode,
+			Body:       resBody,
+		})
+	}
+
+	return res, nil
+}
