@@ -314,8 +314,11 @@ type CreateDriverRequestRequest struct {
 	// IsPublic Defines whether this driver is accessible to all Organizations.
 	IsPublic *bool `json:"is_public,omitempty"`
 
-	// Target The prefix where the driver resides. Only members of the organization the driver belongs to can see 'target'.
+	// Target The prefix where the driver resides or, if the driver is a virtual driver, the reference to an existing driver using the `driver://` schema of the format `driver://{orgId}/{driverId}`. Only members of the organization the driver belongs to can see 'target'.
 	Target string `json:"target"`
+
+	// Template If the driver is a virtual driver, template defines a Go template that converts the driver inputs supplied in the resource definition into the driver inputs for the target driver.
+	Template *interface{} `json:"template,omitempty"`
 
 	// Type The type of resource produced by this driver
 	Type string `json:"type"`
@@ -491,11 +494,12 @@ type DeployConditionResponse struct {
 
 // DeploymentErrorResponse DeploymentError is an error happening during deployment
 type DeploymentErrorResponse struct {
-	Code     string `json:"code"`
-	Message  string `json:"message"`
-	ObjectId string `json:"object_id"`
-	Scope    string `json:"scope"`
-	Summary  string `json:"summary"`
+	Code      string `json:"code"`
+	ErrorType string `json:"error_type"`
+	Message   string `json:"message"`
+	ObjectId  string `json:"object_id"`
+	Scope     string `json:"scope"`
+	Summary   string `json:"summary"`
 }
 
 // DeploymentRequest Deployments represent updates to the running state of an Environment.
@@ -571,8 +575,11 @@ type DriverDefinitionResponse struct {
 	// OrgId The Organization this driver exists under. Useful as public drivers are accessible to other orgs.
 	OrgId string `json:"org_id"`
 
-	// Target The prefix where the driver resides. Only members of the organization the driver belongs to can see `target`.
+	// Target The prefix where the driver resides or, if the driver is a virtual driver, the reference to an existing driver using the `driver://` schema of the format `driver://{orgId}/{driverId}`. Only members of the organization the driver belongs to can see `target`.
 	Target *string `json:"target,omitempty"`
+
+	// Template If the driver is a virtual driver, template defines a Go template that converts the driver inputs supplied in the resource definition into the driver inputs for the target driver.
+	Template *interface{} `json:"template,omitempty"`
 
 	// Type The type of resource produced by this driver
 	Type string `json:"type"`
@@ -1226,8 +1233,11 @@ type UpdateDriverRequestRequest struct {
 	// IsPublic Defines whether this driver is accessible to all Organizations.
 	IsPublic *bool `json:"is_public,omitempty"`
 
-	// Target The prefix where the driver resides. Only members of the organization the driver belongs to can see 'target'.
+	// Target The prefix where the driver resides or, if the driver is a virtual driver, the reference to an existing driver using the `driver://` schema of the format `driver://{orgId}/{driverId}`. Only members of the organization the driver belongs to can see 'target'.
 	Target string `json:"target"`
+
+	// Template If the driver is a virtual driver, template defines a Go template that converts the driver inputs supplied in the resource definition into the driver inputs for the target driver.
+	Template *interface{} `json:"template,omitempty"`
 
 	// Type The type of resource produced by this driver
 	Type string `json:"type"`
@@ -1401,7 +1411,12 @@ type ValueResponse struct {
 	IsSecret bool `json:"is_secret"`
 
 	// Key The unique key by which the Shared Value can be referenced. pattern: ^[a-zA-Z0-9._-]+$.
-	Key       string `json:"key"`
+	Key string `json:"key"`
+
+	// SecretVersion Version of the current secret value as returned by the secret store.
+	SecretVersion *string `json:"secret_version"`
+
+	// Source Source of the value, "app" for app level, "env" for app env level.
 	Source    string `json:"source"`
 	UpdatedAt string `json:"updated_at"`
 
@@ -1627,7 +1642,7 @@ type GetOrgsOrgIdArtefactVersionsParams struct {
 
 // PostOrgsOrgIdArtefactVersionsParams defines parameters for PostOrgsOrgIdArtefactVersions.
 type PostOrgsOrgIdArtefactVersionsParams struct {
-	// Vcs (Optional) Which version control system the version comes from. Default value is "git". If this parameter is not supplied or its value is "git", the provided ref, if not empty, is checked to ensure that it has one prefix among "refs/heads/" or "refs/tags/".
+	// Vcs (Optional) Which version control system the version comes from. Default value is "git". If this parameter is not supplied or its value is "git", the provided ref, if not empty, is checked to ensure that it has the prefix "refs/".
 	//
 	Vcs *string `form:"vcs,omitempty" json:"vcs,omitempty"`
 }
