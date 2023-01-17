@@ -7,18 +7,26 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/humanitec/humanitec-go-autogen/client"
 )
 
 const (
 	DefaultAPIHost = "https://api.humanitec.io/"
+	SDK            = "humanitec-go-autogen"
+	SDKVersion     = "latest"
+)
+
+var (
+	SDKHeader = fmt.Sprintf("%s/%s", SDK, SDKVersion)
 )
 
 type Config struct {
 	Token string
 	URL   string
 
+	InternalApp    string
 	RequestLogger  func(r *RequestDetails)
 	ResponseLogger func(r *ResponseDetails)
 }
@@ -49,7 +57,7 @@ func NewClient(config *Config) (*Client, error) {
 		c.Client = &DoWithLog{&http.Client{}, config.RequestLogger, config.ResponseLogger}
 		c.RequestEditors = append(c.RequestEditors, func(_ context.Context, req *http.Request) error {
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", config.Token))
-
+			req.Header.Add("Humanitec-User-Agent", humanitecUserAgent(config.InternalApp, SDKHeader))
 			return nil
 		})
 		return nil
@@ -59,6 +67,19 @@ func NewClient(config *Config) (*Client, error) {
 	}
 
 	return client, nil
+}
+
+func humanitecUserAgent(app, sdk string) string {
+	parts := []string{}
+
+	if app != "" {
+		parts = append(parts, fmt.Sprintf("app %s", app))
+	}
+	if sdk != "" {
+		parts = append(parts, fmt.Sprintf("sdk %s", sdk))
+	}
+
+	return strings.Join(parts, "; ")
 }
 
 func copyBody(body io.ReadCloser) (io.ReadCloser, []byte, error) {

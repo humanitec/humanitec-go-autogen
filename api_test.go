@@ -20,6 +20,7 @@ func TestNewHumanitecClientRead(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(fmt.Sprintf("Bearer %s", token), r.Header.Get("Authorization"))
+		assert.Equal("sdk humanitec-go-autogen/latest", r.Header.Get("Humanitec-User-Agent"))
 		fmt.Fprint(w, expected)
 	}))
 	defer srv.Close()
@@ -44,6 +45,7 @@ func TestNewHumanitecClientWrite(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(fmt.Sprintf("Bearer %s", token), r.Header.Get("Authorization"))
+		assert.Equal("app test/latest; sdk humanitec-go-autogen/latest", r.Header.Get("Humanitec-User-Agent"))
 
 		defer r.Body.Close()
 		resBody, err := ioutil.ReadAll(r.Body)
@@ -57,8 +59,9 @@ func TestNewHumanitecClientWrite(t *testing.T) {
 	ctx := context.Background()
 
 	humSvc, err := NewClient(&Config{
-		Token: token,
-		URL:   srv.URL,
+		Token:       token,
+		URL:         srv.URL,
+		InternalApp: "test/latest",
 	})
 	assert.NoError(err)
 
