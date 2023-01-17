@@ -32,12 +32,14 @@ type Config struct {
 }
 
 type RequestDetails struct {
-	Method string
-	URL    *url.URL
-	Body   []byte
+	Context context.Context
+	Method  string
+	URL     *url.URL
+	Body    []byte
 }
 
 type ResponseDetails struct {
+	Context    context.Context
 	StatusCode int
 	Body       []byte
 }
@@ -139,9 +141,10 @@ func (d *DoWithLog) Do(req *http.Request) (*http.Response, error) {
 		}
 
 		d.requestLogger(&RequestDetails{
-			Method: req.Method,
-			URL:    req.URL,
-			Body:   reqBody,
+			Context: req.Context(),
+			Method:  req.Method,
+			URL:     req.URL,
+			Body:    reqBody,
 		})
 	}
 
@@ -157,6 +160,7 @@ func (d *DoWithLog) Do(req *http.Request) (*http.Response, error) {
 		}
 
 		d.responseLogger(&ResponseDetails{
+			Context:    req.Context(),
 			StatusCode: res.StatusCode,
 			Body:       resBody,
 		})
