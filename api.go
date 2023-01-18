@@ -44,7 +44,14 @@ type ResponseDetails struct {
 	Body       []byte
 }
 
-type Client = client.ClientWithResponses
+type Client struct {
+	client.ClientWithResponses
+	client *client.Client
+}
+
+func (c *Client) Client() *client.Client {
+	return c.client
+}
 
 func NewClient(config *Config) (*Client, error) {
 	if config.Token == "" {
@@ -55,7 +62,7 @@ func NewClient(config *Config) (*Client, error) {
 		config.URL = DefaultAPIHost
 	}
 
-	client, err := client.NewClientWithResponses(config.URL, func(c *client.Client) error {
+	baseClient, err := client.NewClient(config.URL, func(c *client.Client) error {
 		c.Client = &DoWithLog{&http.Client{}, config.RequestLogger, config.ResponseLogger}
 		c.RequestEditors = append(c.RequestEditors, func(_ context.Context, req *http.Request) error {
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", config.Token))
@@ -68,7 +75,7 @@ func NewClient(config *Config) (*Client, error) {
 		return nil, err
 	}
 
-	return client, nil
+	return &Client{client.ClientWithResponses{ClientInterface: baseClient}, baseClient}, nil
 }
 
 func humanitecUserAgent(app, sdk string) string {

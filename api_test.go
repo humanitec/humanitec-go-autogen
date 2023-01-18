@@ -71,3 +71,19 @@ func TestNewHumanitecClientWrite(t *testing.T) {
 	})
 	assert.NoError(err)
 }
+
+func TestClient(t *testing.T) {
+	assert := assert.New(t)
+
+	token := "TEST_TOKEN"
+	url := "https://my-test/"
+
+	humSvc, err := NewClient(&Config{
+		Token:       token,
+		URL:         url,
+		InternalApp: "test/latest",
+	})
+	assert.NoError(err)
+
+	assert.Equal(url, humSvc.Client().Server)
+}
