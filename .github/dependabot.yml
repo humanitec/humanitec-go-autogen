@@ -1,0 +1,47 @@
+version: 2
+registries:
+  github-humanitec:
+    type: git
+    url: https://github.com
+    username: ${{ secrets.HUMANITEC_GOMOD_USER }}
+    password: ${{ secrets.HUMANITEC_GOMOD_TOKEN }}
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    registries:
+      - github-humanitec
+  - package-ecosystem: gomod
+    directory: test/integration/
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    registries:
+      - github-humanitec
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+      include: "scope"
+  - package-ecosystem: docker
+    directory: test/integration/
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+      include: "scope"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+      include: "scope"
