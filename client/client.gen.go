@@ -783,15 +783,9 @@ type JSONFieldResponse map[string]interface{}
 
 // JSONPatchResponse defines model for JSONPatchResponse.
 type JSONPatchResponse struct {
-	Op   string `json:"op"`
-	Path string `json:"path"`
-
-	// Value Shared Values can be used to manage variables and configuration that might vary between environments. They are also the way that secrets can be stored securely.
-	//
-	// Shared Values are by default shared across all environments in an application. However, they can be overridden on an Environment by Environment basis.
-	//
-	// For example: There might be 2 API keys that are used in an application. One development key used in the development and staging environments and another used for production. The development API key would be set at the Application level. The value would then be overridden at the Environment level for the production Environment.
-	Value *ValueResponse `json:"value,omitempty"`
+	Op    string       `json:"op"`
+	Path  string       `json:"path"`
+	Value *interface{} `json:"value,omitempty"`
 }
 
 // JSONPatchesResponse defines model for JSONPatchesResponse.
@@ -957,11 +951,20 @@ type PodStateResponse struct {
 
 // RegistryCredsResponse RegistryCreds represents current registry credentials (either, username- or token-based).
 type RegistryCredsResponse struct {
+	// Expires Account credentials expiration timestamp.
+	Expires *string `json:"expires"`
+
+	// Password Account password or token secret.
+	Password string `json:"password"`
+
 	// Registry Registry name, usually in a "{domain}" or "{domain}/{project}" format.
 	Registry string `json:"registry"`
 
 	// Secrets ClusterSecretsMap stores a list of Kuberenetes secret references for the target deployment clusters.
 	Secrets ClusterSecretsMapResponse `json:"secrets"`
+
+	// Username Security account login or token.
+	Username string `json:"username"`
 }
 
 // RegistryRequest Humanitec can be used to manage registry credentials. The Registry object represents how to match credentials to a particular registry.
@@ -1635,7 +1638,7 @@ type GetOrgsOrgIdArtefactVersionsParams struct {
 	//
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
 
-	// Archived (Optional) Filter for non-archived Artefact Versions. If no filter is defined all Artefact Versions are returned.
+	// Archived (Optional) Filter for non-archived Artefact Versions. If no filter is defined only non-archived Artefact Versions are returned, if the filter is true both archived and non-archived Versions are returned.
 	//
 	Archived *string `form:"archived,omitempty" json:"archived,omitempty"`
 }
@@ -1660,7 +1663,7 @@ type GetOrgsOrgIdArtefactsParams struct {
 
 // GetOrgsOrgIdArtefactsArtefactIdVersionsParams defines parameters for GetOrgsOrgIdArtefactsArtefactIdVersions.
 type GetOrgsOrgIdArtefactsArtefactIdVersionsParams struct {
-	// Archived (Optional) Filter for non-archived Artefact Versions. If no filter is defined all Artefact Versions are returned.
+	// Archived (Optional) Filter for non-archived Artefact Versions. If no filter is defined only non-archived Artefact Versions are returned, if the filter is true both archived and non-archived Versions are returned.
 	//
 	Archived *string `form:"archived,omitempty" json:"archived,omitempty"`
 
