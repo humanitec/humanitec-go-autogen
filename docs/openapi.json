@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Humanitec API",
-    "version": "0.20.8",
+    "version": "0.20.10",
     "description": "# Introduction\nThe *Humanitec API* allows you to automate and integrate Humanitec into your developer and operational workflows.\nThe API is a REST based API. It is based around a set of concepts:\n\n* Core\n* External Resources\n* Sets and Deltas\n\n## Authentication\nAlmost all requests made to the Humanitec API require Authentication. Humanitec provides 2 ways of authenticating with the API: `Bearer` and `JWT`.\n\n### Bearer Authentication\nThis form of authentication makes use of a **static token**. It is intended to be used when machines interact with the Humanitec API. Bearer tokens should be used for very narrow purposes. This allows for the token to be revoked if it is compromised and so limit the scope of exposure.\nNew Bearer tokens can be obtained via the UI:\n\n1. Log into Humanitec at https://app.humanitec.io\n1. Go to **Organization Settings**\n1. Select **API tokens**\n1. Enter a *name* for the new token and click on **Generate new token**\n\nThe token is passed to the API via the `Authorization` header. Assuming the issued token is `HUMANITEC_TOKEN`, the request could be made as follows:\n\n```\n    curl -H 'Authorization: Bearer HUMANITEC_TOKEN' https://api.humanitec.io/orgs/my-org/apps\n```\n\n### JWT Authentication\nThis form of authentication makes use of a **JSON Web Token (JWT)**. It is intended to be used when humans interact with the Humanitec API. JWTs expire after a period of time. This means that a new JWT will need to be generated regularly. This makes them well suited to working in short sessions, but not for automation. (See Bearer Authentication.)\nThe token is passed to the API via the `Authorization` header. Assuming the issued token is `HUMANITEC_JWT`, the request could be made as follows:\n\n```\n    curl -H 'Authorization: JWT HUMANITEC_JWT' https://api.humanitec.io/orgs/my-org/apps\n```\n\n## Content Types\nAll of the Humanitec API unless explicitly only accepts content types of `application/json` and will always return valid `application/json` or an empty response.\n\n## Response Codes\n### Success\nAny response code in the `2xx` range should be regarded as success.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `200` | Success |\n| `201` | Success (In future, `201` will be replaced by `200`) |\n| `204` | Success, but no content in response |\n\n_Note: We plan to simplify the interface by replacing 201 with 200 status codes._\n\n### Failure\nAny response code in the `4xx` should be regarded as an error which can be rectified by the client. `5xx` error codes indicate errors that cannot be corrected by the client.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `400` | General error. (Body will contain details) |\n| `401` | Attempt to access protected resource without `Authorization` Header. |\n| `403` | The `Bearer` or `JWT` does not grant access to the requested resource. |\n| `404` | Resource not found. |\n| `405` | Method not allowed |\n| `409` | Conflict. Usually indicated a resource with that ID already exists. |\n| `422` | Unprocessable Entity. The body was not valid JSON, was empty or contained an object different from what was expected. |\n| `429` | Too many requests - request rate limit has been reached. |\n| `500` | Internal Error. If it occurs repeatedly, contact support. |\n",
     "contact": {
       "name": "API Support",
@@ -965,7 +965,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "The Environment Type requested.\n\n",
             "content": {
               "application/json": {
@@ -4958,6 +4958,86 @@
           }
         }
       },
+      "put": {
+        "tags": [
+          "public",
+          "ResourceDefinition"
+        ],
+        "summary": "Update a Resource Definition.",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "description": "The Organization ID.\n\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "defId",
+            "in": "path",
+            "description": "The Resource Definition ID.\n\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The Resource Definition record details.\n\nThe PUT operation updates a resource definition using the provided payload. An empty driver_account or driver_inputs property will unset the existing values.\n\nCurrently the resource and driver types can't be changed.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResourceDefinitionRequestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated Resource Definition.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDefinitionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more request parameters is missing or invalid.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A Resource Definition with the 'defId' ID is not found.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal application error.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "public",
@@ -5059,12 +5139,12 @@
           }
         ],
         "requestBody": {
-          "description": "The Resource Definition record details.\n\nThe PATCH operation would change the value of the property if it is included in the request payload JSON, and not `null`. Missing and `null` properties are ignored.\n\nFor the map properties, such as UpdateResourceDefinitionRequest.DriverInputs, the merge operation is applied.\n\nMerge rules are as follows:\n\n- If a map property has a value, it is replaced (or added).\n\n- If a map property is set to `null`, it is removed.\n\n- If a map property is not included (missing in JSON), it remains unchanged.",
+          "description": "The Resource Definition record details.\n\nThe PATCH operation would change the value of the property if it is included in the request payload JSON, and not `null`. Missing and `null` properties are ignored.\n\nFor the map properties, such as PatchResourceDefinitionRequest.DriverInputs, the merge operation is applied.\n\nMerge rules are as follows:\n\n- If a map property has a value, it is replaced (or added).\n\n- If a map property is set to `null`, it is removed.\n\n- If a map property is not included (missing in JSON), it remains unchanged.",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateResourceDefinitionRequestRequest"
+                "$ref": "#/components/schemas/PatchResourceDefinitionRequestRequest"
               }
             }
           }
@@ -12262,11 +12342,16 @@
         },
         "type": "object"
       },
-      "NodeRequest": {
-        "description": "Node Represents a node of a Resource Dependency Graph",
+      "NodeBodyRequest": {
+        "description": "NodeBody Represents a node of a Resource Dependency Graph",
         "properties": {
+          "criteria_id": {
+            "type": "string"
+          },
+          "def_id": {
+            "type": "string"
+          },
           "depends_on": {
-            "description": "List of GuResIDs of dependent resources",
             "items": {
               "type": "string"
             },
@@ -12276,6 +12361,9 @@
             "additionalProperties": true,
             "type": "object"
           },
+          "driver_type": {
+            "type": "string"
+          },
           "guresid": {
             "type": "string"
           },
@@ -12284,7 +12372,6 @@
           },
           "resource": {
             "additionalProperties": true,
-            "description": "Parameters with which the resource should be provisioned",
             "type": "object"
           },
           "resource_schema": {
@@ -12300,11 +12387,16 @@
         },
         "type": "object"
       },
-      "NodeResponse": {
-        "description": "Node Represents a node of a Resource Dependency Graph",
+      "NodeBodyResponse": {
+        "description": "NodeBody Represents a node of a Resource Dependency Graph",
         "properties": {
+          "criteria_id": {
+            "type": "string"
+          },
+          "def_id": {
+            "type": "string"
+          },
           "depends_on": {
-            "description": "List of GuResIDs of dependent resources",
             "items": {
               "type": "string"
             },
@@ -12314,6 +12406,9 @@
             "additionalProperties": true,
             "type": "object"
           },
+          "driver_type": {
+            "type": "string"
+          },
           "guresid": {
             "type": "string"
           },
@@ -12322,7 +12417,6 @@
           },
           "resource": {
             "additionalProperties": true,
-            "description": "Parameters with which the resource should be provisioned",
             "type": "object"
           },
           "resource_schema": {
@@ -12337,14 +12431,92 @@
           }
         },
         "required": [
-          "resource",
           "type",
           "id",
           "guresid",
           "target",
+          "resource",
           "driver",
+          "def_id",
+          "criteria_id",
+          "driver_type",
           "resource_schema",
           "depends_on"
+        ],
+        "type": "object"
+      },
+      "PatchResourceDefinitionRequestRequest": {
+        "description": "PatchResourceDefinitionRequest describes a ResourceDefinition change request.",
+        "example": {
+          "driver_account": "gcp-dev-cloudsql",
+          "driver_inputs": {
+            "secrets": {
+              "dbcredentials": {
+                "password": "***",
+                "username": "***"
+              }
+            },
+            "values": {
+              "instance": "my-dev-project:my-region:dev-db"
+            }
+          }
+        },
+        "properties": {
+          "driver_account": {
+            "description": "(Optional) Security account required by the driver.",
+            "nullable": true,
+            "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$",
+            "type": "string"
+          },
+          "driver_inputs": {
+            "$ref": "#/components/schemas/ValuesSecretsRequest",
+            "description": "(Optional) Additional input data to be passed to the driver."
+          },
+          "name": {
+            "description": "(Optional) Resource display name",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PatchResourceDefinitionRequestResponse": {
+        "description": "PatchResourceDefinitionRequest describes a ResourceDefinition change request.",
+        "example": {
+          "driver_account": "gcp-dev-cloudsql",
+          "driver_inputs": {
+            "secrets": {
+              "dbcredentials": {
+                "password": "***",
+                "username": "***"
+              }
+            },
+            "values": {
+              "instance": "my-dev-project:my-region:dev-db"
+            }
+          }
+        },
+        "properties": {
+          "driver_account": {
+            "description": "(Optional) Security account required by the driver.",
+            "nullable": true,
+            "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$",
+            "type": "string"
+          },
+          "driver_inputs": {
+            "$ref": "#/components/schemas/ValuesSecretsResponse",
+            "description": "(Optional) Additional input data to be passed to the driver."
+          },
+          "name": {
+            "description": "(Optional) Resource display name",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "driver_account",
+          "driver_inputs"
         ],
         "type": "object"
       },
@@ -12779,56 +12951,6 @@
         ],
         "type": "object"
       },
-      "ResourceProvisionRequestLegacyRequest": {
-        "description": "ResourceProvisionRequestLegacy is the payload passed to the resource provisioner",
-        "example": {
-          "resource": {
-            "host": "127.0.0.1",
-            "name": "my-database"
-          },
-          "type": "postgres"
-        },
-        "properties": {
-          "resource": {
-            "additionalProperties": true,
-            "description": "(Optional) The input parameters for the resource passed from the deployment set",
-            "type": "object"
-          },
-          "type": {
-            "description": "The resource type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type"
-        ],
-        "type": "object"
-      },
-      "ResourceProvisionRequestLegacyResponse": {
-        "description": "ResourceProvisionRequestLegacy is the payload passed to the resource provisioner",
-        "example": {
-          "resource": {
-            "host": "127.0.0.1",
-            "name": "my-database"
-          },
-          "type": "postgres"
-        },
-        "properties": {
-          "resource": {
-            "additionalProperties": true,
-            "description": "(Optional) The input parameters for the resource passed from the deployment set",
-            "type": "object"
-          },
-          "type": {
-            "description": "The resource type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type"
-        ],
-        "type": "object"
-      },
       "ResourceProvisionRequestRequest": {
         "description": "ResourceProvisionRequest is the payload passed to the resource provisioner",
         "example": {
@@ -13237,7 +13359,8 @@
             "values": {
               "instance": "my-dev-project:my-region:dev-db"
             }
-          }
+          },
+          "name": "Dev Postgres Instance"
         },
         "properties": {
           "driver_account": {
@@ -13251,11 +13374,13 @@
             "description": "(Optional) Additional input data to be passed to the driver."
           },
           "name": {
-            "description": "(Optional) Resource display name",
-            "nullable": true,
+            "description": "The display name.",
             "type": "string"
           }
         },
+        "required": [
+          "name"
+        ],
         "type": "object"
       },
       "UpdateResourceDefinitionRequestResponse": {
@@ -13272,7 +13397,8 @@
             "values": {
               "instance": "my-dev-project:my-region:dev-db"
             }
-          }
+          },
+          "name": "Dev Postgres Instance"
         },
         "properties": {
           "driver_account": {
@@ -13286,8 +13412,7 @@
             "description": "(Optional) Additional input data to be passed to the driver."
           },
           "name": {
-            "description": "(Optional) Resource display name",
-            "nullable": true,
+            "description": "The display name.",
             "type": "string"
           }
         },
@@ -15238,11 +15363,6 @@
       "name": "ResourceDefinition",
       "x-displayName": "Definitions",
       "description": "A Resource Definitions describes how and when a resource should be provisioned. It links a driver (the how) along with a Matching Criteria (the when) to a Resource Type. This allows Humanitec to invoke a particular driver for the required Resource Type in the context of a particular Application and Environment.\n\nThe schema for the `driver_inputs` is defined by the `input_schema` property on the DriverDefinition identified by the `driver_type` property.\n<SchemaDefinition schemaRef=\"#/components/schemas/ResourceDefinitionRequest\" />\n"
-    },
-    {
-      "name": "RuntimeInfo",
-      "x-displayName": "Runtime Info",
-      "description": "RuntimeInfo object returned by the runtime endpoint. Represents a list post statuses grouped by modules and controllers (deployments and stateful sets).\n<SchemaDefinition schemaRef=\"#/components/schemas/RuntimeInfoRequest\" />\n"
     },
     {
       "name": "UserProfile",
