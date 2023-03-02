@@ -929,6 +929,18 @@ type OrganizationResponse struct {
 	Name string `json:"name"`
 }
 
+// PatchResourceDefinitionRequestRequest PatchResourceDefinitionRequest describes a ResourceDefinition change request.
+type PatchResourceDefinitionRequestRequest struct {
+	// DriverAccount (Optional) Security account required by the driver.
+	DriverAccount *string `json:"driver_account"`
+
+	// DriverInputs ValuesSecrets stores data that should be passed around split by sensitivity.
+	DriverInputs *ValuesSecretsRequest `json:"driver_inputs,omitempty"`
+
+	// Name (Optional) Resource display name
+	Name *string `json:"name"`
+}
+
 // PlainDeltaResponse Similar to the delta response, except the id and metadata properties.
 //
 // **Basic Structure**
@@ -1292,8 +1304,8 @@ type UpdateResourceDefinitionRequestRequest struct {
 	// DriverInputs ValuesSecrets stores data that should be passed around split by sensitivity.
 	DriverInputs *ValuesSecretsRequest `json:"driver_inputs,omitempty"`
 
-	// Name (Optional) Resource display name
-	Name *string `json:"name"`
+	// Name The display name.
+	Name string `json:"name"`
 }
 
 // UserInviteRequestRequest UserInviteRequest describes a new user invitation.
@@ -1884,7 +1896,10 @@ type PatchOrgsOrgIdResourcesAccountsAccIdJSONRequestBody = UpdateResourceAccount
 type PostOrgsOrgIdResourcesDefsJSONRequestBody = CreateResourceDefinitionRequestRequest
 
 // PatchOrgsOrgIdResourcesDefsDefIdJSONRequestBody defines body for PatchOrgsOrgIdResourcesDefsDefId for application/json ContentType.
-type PatchOrgsOrgIdResourcesDefsDefIdJSONRequestBody = UpdateResourceDefinitionRequestRequest
+type PatchOrgsOrgIdResourcesDefsDefIdJSONRequestBody = PatchResourceDefinitionRequestRequest
+
+// PutOrgsOrgIdResourcesDefsDefIdJSONRequestBody defines body for PutOrgsOrgIdResourcesDefsDefId for application/json ContentType.
+type PutOrgsOrgIdResourcesDefsDefIdJSONRequestBody = UpdateResourceDefinitionRequestRequest
 
 // PostOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody defines body for PostOrgsOrgIdResourcesDefsDefIdCriteria for application/json ContentType.
 type PostOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody = MatchingCriteriaRuleRequest
@@ -2595,6 +2610,11 @@ type ClientInterface interface {
 	PatchOrgsOrgIdResourcesDefsDefIdWithBody(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PatchOrgsOrgIdResourcesDefsDefId(ctx context.Context, orgId string, defId string, body PatchOrgsOrgIdResourcesDefsDefIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutOrgsOrgIdResourcesDefsDefId request with any body
+	PutOrgsOrgIdResourcesDefsDefIdWithBody(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutOrgsOrgIdResourcesDefsDefId(ctx context.Context, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdResourcesDefsDefIdCriteria request with any body
 	PostOrgsOrgIdResourcesDefsDefIdCriteriaWithBody(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4424,6 +4444,30 @@ func (c *Client) PatchOrgsOrgIdResourcesDefsDefIdWithBody(ctx context.Context, o
 
 func (c *Client) PatchOrgsOrgIdResourcesDefsDefId(ctx context.Context, orgId string, defId string, body PatchOrgsOrgIdResourcesDefsDefIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchOrgsOrgIdResourcesDefsDefIdRequest(c.Server, orgId, defId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutOrgsOrgIdResourcesDefsDefIdWithBody(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutOrgsOrgIdResourcesDefsDefIdRequestWithBody(c.Server, orgId, defId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutOrgsOrgIdResourcesDefsDefId(ctx context.Context, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutOrgsOrgIdResourcesDefsDefIdRequest(c.Server, orgId, defId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10285,6 +10329,60 @@ func NewPatchOrgsOrgIdResourcesDefsDefIdRequestWithBody(server string, orgId str
 	return req, nil
 }
 
+// NewPutOrgsOrgIdResourcesDefsDefIdRequest calls the generic PutOrgsOrgIdResourcesDefsDefId builder with application/json body
+func NewPutOrgsOrgIdResourcesDefsDefIdRequest(server string, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutOrgsOrgIdResourcesDefsDefIdRequestWithBody(server, orgId, defId, "application/json", bodyReader)
+}
+
+// NewPutOrgsOrgIdResourcesDefsDefIdRequestWithBody generates requests for PutOrgsOrgIdResourcesDefsDefId with any type of body
+func NewPutOrgsOrgIdResourcesDefsDefIdRequestWithBody(server string, orgId string, defId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "defId", runtime.ParamLocationPath, defId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/defs/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewPostOrgsOrgIdResourcesDefsDefIdCriteriaRequest calls the generic PostOrgsOrgIdResourcesDefsDefIdCriteria builder with application/json body
 func NewPostOrgsOrgIdResourcesDefsDefIdCriteriaRequest(server string, orgId string, defId string, body PostOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -11624,6 +11722,11 @@ type ClientWithResponsesInterface interface {
 	PatchOrgsOrgIdResourcesDefsDefIdWithBodyWithResponse(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdResourcesDefsDefIdResponse, error)
 
 	PatchOrgsOrgIdResourcesDefsDefIdWithResponse(ctx context.Context, orgId string, defId string, body PatchOrgsOrgIdResourcesDefsDefIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdResourcesDefsDefIdResponse, error)
+
+	// PutOrgsOrgIdResourcesDefsDefId request with any body
+	PutOrgsOrgIdResourcesDefsDefIdWithBodyWithResponse(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdResourcesDefsDefIdResponse, error)
+
+	PutOrgsOrgIdResourcesDefsDefIdWithResponse(ctx context.Context, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdResourcesDefsDefIdResponse, error)
 
 	// PostOrgsOrgIdResourcesDefsDefIdCriteria request with any body
 	PostOrgsOrgIdResourcesDefsDefIdCriteriaWithBodyWithResponse(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdResourcesDefsDefIdCriteriaResponse, error)
@@ -13502,7 +13605,7 @@ func (r GetOrgsOrgIdEnvTypesResponse) StatusCode() int {
 type PostOrgsOrgIdEnvTypesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *EnvironmentTypeResponse
+	JSON201      *EnvironmentTypeResponse
 	JSON400      *HumanitecErrorResponse
 	JSON401      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
@@ -14119,6 +14222,31 @@ func (r PatchOrgsOrgIdResourcesDefsDefIdResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PatchOrgsOrgIdResourcesDefsDefIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutOrgsOrgIdResourcesDefsDefIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResourceDefinitionResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON500      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PutOrgsOrgIdResourcesDefsDefIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutOrgsOrgIdResourcesDefsDefIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15892,6 +16020,23 @@ func (c *ClientWithResponses) PatchOrgsOrgIdResourcesDefsDefIdWithResponse(ctx c
 		return nil, err
 	}
 	return ParsePatchOrgsOrgIdResourcesDefsDefIdResponse(rsp)
+}
+
+// PutOrgsOrgIdResourcesDefsDefIdWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdResourcesDefsDefIdResponse
+func (c *ClientWithResponses) PutOrgsOrgIdResourcesDefsDefIdWithBodyWithResponse(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdResourcesDefsDefIdResponse, error) {
+	rsp, err := c.PutOrgsOrgIdResourcesDefsDefIdWithBody(ctx, orgId, defId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutOrgsOrgIdResourcesDefsDefIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutOrgsOrgIdResourcesDefsDefIdWithResponse(ctx context.Context, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdResourcesDefsDefIdResponse, error) {
+	rsp, err := c.PutOrgsOrgIdResourcesDefsDefId(ctx, orgId, defId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutOrgsOrgIdResourcesDefsDefIdResponse(rsp)
 }
 
 // PostOrgsOrgIdResourcesDefsDefIdCriteriaWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdResourcesDefsDefIdCriteriaResponse
@@ -18574,12 +18719,12 @@ func ParsePostOrgsOrgIdEnvTypesResponse(rsp *http.Response) (*PostOrgsOrgIdEnvTy
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest EnvironmentTypeResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
@@ -19601,6 +19746,53 @@ func ParsePatchOrgsOrgIdResourcesDefsDefIdResponse(rsp *http.Response) (*PatchOr
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutOrgsOrgIdResourcesDefsDefIdResponse parses an HTTP response from a PutOrgsOrgIdResourcesDefsDefIdWithResponse call
+func ParsePutOrgsOrgIdResourcesDefsDefIdResponse(rsp *http.Response) (*PutOrgsOrgIdResourcesDefsDefIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutOrgsOrgIdResourcesDefsDefIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResourceDefinitionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
