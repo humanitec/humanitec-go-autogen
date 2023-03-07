@@ -2495,6 +2495,9 @@ type ClientInterface interface {
 
 	PostOrgsOrgIdArtefactVersions(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, body PostOrgsOrgIdArtefactVersionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetOrgsOrgIdArtefactVersionsArtefactVersionId request
+	GetOrgsOrgIdArtefactVersionsArtefactVersionId(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetOrgsOrgIdArtefacts request
 	GetOrgsOrgIdArtefacts(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3940,6 +3943,18 @@ func (c *Client) PostOrgsOrgIdArtefactVersionsWithBody(ctx context.Context, orgI
 
 func (c *Client) PostOrgsOrgIdArtefactVersions(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, body PostOrgsOrgIdArtefactVersionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdArtefactVersionsRequest(c.Server, orgId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOrgsOrgIdArtefactVersionsArtefactVersionId(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrgsOrgIdArtefactVersionsArtefactVersionIdRequest(c.Server, orgId, artefactVersionId)
 	if err != nil {
 		return nil, err
 	}
@@ -8779,6 +8794,47 @@ func NewPostOrgsOrgIdArtefactVersionsRequestWithBody(server string, orgId string
 	return req, nil
 }
 
+// NewGetOrgsOrgIdArtefactVersionsArtefactVersionIdRequest generates requests for GetOrgsOrgIdArtefactVersionsArtefactVersionId
+func NewGetOrgsOrgIdArtefactVersionsArtefactVersionIdRequest(server string, orgId string, artefactVersionId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "artefactVersionId", runtime.ParamLocationPath, artefactVersionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/artefact-versions/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdArtefactsRequest generates requests for GetOrgsOrgIdArtefacts
 func NewGetOrgsOrgIdArtefactsRequest(server string, orgId string, params *GetOrgsOrgIdArtefactsParams) (*http.Request, error) {
 	var err error
@@ -11607,6 +11663,9 @@ type ClientWithResponsesInterface interface {
 
 	PostOrgsOrgIdArtefactVersionsWithResponse(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, body PostOrgsOrgIdArtefactVersionsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdArtefactVersionsResponse, error)
 
+	// GetOrgsOrgIdArtefactVersionsArtefactVersionId request
+	GetOrgsOrgIdArtefactVersionsArtefactVersionIdWithResponse(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse, error)
+
 	// GetOrgsOrgIdArtefacts request
 	GetOrgsOrgIdArtefactsWithResponse(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactsResponse, error)
 
@@ -13443,6 +13502,7 @@ func (r GetOrgsOrgIdArtefactVersionsResponse) StatusCode() int {
 type PostOrgsOrgIdArtefactVersionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON200      *ArtefactVersionResponse
 	JSON400      *HumanitecErrorResponse
 	JSON401      *HumanitecErrorResponse
 }
@@ -13457,6 +13517,30 @@ func (r PostOrgsOrgIdArtefactVersionsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostOrgsOrgIdArtefactVersionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ArtefactVersionResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15652,6 +15736,15 @@ func (c *ClientWithResponses) PostOrgsOrgIdArtefactVersionsWithResponse(ctx cont
 		return nil, err
 	}
 	return ParsePostOrgsOrgIdArtefactVersionsResponse(rsp)
+}
+
+// GetOrgsOrgIdArtefactVersionsArtefactVersionIdWithResponse request returning *GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse
+func (c *ClientWithResponses) GetOrgsOrgIdArtefactVersionsArtefactVersionIdWithResponse(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse, error) {
+	rsp, err := c.GetOrgsOrgIdArtefactVersionsArtefactVersionId(ctx, orgId, artefactVersionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse(rsp)
 }
 
 // GetOrgsOrgIdArtefactsWithResponse request returning *GetOrgsOrgIdArtefactsResponse
@@ -18481,6 +18574,13 @@ func ParsePostOrgsOrgIdArtefactVersionsResponse(rsp *http.Response) (*PostOrgsOr
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ArtefactVersionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -18494,6 +18594,46 @@ func ParsePostOrgsOrgIdArtefactVersionsResponse(rsp *http.Response) (*PostOrgsOr
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse parses an HTTP response from a GetOrgsOrgIdArtefactVersionsArtefactVersionIdWithResponse call
+func ParseGetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse(rsp *http.Response) (*GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ArtefactVersionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
