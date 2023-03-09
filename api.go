@@ -29,6 +29,7 @@ type Config struct {
 	InternalApp    string
 	RequestLogger  func(r *RequestDetails)
 	ResponseLogger func(r *ResponseDetails)
+	Client         client.HttpRequestDoer
 }
 
 type RequestDetails struct {
@@ -62,8 +63,15 @@ func NewClient(config *Config) (*Client, error) {
 		config.URL = DefaultAPIHost
 	}
 
+	var doer client.HttpRequestDoer
+	if config.Client == nil {
+		doer = &http.Client{}
+	} else {
+		doer = config.Client
+	}
+
 	baseClient, err := client.NewClient(config.URL, func(c *client.Client) error {
-		c.Client = &DoWithLog{&http.Client{}, config.RequestLogger, config.ResponseLogger}
+		c.Client = &DoWithLog{doer, config.RequestLogger, config.ResponseLogger}
 		c.RequestEditors = append(c.RequestEditors, func(_ context.Context, req *http.Request) error {
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", config.Token))
 			req.Header.Add("Humanitec-User-Agent", humanitecUserAgent(config.InternalApp, SDKHeader))
