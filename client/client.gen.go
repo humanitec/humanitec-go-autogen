@@ -1428,6 +1428,8 @@ type ValueCreatePayloadRequest struct {
 // ValueEditPayloadRequest defines model for ValueEditPayloadRequest.
 type ValueEditPayloadRequest struct {
 	Description *string `json:"description"`
+	IsSecret    *bool   `json:"is_secret,omitempty"`
+	Key         *string `json:"key,omitempty"`
 	Value       *string `json:"value"`
 }
 
@@ -1443,7 +1445,7 @@ type ValuePatchPayloadRequest struct {
 //
 // For example: There might be 2 API keys that are used in an application. One development key used in the development and staging environments and another used for production. The development API key would be set at the Application level. The value would then be overridden at the Environment level for the production Environment.
 type ValueResponse struct {
-	CreatedAt string `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// Description A Human friendly description of what the Shared Value is.
 	Description string `json:"description"`
@@ -1458,8 +1460,8 @@ type ValueResponse struct {
 	SecretVersion *string `json:"secret_version"`
 
 	// Source Source of the value, "app" for app level, "env" for app env level.
-	Source    string `json:"source"`
-	UpdatedAt string `json:"updated_at"`
+	Source    string    `json:"source"`
+	UpdatedAt time.Time `json:"updated_at"`
 
 	// Value The value that will be stored. (Will be always empty for secrets.)
 	Value string `json:"value"`
@@ -1477,12 +1479,12 @@ type ValueSetResponse map[string]ValueResponse
 type ValueSetVersionResponse struct {
 	Change                  JSONPatchesResponse `json:"change"`
 	Comment                 string              `json:"comment"`
-	CreatedAt               string              `json:"created_at"`
+	CreatedAt               time.Time           `json:"created_at"`
 	CreatedBy               string              `json:"created_by"`
 	Id                      string              `json:"id"`
 	ResultOf                *string             `json:"result_of"`
 	SourceValueSetVersionId *string             `json:"source_value_set_version_id"`
-	UpdatedAt               string              `json:"updated_at"`
+	UpdatedAt               time.Time           `json:"updated_at"`
 	Values                  ValueSetResponse    `json:"values"`
 }
 
@@ -12706,6 +12708,8 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdResponse)
 type PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -12751,6 +12755,7 @@ type PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyR
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ValueSetVersionResponse
+	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
 
@@ -12863,7 +12868,7 @@ func (r DeleteOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyResponse) StatusCode() int {
 type PatchOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ValueResponse
+	JSON200      *ValueResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -12887,7 +12892,7 @@ func (r PatchOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyResponse) StatusCode() int {
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ValueResponse
+	JSON200      *ValueResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -13208,6 +13213,7 @@ type PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse s
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ValueSetVersionResponse
+	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
 
@@ -13320,7 +13326,7 @@ func (r DeleteOrgsOrgIdAppsAppIdValuesKeyResponse) StatusCode() int {
 type PatchOrgsOrgIdAppsAppIdValuesKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ValueResponse
+	JSON200      *ValueResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -13344,7 +13350,7 @@ func (r PatchOrgsOrgIdAppsAppIdValuesKeyResponse) StatusCode() int {
 type PutOrgsOrgIdAppsAppIdValuesKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ValueResponse
+	JSON200      *ValueResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -17508,6 +17514,23 @@ func ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeK
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
 	return response, nil
 }
 
@@ -17564,6 +17587,13 @@ func ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestor
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest HumanitecErrorResponse
@@ -17706,12 +17736,12 @@ func ParsePatchOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyResponse(rsp *http.Response) 
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ValueResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
@@ -17746,12 +17776,12 @@ func ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyResponse(rsp *http.Response) (*
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ValueResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
@@ -18186,6 +18216,13 @@ func ParsePostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRespo
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -18327,12 +18364,12 @@ func ParsePatchOrgsOrgIdAppsAppIdValuesKeyResponse(rsp *http.Response) (*PatchOr
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ValueResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
@@ -18367,12 +18404,12 @@ func ParsePutOrgsOrgIdAppsAppIdValuesKeyResponse(rsp *http.Response) (*PutOrgsOr
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ValueResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
