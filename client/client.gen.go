@@ -18,6 +18,28 @@ import (
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 )
 
+// Defines values for ValueSetVersionResultOf.
+const (
+	AppValueCreate            ValueSetVersionResultOf = "app_value_create"
+	AppValueDelete            ValueSetVersionResultOf = "app_value_delete"
+	AppValueSetVersionPurge   ValueSetVersionResultOf = "app_value_set_version_purge"
+	AppValueSetVersionRestore ValueSetVersionResultOf = "app_value_set_version_restore"
+	AppValueUpdate            ValueSetVersionResultOf = "app_value_update"
+	AppValuesDelete           ValueSetVersionResultOf = "app_values_delete"
+	EnvValueCreate            ValueSetVersionResultOf = "env_value_create"
+	EnvValueDelete            ValueSetVersionResultOf = "env_value_delete"
+	EnvValueSetVersionPurge   ValueSetVersionResultOf = "env_value_set_version_purge"
+	EnvValueSetVersionRestore ValueSetVersionResultOf = "env_value_set_version_restore"
+	EnvValueUpdate            ValueSetVersionResultOf = "env_value_update"
+	EnvValuesDelete           ValueSetVersionResultOf = "env_values_delete"
+)
+
+// Defines values for ValueSource.
+const (
+	App ValueSource = "app"
+	Env ValueSource = "env"
+)
+
 // AccountCredsRequest AccountCreds represents an account credentials (either, username- or token-based).
 type AccountCredsRequest struct {
 	// Expires Account credentials expiration timestamp.
@@ -95,10 +117,10 @@ type AddArtefactVersionPayloadRequest struct {
 	Version *string `json:"version,omitempty"`
 }
 
-// ApplicationRequest An Application is a collection of Modules that work together. When deployed, all Modules in an Application are deployed to the same namespace.
-//
-// Apps are the root of the configuration tree holding Environments, Deployments, Shared Values, and Secrets.
-type ApplicationRequest struct {
+// ApplicationCreationRequest defines model for ApplicationCreationRequest.
+type ApplicationCreationRequest struct {
+	Env *EnvironmentBaseRequest `json:"env,omitempty"`
+
 	// Id The ID which refers to a specific application.
 	Id string `json:"id"`
 
@@ -583,6 +605,18 @@ type DriverDefinitionResponse struct {
 	Template *interface{} `json:"template,omitempty"`
 
 	// Type The type of resource produced by this driver
+	Type string `json:"type"`
+}
+
+// EnvironmentBaseRequest defines model for EnvironmentBaseRequest.
+type EnvironmentBaseRequest struct {
+	// Id The ID the Environment is referenced as.
+	Id string `json:"id"`
+
+	// Name The Human-friendly name for the Environment.
+	Name string `json:"name"`
+
+	// Type The Environment Type. This is used for organizing and managing Environments.
 	Type string `json:"type"`
 }
 
@@ -1421,8 +1455,8 @@ type UserRoleResponse struct {
 type ValueCreatePayloadRequest struct {
 	Description *string `json:"description"`
 	IsSecret    *bool   `json:"is_secret,omitempty"`
-	Key         *string `json:"key,omitempty"`
-	Value       *string `json:"value"`
+	Key         string  `json:"key"`
+	Value       string  `json:"value"`
 }
 
 // ValueEditPayloadRequest defines model for ValueEditPayloadRequest.
@@ -1460,8 +1494,8 @@ type ValueResponse struct {
 	SecretVersion *string `json:"secret_version"`
 
 	// Source Source of the value, "app" for app level, "env" for app env level.
-	Source    string    `json:"source"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Source    ValueSource `json:"source"`
+	UpdatedAt time.Time   `json:"updated_at"`
 
 	// Value The value that will be stored. (Will be always empty for secrets.)
 	Value string `json:"value"`
@@ -1475,18 +1509,24 @@ type ValueSetActionPayloadRequest struct {
 // ValueSetResponse defines model for ValueSetResponse.
 type ValueSetResponse map[string]ValueResponse
 
-// ValueSetVersionResponse Value Set Version can be used as a track record of Shared Value changes, restore to a previous Shared Value or purge an accidentally added Shared Value.
+// ValueSetVersionResponse A Value Set Version can be used as a track record of Shared Values changes, to restore a previous version of a Shared Value or Value Set, or to purge a Shared Value if it shouldn't be accessible anymore.
 type ValueSetVersionResponse struct {
-	Change                  JSONPatchesResponse `json:"change"`
-	Comment                 string              `json:"comment"`
-	CreatedAt               time.Time           `json:"created_at"`
-	CreatedBy               string              `json:"created_by"`
-	Id                      string              `json:"id"`
-	ResultOf                *string             `json:"result_of"`
-	SourceValueSetVersionId *string             `json:"source_value_set_version_id"`
-	UpdatedAt               time.Time           `json:"updated_at"`
-	Values                  ValueSetResponse    `json:"values"`
+	Change                  JSONPatchesResponse      `json:"change"`
+	Comment                 string                   `json:"comment"`
+	CreatedAt               time.Time                `json:"created_at"`
+	CreatedBy               string                   `json:"created_by"`
+	Id                      string                   `json:"id"`
+	ResultOf                *ValueSetVersionResultOf `json:"result_of"`
+	SourceValueSetVersionId *string                  `json:"source_value_set_version_id"`
+	UpdatedAt               time.Time                `json:"updated_at"`
+	Values                  ValueSetResponse         `json:"values"`
 }
+
+// ValueSetVersionResultOf defines model for ValueSetVersionResultOf.
+type ValueSetVersionResultOf string
+
+// ValueSource Source of the value, "app" for app level, "env" for app env level.
+type ValueSource string
 
 // ValuesSecretsRequest ValuesSecrets stores data that should be passed around split by sensitivity.
 type ValuesSecretsRequest struct {
@@ -1778,7 +1818,7 @@ type GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams struct {
 type PatchCurrentUserJSONRequestBody = UserProfileExtendedRequest
 
 // PostOrgsOrgIdAppsJSONRequestBody defines body for PostOrgsOrgIdApps for application/json ContentType.
-type PostOrgsOrgIdAppsJSONRequestBody = ApplicationRequest
+type PostOrgsOrgIdAppsJSONRequestBody = ApplicationCreationRequest
 
 // PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdDeltas for application/json ContentType.
 type PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody = DeltaRequest
@@ -2353,22 +2393,22 @@ type ClientInterface interface {
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersions(ctx context.Context, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey request with any body
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore request with any body
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey request with any body
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteOrgsOrgIdAppsAppIdEnvsEnvIdValues request
 	DeleteOrgsOrgIdAppsAppIdEnvsEnvIdValues(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2429,22 +2469,22 @@ type ClientInterface interface {
 	GetOrgsOrgIdAppsAppIdValueSetVersions(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId request
-	GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId(ctx context.Context, orgId string, appId string, valueSetVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey request with any body
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore request with any body
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore(ctx context.Context, orgId string, appId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey request with any body
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteOrgsOrgIdAppsAppIdValues request
 	DeleteOrgsOrgIdAppsAppIdValues(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3307,7 +3347,7 @@ func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersions(ctx context.Cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRequest(c.Server, orgId, appId, envId, valueSetVersionId)
 	if err != nil {
 		return nil, err
@@ -3319,7 +3359,7 @@ func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWithBody(c.Server, orgId, appId, envId, valueSetVersionId, key, contentType, body)
 	if err != nil {
 		return nil, err
@@ -3331,7 +3371,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyRequest(c.Server, orgId, appId, envId, valueSetVersionId, key, body)
 	if err != nil {
 		return nil, err
@@ -3343,7 +3383,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreRequestWithBody(c.Server, orgId, appId, envId, valueSetVersionId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -3355,7 +3395,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreRequest(c.Server, orgId, appId, envId, valueSetVersionId, body)
 	if err != nil {
 		return nil, err
@@ -3367,7 +3407,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyRequestWithBody(c.Server, orgId, appId, envId, valueSetVersionId, key, contentType, body)
 	if err != nil {
 		return nil, err
@@ -3379,7 +3419,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyRequest(c.Server, orgId, appId, envId, valueSetVersionId, key, body)
 	if err != nil {
 		return nil, err
@@ -3643,7 +3683,7 @@ func (c *Client) GetOrgsOrgIdAppsAppIdValueSetVersions(ctx context.Context, orgI
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId(ctx context.Context, orgId string, appId string, valueSetVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRequest(c.Server, orgId, appId, valueSetVersionId)
 	if err != nil {
 		return nil, err
@@ -3655,7 +3695,7 @@ func (c *Client) GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId(ctx cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWithBody(c.Server, orgId, appId, valueSetVersionId, key, contentType, body)
 	if err != nil {
 		return nil, err
@@ -3667,7 +3707,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequest(c.Server, orgId, appId, valueSetVersionId, key, body)
 	if err != nil {
 		return nil, err
@@ -3679,7 +3719,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequestWithBody(c.Server, orgId, appId, valueSetVersionId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -3691,7 +3731,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreW
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore(ctx context.Context, orgId string, appId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequest(c.Server, orgId, appId, valueSetVersionId, body)
 	if err != nil {
 		return nil, err
@@ -3703,7 +3743,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore(
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequestWithBody(c.Server, orgId, appId, valueSetVersionId, key, contentType, body)
 	if err != nil {
 		return nil, err
@@ -3715,7 +3755,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreK
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequest(c.Server, orgId, appId, valueSetVersionId, key, body)
 	if err != nil {
 		return nil, err
@@ -6689,7 +6729,7 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsRequest(server string, org
 }
 
 // NewGetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRequest generates requests for GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId
-func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRequest(server string, orgId string, appId string, envId string, valueSetVersionId string) (*http.Request, error) {
+func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRequest(server string, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -6744,7 +6784,7 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRequest(s
 }
 
 // NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyRequest calls the generic PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyRequest(server string, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyRequest(server string, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -6755,7 +6795,7 @@ func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey
 }
 
 // NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey with any type of body
-func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWithBody(server string, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWithBody(server string, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -6819,7 +6859,7 @@ func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey
 }
 
 // NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreRequest calls the generic PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreRequest(server string, orgId string, appId string, envId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreRequest(server string, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -6830,7 +6870,7 @@ func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreR
 }
 
 // NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore with any type of body
-func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreRequestWithBody(server string, orgId string, appId string, envId string, valueSetVersionId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreRequestWithBody(server string, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -6887,7 +6927,7 @@ func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreR
 }
 
 // NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyRequest calls the generic PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyRequest(server string, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyRequest(server string, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -6898,7 +6938,7 @@ func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreK
 }
 
 // NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey with any type of body
-func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyRequestWithBody(server string, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyRequestWithBody(server string, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7841,7 +7881,7 @@ func NewGetOrgsOrgIdAppsAppIdValueSetVersionsRequest(server string, orgId string
 }
 
 // NewGetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRequest generates requests for GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId
-func NewGetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRequest(server string, orgId string, appId string, valueSetVersionId string) (*http.Request, error) {
+func NewGetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRequest(server string, orgId string, appId string, valueSetVersionId openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7889,7 +7929,7 @@ func NewGetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRequest(server str
 }
 
 // NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequest calls the generic PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequest(server string, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequest(server string, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -7900,7 +7940,7 @@ func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequest(s
 }
 
 // NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey with any type of body
-func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWithBody(server string, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWithBody(server string, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7957,7 +7997,7 @@ func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyRequestWi
 }
 
 // NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequest calls the generic PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequest(server string, orgId string, appId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequest(server string, orgId string, appId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -7968,7 +8008,7 @@ func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequest(se
 }
 
 // NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore with any type of body
-func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequestWithBody(server string, orgId string, appId string, valueSetVersionId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequestWithBody(server string, orgId string, appId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8018,7 +8058,7 @@ func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreRequestWit
 }
 
 // NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequest calls the generic PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequest(server string, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequest(server string, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -8029,7 +8069,7 @@ func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequest
 }
 
 // NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey with any type of body
-func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequestWithBody(server string, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyRequestWithBody(server string, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11521,22 +11561,22 @@ type ClientWithResponsesInterface interface {
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsWithResponse(ctx context.Context, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdResponse, error)
+	GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey request with any body
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error)
 
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore request with any body
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse, error)
 
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey request with any body
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error)
 
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error)
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error)
 
 	// DeleteOrgsOrgIdAppsAppIdEnvsEnvIdValues request
 	DeleteOrgsOrgIdAppsAppIdEnvsEnvIdValuesWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdEnvsEnvIdValuesResponse, error)
@@ -11597,22 +11637,22 @@ type ClientWithResponsesInterface interface {
 	GetOrgsOrgIdAppsAppIdValueSetVersionsWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdValueSetVersionsResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId request
-	GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdResponse, error)
+	GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey request with any body
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error)
 
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore request with any body
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse, error)
 
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey request with any body
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error)
 
-	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error)
+	PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error)
 
 	// DeleteOrgsOrgIdAppsAppIdValues request
 	DeleteOrgsOrgIdAppsAppIdValuesWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdValuesResponse, error)
@@ -11889,6 +11929,7 @@ type PatchCurrentUserResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserProfileExtendedResponse
+	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -13077,7 +13118,7 @@ type PostOrgsOrgIdAppsAppIdUsersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *string
+	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -13100,6 +13141,7 @@ type GetOrgsOrgIdAppsAppIdUsersUserIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
+	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -13652,6 +13694,7 @@ type GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
+	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -13906,6 +13949,7 @@ type PostOrgsOrgIdInvitationsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]UserRoleResponse
+	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -14586,7 +14630,7 @@ type PostOrgsOrgIdUsersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserProfileExtendedResponse
-	JSON400      *string
+	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -15276,7 +15320,7 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsWith
 }
 
 // GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdResponse, error) {
+func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdResponse, error) {
 	rsp, err := c.GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionId(ctx, orgId, appId, envId, valueSetVersionId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15285,7 +15329,7 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValu
 }
 
 // PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx, orgId, appId, envId, valueSetVersionId, key, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15293,7 +15337,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsVal
 	return ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey(ctx, orgId, appId, envId, valueSetVersionId, key, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15302,7 +15346,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsVal
 }
 
 // PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx, orgId, appId, envId, valueSetVersionId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15310,7 +15354,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsVal
 	return ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestore(ctx, orgId, appId, envId, valueSetVersionId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15319,7 +15363,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsVal
 }
 
 // PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx, orgId, appId, envId, valueSetVersionId, key, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15327,7 +15371,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsVal
 	return ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyWithResponse(ctx context.Context, orgId string, appId string, envId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdRestoreKey(ctx, orgId, appId, envId, valueSetVersionId, key, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15520,7 +15564,7 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdValueSetVersionsWithResponse(
 }
 
 // GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdWithResponse request returning *GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdResponse, error) {
+func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdResponse, error) {
 	rsp, err := c.GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionId(ctx, orgId, appId, valueSetVersionId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15529,7 +15573,7 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersi
 }
 
 // PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithBody(ctx, orgId, appId, valueSetVersionId, key, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15537,7 +15581,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVers
 	return ParsePostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey(ctx, orgId, appId, valueSetVersionId, key, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15546,7 +15590,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVers
 }
 
 // PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithBody(ctx, orgId, appId, valueSetVersionId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15554,7 +15598,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVers
 	return ParsePostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestore(ctx, orgId, appId, valueSetVersionId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15563,7 +15607,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVers
 }
 
 // PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBodyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithBody(ctx, orgId, appId, valueSetVersionId, key, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15571,7 +15615,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVers
 	return ParsePostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId string, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyWithResponse(ctx context.Context, orgId string, appId string, valueSetVersionId openapi_types.UUID, key string, body PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKeyResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdRestoreKey(ctx, orgId, appId, valueSetVersionId, key, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -16413,6 +16457,13 @@ func ParsePatchCurrentUserResponse(rsp *http.Response) (*PatchCurrentUserRespons
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -18033,7 +18084,7 @@ func ParsePostOrgsOrgIdAppsAppIdUsersResponse(rsp *http.Response) (*PostOrgsOrgI
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest string
+		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -18064,6 +18115,13 @@ func ParseGetOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp *http.Response) (*GetOrgs
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -18851,6 +18909,13 @@ func ParseGetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse(rsp *http.Response) (*Ge
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
 	}
 
 	return response, nil
@@ -19220,6 +19285,13 @@ func ParsePostOrgsOrgIdInvitationsResponse(rsp *http.Response) (*PostOrgsOrgIdIn
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -20398,7 +20470,7 @@ func ParsePostOrgsOrgIdUsersResponse(rsp *http.Response) (*PostOrgsOrgIdUsersRes
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest string
+		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
