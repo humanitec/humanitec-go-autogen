@@ -71,6 +71,9 @@ type ActiveResourceResponse struct {
 	// DefId The Resource Definition that this resource was provisioned from.
 	DefId string `json:"def_id"`
 
+	// DeployId The deployment that the resource was last provisioned in.
+	DeployId string `json:"deploy_id"`
+
 	// EnvId The ID of the Environment the resource is associated with.
 	EnvId string `json:"env_id"`
 
@@ -128,7 +131,7 @@ type ApplicationCreationRequest struct {
 	Name string `json:"name"`
 }
 
-// ApplicationResponse An Application is a collection of Modules that work together. When deployed, all Modules in an Application are deployed to the same namespace.
+// ApplicationResponse An Application is a collection of Workloads that work together. When deployed, all Workloads in an Application are deployed to the same namespace.
 //
 // Apps are the root of the configuration tree holding Environments, Deployments, Shared Values, and Secrets.
 type ApplicationResponse struct {
@@ -211,7 +214,7 @@ type ArtefactVersionResponse struct {
 	Version string `json:"version"`
 }
 
-// AutomationRuleRequest An Automation Rule defining how and when images in an environment should be updated.
+// AutomationRuleRequest An Automation Rule defining how and when artefacts in an environment should be updated.
 type AutomationRuleRequest struct {
 	// Active Whether the rule will be processed or not.
 	Active *bool `json:"active,omitempty"`
@@ -241,7 +244,7 @@ type AutomationRuleRequest struct {
 	UpdateTo *string `json:"update_to,omitempty"`
 }
 
-// AutomationRuleResponse An Automation Rule defining how and when images in an environment should be updated.
+// AutomationRuleResponse An Automation Rule defining how and when artefacts in an environment should be updated.
 type AutomationRuleResponse struct {
 	// Active Whether the rule will be processed or not.
 	Active bool `json:"active"`
@@ -390,7 +393,7 @@ type CreateResourceDefinitionRequestRequest struct {
 // DeltaMetadataRequest defines model for DeltaMetadataRequest.
 type DeltaMetadataRequest struct {
 	Archived       *bool      `json:"archived,omitempty"`
-	Contributers   *[]string  `json:"contributers,omitempty"`
+	Contributers   *[]string  `json:"contributers"`
 	CreatedAt      *time.Time `json:"created_at,omitempty"`
 	CreatedBy      *string    `json:"created_by,omitempty"`
 	EnvId          *string    `json:"env_id,omitempty"`
@@ -449,7 +452,7 @@ type DeltaRequest struct {
 
 	// Modules ModuleDeltas groups the different operations together.
 	Modules *ModuleDeltasRequest   `json:"modules,omitempty"`
-	Shared  *[]UpdateActionRequest `json:"shared,omitempty"`
+	Shared  *[]UpdateActionRequest `json:"shared"`
 }
 
 // DeltaResponse A Deployment Delta (or just "Delta") describes the changes that must be applied to one Deployment Set to generate another Deployment Set. Deployment Deltas are the only way to create new Deployment Sets.
@@ -908,9 +911,9 @@ type MatchingCriteriaRuleRequest struct {
 
 // ModuleDeltasRequest ModuleDeltas groups the different operations together.
 type ModuleDeltasRequest struct {
-	Add    *map[string]ModuleRequest         `json:"add,omitempty"`
-	Remove *[]string                         `json:"remove,omitempty"`
-	Update *map[string][]UpdateActionRequest `json:"update,omitempty"`
+	Add    *map[string]ModuleRequest         `json:"add"`
+	Remove *[]string                         `json:"remove"`
+	Update *map[string][]UpdateActionRequest `json:"update"`
 }
 
 // ModuleDeltasResponse ModuleDeltas groups the different operations together.
@@ -928,9 +931,9 @@ type ModuleRequest struct {
 	//
 	// Possible values for "success" are: - "deploy", workload deployed - "available", workload available - "complete", workload complete (often used with jobs)
 	Deploy               *DeployConditionRequest      `json:"deploy,omitempty"`
-	Externals            *map[string]interface{}      `json:"externals,omitempty"`
+	Externals            *map[string]interface{}      `json:"externals"`
 	Profile              *string                      `json:"profile,omitempty"`
-	Spec                 *map[string]interface{}      `json:"spec,omitempty"`
+	Spec                 *map[string]interface{}      `json:"spec"`
 	AdditionalProperties map[string]ControllerRequest `json:"-"`
 }
 
@@ -1217,6 +1220,11 @@ type ResourceTypeResponse struct {
 	Type string `json:"type"`
 }
 
+// RoleRequest Role defines the role that will be used in request
+type RoleRequest struct {
+	Role *string `json:"role,omitempty"`
+}
+
 // RuntimeInfoResponse RuntimeInfo object returned by the runtime endpoint. Represents a list post statuses grouped by modules and controllers (deployments and stateful sets).
 type RuntimeInfoResponse struct {
 	Modules   map[string]ModuleResponse `json:"modules"`
@@ -1384,6 +1392,9 @@ type UserProfileExtendedRequest struct {
 	Name       *string                 `json:"name,omitempty"`
 	Properties *map[string]interface{} `json:"properties,omitempty"`
 	Roles      *map[string]string      `json:"roles,omitempty"`
+
+	// Type The type of the account. Could be user, service or system
+	Type *string `json:"type,omitempty"`
 }
 
 // UserProfileExtendedResponse UserProfileExtended holds the profile information of a user including properties only accessible to the user.
@@ -1401,6 +1412,9 @@ type UserProfileExtendedResponse struct {
 	Name       string                 `json:"name"`
 	Properties map[string]interface{} `json:"properties"`
 	Roles      map[string]string      `json:"roles"`
+
+	// Type The type of the account. Could be user, service or system
+	Type string `json:"type"`
 }
 
 // UserRoleRequest UserRole holds the mapping of role to user for a particular object.
@@ -1422,6 +1436,9 @@ type UserRoleRequest struct {
 
 	// Role The role that this user holds
 	Role *string `json:"role,omitempty"`
+
+	// Type The type of the account. Could be user, service or system
+	Type *string `json:"type,omitempty"`
 
 	// User The user ID that hold the role
 	User *string `json:"user,omitempty"`
@@ -1446,6 +1463,9 @@ type UserRoleResponse struct {
 
 	// Role The role that this user holds
 	Role string `json:"role"`
+
+	// Type The type of the account. Could be user, service or system
+	Type string `json:"type"`
 
 	// User The user ID that hold the role
 	User *string `json:"user,omitempty"`
@@ -1883,6 +1903,9 @@ type PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody = DeltaRequest
 // PostOrgsOrgIdAppsAppIdUsersJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdUsers for application/json ContentType.
 type PostOrgsOrgIdAppsAppIdUsersJSONRequestBody = UserRoleRequest
 
+// PatchOrgsOrgIdAppsAppIdUsersUserIdJSONRequestBody defines body for PatchOrgsOrgIdAppsAppIdUsersUserId for application/json ContentType.
+type PatchOrgsOrgIdAppsAppIdUsersUserIdJSONRequestBody = RoleRequest
+
 // PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKey for application/json ContentType.
 type PostOrgsOrgIdAppsAppIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody = ValueSetActionPayloadRequest
 
@@ -1915,6 +1938,12 @@ type PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody = UpdateA
 
 // PostOrgsOrgIdEnvTypesJSONRequestBody defines body for PostOrgsOrgIdEnvTypes for application/json ContentType.
 type PostOrgsOrgIdEnvTypesJSONRequestBody = EnvironmentTypeRequest
+
+// PostOrgsOrgIdEnvTypesEnvTypeUsersJSONRequestBody defines body for PostOrgsOrgIdEnvTypesEnvTypeUsers for application/json ContentType.
+type PostOrgsOrgIdEnvTypesEnvTypeUsersJSONRequestBody = UserRoleRequest
+
+// PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody defines body for PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId for application/json ContentType.
+type PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody = RoleRequest
 
 // PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody defines body for PostOrgsOrgIdImagesImageIdBuilds for application/json ContentType.
 type PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody = ImageBuildRequest
@@ -1954,6 +1983,9 @@ type PutOrgsOrgIdResourcesDriversDriverIdJSONRequestBody = UpdateDriverRequestRe
 
 // PostOrgsOrgIdUsersJSONRequestBody defines body for PostOrgsOrgIdUsers for application/json ContentType.
 type PostOrgsOrgIdUsersJSONRequestBody = UserProfileExtendedRequest
+
+// PatchOrgsOrgIdUsersUserIdJSONRequestBody defines body for PatchOrgsOrgIdUsersUserId for application/json ContentType.
+type PatchOrgsOrgIdUsersUserIdJSONRequestBody = RoleRequest
 
 // PostOrgsOrgIdWorkloadProfilesJSONRequestBody defines body for PostOrgsOrgIdWorkloadProfiles for application/json ContentType.
 type PostOrgsOrgIdWorkloadProfilesJSONRequestBody = WorkloadProfileRequest
@@ -2462,8 +2494,16 @@ type ClientInterface interface {
 
 	PostOrgsOrgIdAppsAppIdUsers(ctx context.Context, orgId string, appId string, body PostOrgsOrgIdAppsAppIdUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DeleteOrgsOrgIdAppsAppIdUsersUserId request
+	DeleteOrgsOrgIdAppsAppIdUsersUserId(ctx context.Context, orgId string, appId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetOrgsOrgIdAppsAppIdUsersUserId request
 	GetOrgsOrgIdAppsAppIdUsersUserId(ctx context.Context, orgId string, appId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PatchOrgsOrgIdAppsAppIdUsersUserId request with any body
+	PatchOrgsOrgIdAppsAppIdUsersUserIdWithBody(ctx context.Context, orgId string, appId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchOrgsOrgIdAppsAppIdUsersUserId(ctx context.Context, orgId string, appId string, userId string, body PatchOrgsOrgIdAppsAppIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdValueSetVersions request
 	GetOrgsOrgIdAppsAppIdValueSetVersions(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2554,9 +2594,6 @@ type ClientInterface interface {
 
 	PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId(ctx context.Context, orgId string, artefactId string, versionId string, body PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdEnvTypeEnvTypeUsersUserId request
-	GetOrgsOrgIdEnvTypeEnvTypeUsersUserId(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// GetOrgsOrgIdEnvTypes request
 	GetOrgsOrgIdEnvTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -2570,6 +2607,22 @@ type ClientInterface interface {
 
 	// GetOrgsOrgIdEnvTypesEnvTypeId request
 	GetOrgsOrgIdEnvTypesEnvTypeId(ctx context.Context, orgId string, envTypeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostOrgsOrgIdEnvTypesEnvTypeUsers request with any body
+	PostOrgsOrgIdEnvTypesEnvTypeUsersWithBody(ctx context.Context, orgId string, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostOrgsOrgIdEnvTypesEnvTypeUsers(ctx context.Context, orgId string, envType string, body PostOrgsOrgIdEnvTypesEnvTypeUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserId request
+	DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrgsOrgIdEnvTypesEnvTypeUsersUserId request
+	GetOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId request with any body
+	PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithBody(ctx context.Context, orgId string, envType string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx context.Context, orgId string, envType string, userId string, body PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdEvents request
 	GetOrgsOrgIdEvents(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2701,6 +2754,17 @@ type ClientInterface interface {
 	PostOrgsOrgIdUsersWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostOrgsOrgIdUsers(ctx context.Context, orgId string, body PostOrgsOrgIdUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteOrgsOrgIdUsersUserId request
+	DeleteOrgsOrgIdUsersUserId(ctx context.Context, orgId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrgsOrgIdUsersUserId request
+	GetOrgsOrgIdUsersUserId(ctx context.Context, orgId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PatchOrgsOrgIdUsersUserId request with any body
+	PatchOrgsOrgIdUsersUserIdWithBody(ctx context.Context, orgId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchOrgsOrgIdUsersUserId(ctx context.Context, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdWorkloadProfiles request
 	GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3659,8 +3723,44 @@ func (c *Client) PostOrgsOrgIdAppsAppIdUsers(ctx context.Context, orgId string, 
 	return c.Client.Do(req)
 }
 
+func (c *Client) DeleteOrgsOrgIdAppsAppIdUsersUserId(ctx context.Context, orgId string, appId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrgsOrgIdAppsAppIdUsersUserIdRequest(c.Server, orgId, appId, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetOrgsOrgIdAppsAppIdUsersUserId(ctx context.Context, orgId string, appId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdUsersUserIdRequest(c.Server, orgId, appId, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchOrgsOrgIdAppsAppIdUsersUserIdWithBody(ctx context.Context, orgId string, appId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdAppsAppIdUsersUserIdRequestWithBody(c.Server, orgId, appId, userId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchOrgsOrgIdAppsAppIdUsersUserId(ctx context.Context, orgId string, appId string, userId string, body PatchOrgsOrgIdAppsAppIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdAppsAppIdUsersUserIdRequest(c.Server, orgId, appId, userId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4067,18 +4167,6 @@ func (c *Client) PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId(ctx context.
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdEnvTypeEnvTypeUsersUserId(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdEnvTypeEnvTypeUsersUserIdRequest(c.Server, orgId, envType, userId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) GetOrgsOrgIdEnvTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdEnvTypesRequest(c.Server, orgId)
 	if err != nil {
@@ -4129,6 +4217,78 @@ func (c *Client) DeleteOrgsOrgIdEnvTypesEnvTypeId(ctx context.Context, orgId str
 
 func (c *Client) GetOrgsOrgIdEnvTypesEnvTypeId(ctx context.Context, orgId string, envTypeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdEnvTypesEnvTypeIdRequest(c.Server, orgId, envTypeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOrgsOrgIdEnvTypesEnvTypeUsersWithBody(ctx context.Context, orgId string, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOrgsOrgIdEnvTypesEnvTypeUsersRequestWithBody(c.Server, orgId, envType, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOrgsOrgIdEnvTypesEnvTypeUsers(ctx context.Context, orgId string, envType string, body PostOrgsOrgIdEnvTypesEnvTypeUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOrgsOrgIdEnvTypesEnvTypeUsersRequest(c.Server, orgId, envType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest(c.Server, orgId, envType, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest(c.Server, orgId, envType, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithBody(ctx context.Context, orgId string, envType string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequestWithBody(c.Server, orgId, envType, userId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx context.Context, orgId string, envType string, userId string, body PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest(c.Server, orgId, envType, userId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4705,6 +4865,54 @@ func (c *Client) PostOrgsOrgIdUsersWithBody(ctx context.Context, orgId string, c
 
 func (c *Client) PostOrgsOrgIdUsers(ctx context.Context, orgId string, body PostOrgsOrgIdUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdUsersRequest(c.Server, orgId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteOrgsOrgIdUsersUserId(ctx context.Context, orgId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrgsOrgIdUsersUserIdRequest(c.Server, orgId, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOrgsOrgIdUsersUserId(ctx context.Context, orgId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrgsOrgIdUsersUserIdRequest(c.Server, orgId, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchOrgsOrgIdUsersUserIdWithBody(ctx context.Context, orgId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdUsersUserIdRequestWithBody(c.Server, orgId, userId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchOrgsOrgIdUsersUserId(ctx context.Context, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdUsersUserIdRequest(c.Server, orgId, userId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7771,6 +7979,54 @@ func NewPostOrgsOrgIdAppsAppIdUsersRequestWithBody(server string, orgId string, 
 	return req, nil
 }
 
+// NewDeleteOrgsOrgIdAppsAppIdUsersUserIdRequest generates requests for DeleteOrgsOrgIdAppsAppIdUsersUserId
+func NewDeleteOrgsOrgIdAppsAppIdUsersUserIdRequest(server string, orgId string, appId string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/users/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdAppsAppIdUsersUserIdRequest generates requests for GetOrgsOrgIdAppsAppIdUsersUserId
 func NewGetOrgsOrgIdAppsAppIdUsersUserIdRequest(server string, orgId string, appId string, userId string) (*http.Request, error) {
 	var err error
@@ -7815,6 +8071,67 @@ func NewGetOrgsOrgIdAppsAppIdUsersUserIdRequest(server string, orgId string, app
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPatchOrgsOrgIdAppsAppIdUsersUserIdRequest calls the generic PatchOrgsOrgIdAppsAppIdUsersUserId builder with application/json body
+func NewPatchOrgsOrgIdAppsAppIdUsersUserIdRequest(server string, orgId string, appId string, userId string, body PatchOrgsOrgIdAppsAppIdUsersUserIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchOrgsOrgIdAppsAppIdUsersUserIdRequestWithBody(server, orgId, appId, userId, "application/json", bodyReader)
+}
+
+// NewPatchOrgsOrgIdAppsAppIdUsersUserIdRequestWithBody generates requests for PatchOrgsOrgIdAppsAppIdUsersUserId with any type of body
+func NewPatchOrgsOrgIdAppsAppIdUsersUserIdRequestWithBody(server string, orgId string, appId string, userId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/users/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -9142,54 +9459,6 @@ func NewPatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdRequestWithBody(server
 	return req, nil
 }
 
-// NewGetOrgsOrgIdEnvTypeEnvTypeUsersUserIdRequest generates requests for GetOrgsOrgIdEnvTypeEnvTypeUsersUserId
-func NewGetOrgsOrgIdEnvTypeEnvTypeUsersUserIdRequest(server string, orgId string, envType string, userId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "envType", runtime.ParamLocationPath, envType)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam2 string
-
-	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/env-type/%s/users/%s", pathParam0, pathParam1, pathParam2)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewGetOrgsOrgIdEnvTypesRequest generates requests for GetOrgsOrgIdEnvTypes
 func NewGetOrgsOrgIdEnvTypesRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -9349,6 +9618,217 @@ func NewGetOrgsOrgIdEnvTypesEnvTypeIdRequest(server string, orgId string, envTyp
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPostOrgsOrgIdEnvTypesEnvTypeUsersRequest calls the generic PostOrgsOrgIdEnvTypesEnvTypeUsers builder with application/json body
+func NewPostOrgsOrgIdEnvTypesEnvTypeUsersRequest(server string, orgId string, envType string, body PostOrgsOrgIdEnvTypesEnvTypeUsersJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostOrgsOrgIdEnvTypesEnvTypeUsersRequestWithBody(server, orgId, envType, "application/json", bodyReader)
+}
+
+// NewPostOrgsOrgIdEnvTypesEnvTypeUsersRequestWithBody generates requests for PostOrgsOrgIdEnvTypesEnvTypeUsers with any type of body
+func NewPostOrgsOrgIdEnvTypesEnvTypeUsersRequestWithBody(server string, orgId string, envType string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "envType", runtime.ParamLocationPath, envType)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/env-types/%s/users", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest generates requests for DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserId
+func NewDeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest(server string, orgId string, envType string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "envType", runtime.ParamLocationPath, envType)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/env-types/%s/users/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest generates requests for GetOrgsOrgIdEnvTypesEnvTypeUsersUserId
+func NewGetOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest(server string, orgId string, envType string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "envType", runtime.ParamLocationPath, envType)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/env-types/%s/users/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest calls the generic PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId builder with application/json body
+func NewPatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequest(server string, orgId string, envType string, userId string, body PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequestWithBody(server, orgId, envType, userId, "application/json", bodyReader)
+}
+
+// NewPatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequestWithBody generates requests for PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId with any type of body
+func NewPatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdRequestWithBody(server string, orgId string, envType string, userId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "envType", runtime.ParamLocationPath, envType)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/env-types/%s/users/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -10976,6 +11456,142 @@ func NewPostOrgsOrgIdUsersRequestWithBody(server string, orgId string, contentTy
 	return req, nil
 }
 
+// NewDeleteOrgsOrgIdUsersUserIdRequest generates requests for DeleteOrgsOrgIdUsersUserId
+func NewDeleteOrgsOrgIdUsersUserIdRequest(server string, orgId string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/users/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOrgsOrgIdUsersUserIdRequest generates requests for GetOrgsOrgIdUsersUserId
+func NewGetOrgsOrgIdUsersUserIdRequest(server string, orgId string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/users/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPatchOrgsOrgIdUsersUserIdRequest calls the generic PatchOrgsOrgIdUsersUserId builder with application/json body
+func NewPatchOrgsOrgIdUsersUserIdRequest(server string, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchOrgsOrgIdUsersUserIdRequestWithBody(server, orgId, userId, "application/json", bodyReader)
+}
+
+// NewPatchOrgsOrgIdUsersUserIdRequestWithBody generates requests for PatchOrgsOrgIdUsersUserId with any type of body
+func NewPatchOrgsOrgIdUsersUserIdRequestWithBody(server string, orgId string, userId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/users/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdWorkloadProfilesRequest generates requests for GetOrgsOrgIdWorkloadProfiles
 func NewGetOrgsOrgIdWorkloadProfilesRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -11630,8 +12246,16 @@ type ClientWithResponsesInterface interface {
 
 	PostOrgsOrgIdAppsAppIdUsersWithResponse(ctx context.Context, orgId string, appId string, body PostOrgsOrgIdAppsAppIdUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdUsersResponse, error)
 
+	// DeleteOrgsOrgIdAppsAppIdUsersUserId request
+	DeleteOrgsOrgIdAppsAppIdUsersUserIdWithResponse(ctx context.Context, orgId string, appId string, userId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdUsersUserIdResponse, error)
+
 	// GetOrgsOrgIdAppsAppIdUsersUserId request
 	GetOrgsOrgIdAppsAppIdUsersUserIdWithResponse(ctx context.Context, orgId string, appId string, userId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdUsersUserIdResponse, error)
+
+	// PatchOrgsOrgIdAppsAppIdUsersUserId request with any body
+	PatchOrgsOrgIdAppsAppIdUsersUserIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdUsersUserIdResponse, error)
+
+	PatchOrgsOrgIdAppsAppIdUsersUserIdWithResponse(ctx context.Context, orgId string, appId string, userId string, body PatchOrgsOrgIdAppsAppIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdUsersUserIdResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdValueSetVersions request
 	GetOrgsOrgIdAppsAppIdValueSetVersionsWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdValueSetVersionsResponse, error)
@@ -11722,9 +12346,6 @@ type ClientWithResponsesInterface interface {
 
 	PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, body PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse, error)
 
-	// GetOrgsOrgIdEnvTypeEnvTypeUsersUserId request
-	GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdWithResponse(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse, error)
-
 	// GetOrgsOrgIdEnvTypes request
 	GetOrgsOrgIdEnvTypesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypesResponse, error)
 
@@ -11738,6 +12359,22 @@ type ClientWithResponsesInterface interface {
 
 	// GetOrgsOrgIdEnvTypesEnvTypeId request
 	GetOrgsOrgIdEnvTypesEnvTypeIdWithResponse(ctx context.Context, orgId string, envTypeId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypesEnvTypeIdResponse, error)
+
+	// PostOrgsOrgIdEnvTypesEnvTypeUsers request with any body
+	PostOrgsOrgIdEnvTypesEnvTypeUsersWithBodyWithResponse(ctx context.Context, orgId string, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdEnvTypesEnvTypeUsersResponse, error)
+
+	PostOrgsOrgIdEnvTypesEnvTypeUsersWithResponse(ctx context.Context, orgId string, envType string, body PostOrgsOrgIdEnvTypesEnvTypeUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdEnvTypesEnvTypeUsersResponse, error)
+
+	// DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserId request
+	DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error)
+
+	// GetOrgsOrgIdEnvTypesEnvTypeUsersUserId request
+	GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error)
+
+	// PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId request with any body
+	PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithBodyWithResponse(ctx context.Context, orgId string, envType string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error)
+
+	PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse(ctx context.Context, orgId string, envType string, userId string, body PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error)
 
 	// GetOrgsOrgIdEvents request
 	GetOrgsOrgIdEventsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEventsResponse, error)
@@ -11869,6 +12506,17 @@ type ClientWithResponsesInterface interface {
 	PostOrgsOrgIdUsersWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdUsersResponse, error)
 
 	PostOrgsOrgIdUsersWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdUsersResponse, error)
+
+	// DeleteOrgsOrgIdUsersUserId request
+	DeleteOrgsOrgIdUsersUserIdWithResponse(ctx context.Context, orgId string, userId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdUsersUserIdResponse, error)
+
+	// GetOrgsOrgIdUsersUserId request
+	GetOrgsOrgIdUsersUserIdWithResponse(ctx context.Context, orgId string, userId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdUsersUserIdResponse, error)
+
+	// PatchOrgsOrgIdUsersUserId request with any body
+	PatchOrgsOrgIdUsersUserIdWithBodyWithResponse(ctx context.Context, orgId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdUsersUserIdResponse, error)
+
+	PatchOrgsOrgIdUsersUserIdWithResponse(ctx context.Context, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdUsersUserIdResponse, error)
 
 	// GetOrgsOrgIdWorkloadProfiles request
 	GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error)
@@ -13137,6 +13785,28 @@ func (r PostOrgsOrgIdAppsAppIdUsersResponse) StatusCode() int {
 	return 0
 }
 
+type DeleteOrgsOrgIdAppsAppIdUsersUserIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrgsOrgIdAppsAppIdUsersUserIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrgsOrgIdAppsAppIdUsersUserIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetOrgsOrgIdAppsAppIdUsersUserIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -13154,6 +13824,29 @@ func (r GetOrgsOrgIdAppsAppIdUsersUserIdResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrgsOrgIdAppsAppIdUsersUserIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PatchOrgsOrgIdAppsAppIdUsersUserIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UserRoleResponse
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PatchOrgsOrgIdAppsAppIdUsersUserIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PatchOrgsOrgIdAppsAppIdUsersUserIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -13690,29 +14383,6 @@ func (r PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse) StatusCode()
 	return 0
 }
 
-type GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type GetOrgsOrgIdEnvTypesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -13802,6 +14472,97 @@ func (r GetOrgsOrgIdEnvTypesEnvTypeIdResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrgsOrgIdEnvTypesEnvTypeIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostOrgsOrgIdEnvTypesEnvTypeUsersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UserRoleResponse
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PostOrgsOrgIdEnvTypesEnvTypeUsersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostOrgsOrgIdEnvTypesEnvTypeUsersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UserRoleResponse
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UserRoleResponse
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -14643,6 +15404,74 @@ func (r PostOrgsOrgIdUsersResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostOrgsOrgIdUsersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteOrgsOrgIdUsersUserIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrgsOrgIdUsersUserIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrgsOrgIdUsersUserIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetOrgsOrgIdUsersUserIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UserRoleResponse
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrgsOrgIdUsersUserIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrgsOrgIdUsersUserIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PatchOrgsOrgIdUsersUserIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UserRoleResponse
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PatchOrgsOrgIdUsersUserIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PatchOrgsOrgIdUsersUserIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15545,6 +16374,15 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdUsersWithResponse(ctx contex
 	return ParsePostOrgsOrgIdAppsAppIdUsersResponse(rsp)
 }
 
+// DeleteOrgsOrgIdAppsAppIdUsersUserIdWithResponse request returning *DeleteOrgsOrgIdAppsAppIdUsersUserIdResponse
+func (c *ClientWithResponses) DeleteOrgsOrgIdAppsAppIdUsersUserIdWithResponse(ctx context.Context, orgId string, appId string, userId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdUsersUserIdResponse, error) {
+	rsp, err := c.DeleteOrgsOrgIdAppsAppIdUsersUserId(ctx, orgId, appId, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp)
+}
+
 // GetOrgsOrgIdAppsAppIdUsersUserIdWithResponse request returning *GetOrgsOrgIdAppsAppIdUsersUserIdResponse
 func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdUsersUserIdWithResponse(ctx context.Context, orgId string, appId string, userId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdUsersUserIdResponse, error) {
 	rsp, err := c.GetOrgsOrgIdAppsAppIdUsersUserId(ctx, orgId, appId, userId, reqEditors...)
@@ -15552,6 +16390,23 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdUsersUserIdWithResponse(ctx c
 		return nil, err
 	}
 	return ParseGetOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp)
+}
+
+// PatchOrgsOrgIdAppsAppIdUsersUserIdWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdAppsAppIdUsersUserIdResponse
+func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdUsersUserIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdUsersUserIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdAppsAppIdUsersUserIdWithBody(ctx, orgId, appId, userId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdUsersUserIdWithResponse(ctx context.Context, orgId string, appId string, userId string, body PatchOrgsOrgIdAppsAppIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdUsersUserIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdAppsAppIdUsersUserId(ctx, orgId, appId, userId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp)
 }
 
 // GetOrgsOrgIdAppsAppIdValueSetVersionsWithResponse request returning *GetOrgsOrgIdAppsAppIdValueSetVersionsResponse
@@ -15841,15 +16696,6 @@ func (c *ClientWithResponses) PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId
 	return ParsePatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse(rsp)
 }
 
-// GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdWithResponse request returning *GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdWithResponse(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse, error) {
-	rsp, err := c.GetOrgsOrgIdEnvTypeEnvTypeUsersUserId(ctx, orgId, envType, userId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse(rsp)
-}
-
 // GetOrgsOrgIdEnvTypesWithResponse request returning *GetOrgsOrgIdEnvTypesResponse
 func (c *ClientWithResponses) GetOrgsOrgIdEnvTypesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypesResponse, error) {
 	rsp, err := c.GetOrgsOrgIdEnvTypes(ctx, orgId, reqEditors...)
@@ -15892,6 +16738,58 @@ func (c *ClientWithResponses) GetOrgsOrgIdEnvTypesEnvTypeIdWithResponse(ctx cont
 		return nil, err
 	}
 	return ParseGetOrgsOrgIdEnvTypesEnvTypeIdResponse(rsp)
+}
+
+// PostOrgsOrgIdEnvTypesEnvTypeUsersWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdEnvTypesEnvTypeUsersResponse
+func (c *ClientWithResponses) PostOrgsOrgIdEnvTypesEnvTypeUsersWithBodyWithResponse(ctx context.Context, orgId string, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdEnvTypesEnvTypeUsersResponse, error) {
+	rsp, err := c.PostOrgsOrgIdEnvTypesEnvTypeUsersWithBody(ctx, orgId, envType, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOrgsOrgIdEnvTypesEnvTypeUsersResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostOrgsOrgIdEnvTypesEnvTypeUsersWithResponse(ctx context.Context, orgId string, envType string, body PostOrgsOrgIdEnvTypesEnvTypeUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdEnvTypesEnvTypeUsersResponse, error) {
+	rsp, err := c.PostOrgsOrgIdEnvTypesEnvTypeUsers(ctx, orgId, envType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOrgsOrgIdEnvTypesEnvTypeUsersResponse(rsp)
+}
+
+// DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse request returning *DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse
+func (c *ClientWithResponses) DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error) {
+	rsp, err := c.DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx, orgId, envType, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse(rsp)
+}
+
+// GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse request returning *GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse
+func (c *ClientWithResponses) GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse(ctx context.Context, orgId string, envType string, userId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error) {
+	rsp, err := c.GetOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx, orgId, envType, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse(rsp)
+}
+
+// PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse
+func (c *ClientWithResponses) PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithBodyWithResponse(ctx context.Context, orgId string, envType string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithBody(ctx, orgId, envType, userId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse(ctx context.Context, orgId string, envType string, userId string, body PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId(ctx, orgId, envType, userId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse(rsp)
 }
 
 // GetOrgsOrgIdEventsWithResponse request returning *GetOrgsOrgIdEventsResponse
@@ -16311,6 +17209,41 @@ func (c *ClientWithResponses) PostOrgsOrgIdUsersWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParsePostOrgsOrgIdUsersResponse(rsp)
+}
+
+// DeleteOrgsOrgIdUsersUserIdWithResponse request returning *DeleteOrgsOrgIdUsersUserIdResponse
+func (c *ClientWithResponses) DeleteOrgsOrgIdUsersUserIdWithResponse(ctx context.Context, orgId string, userId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdUsersUserIdResponse, error) {
+	rsp, err := c.DeleteOrgsOrgIdUsersUserId(ctx, orgId, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrgsOrgIdUsersUserIdResponse(rsp)
+}
+
+// GetOrgsOrgIdUsersUserIdWithResponse request returning *GetOrgsOrgIdUsersUserIdResponse
+func (c *ClientWithResponses) GetOrgsOrgIdUsersUserIdWithResponse(ctx context.Context, orgId string, userId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdUsersUserIdResponse, error) {
+	rsp, err := c.GetOrgsOrgIdUsersUserId(ctx, orgId, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrgsOrgIdUsersUserIdResponse(rsp)
+}
+
+// PatchOrgsOrgIdUsersUserIdWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdUsersUserIdResponse
+func (c *ClientWithResponses) PatchOrgsOrgIdUsersUserIdWithBodyWithResponse(ctx context.Context, orgId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdUsersUserIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdUsersUserIdWithBody(ctx, orgId, userId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchOrgsOrgIdUsersUserIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchOrgsOrgIdUsersUserIdWithResponse(ctx context.Context, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdUsersUserIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdUsersUserId(ctx, orgId, userId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchOrgsOrgIdUsersUserIdResponse(rsp)
 }
 
 // GetOrgsOrgIdWorkloadProfilesWithResponse request returning *GetOrgsOrgIdWorkloadProfilesResponse
@@ -18095,6 +19028,32 @@ func ParsePostOrgsOrgIdAppsAppIdUsersResponse(rsp *http.Response) (*PostOrgsOrgI
 	return response, nil
 }
 
+// ParseDeleteOrgsOrgIdAppsAppIdUsersUserIdResponse parses an HTTP response from a DeleteOrgsOrgIdAppsAppIdUsersUserIdWithResponse call
+func ParseDeleteOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdAppsAppIdUsersUserIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrgsOrgIdAppsAppIdUsersUserIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetOrgsOrgIdAppsAppIdUsersUserIdResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdUsersUserIdWithResponse call
 func ParseGetOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdUsersUserIdResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -18104,6 +19063,39 @@ func ParseGetOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp *http.Response) (*GetOrgs
 	}
 
 	response := &GetOrgsOrgIdAppsAppIdUsersUserIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserRoleResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePatchOrgsOrgIdAppsAppIdUsersUserIdResponse parses an HTTP response from a PatchOrgsOrgIdAppsAppIdUsersUserIdWithResponse call
+func ParsePatchOrgsOrgIdAppsAppIdUsersUserIdResponse(rsp *http.Response) (*PatchOrgsOrgIdAppsAppIdUsersUserIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PatchOrgsOrgIdAppsAppIdUsersUserIdResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -18888,39 +19880,6 @@ func ParsePatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse(rsp *http.R
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse parses an HTTP response from a GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdWithResponse call
-func ParseGetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse(rsp *http.Response) (*GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetOrgsOrgIdEnvTypeEnvTypeUsersUserIdResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest UserRoleResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseGetOrgsOrgIdEnvTypesResponse parses an HTTP response from a GetOrgsOrgIdEnvTypesWithResponse call
 func ParseGetOrgsOrgIdEnvTypesResponse(rsp *http.Response) (*GetOrgsOrgIdEnvTypesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -19068,6 +20027,131 @@ func ParseGetOrgsOrgIdEnvTypesEnvTypeIdResponse(rsp *http.Response) (*GetOrgsOrg
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostOrgsOrgIdEnvTypesEnvTypeUsersResponse parses an HTTP response from a PostOrgsOrgIdEnvTypesEnvTypeUsersWithResponse call
+func ParsePostOrgsOrgIdEnvTypesEnvTypeUsersResponse(rsp *http.Response) (*PostOrgsOrgIdEnvTypesEnvTypeUsersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostOrgsOrgIdEnvTypesEnvTypeUsersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserRoleResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse parses an HTTP response from a DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse call
+func ParseDeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse parses an HTTP response from a GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse call
+func ParseGetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse(rsp *http.Response) (*GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserRoleResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse parses an HTTP response from a PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdWithResponse call
+func ParsePatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse(rsp *http.Response) (*PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserRoleResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -20464,6 +21548,98 @@ func ParsePostOrgsOrgIdUsersResponse(rsp *http.Response) (*PostOrgsOrgIdUsersRes
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest UserProfileExtendedResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteOrgsOrgIdUsersUserIdResponse parses an HTTP response from a DeleteOrgsOrgIdUsersUserIdWithResponse call
+func ParseDeleteOrgsOrgIdUsersUserIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdUsersUserIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrgsOrgIdUsersUserIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOrgsOrgIdUsersUserIdResponse parses an HTTP response from a GetOrgsOrgIdUsersUserIdWithResponse call
+func ParseGetOrgsOrgIdUsersUserIdResponse(rsp *http.Response) (*GetOrgsOrgIdUsersUserIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrgsOrgIdUsersUserIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserRoleResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePatchOrgsOrgIdUsersUserIdResponse parses an HTTP response from a PatchOrgsOrgIdUsersUserIdWithResponse call
+func ParsePatchOrgsOrgIdUsersUserIdResponse(rsp *http.Response) (*PatchOrgsOrgIdUsersUserIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PatchOrgsOrgIdUsersUserIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserRoleResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
