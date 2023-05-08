@@ -951,6 +951,18 @@ type ModuleResponse struct {
 	AdditionalProperties map[string]ControllerResponse `json:"-"`
 }
 
+// NewServiceUserRequest NewServiceUser holds the definition of a new service user.
+type NewServiceUserRequest struct {
+	// Email The email address that should get notifications about this service user. (Optional)
+	Email *string `json:"email,omitempty"`
+
+	// Name The name that should be shown for this service user.
+	Name *string `json:"name,omitempty"`
+
+	// Role The role that the service user should have on the organization it is created in
+	Role *string `json:"role,omitempty"`
+}
+
 // OrganizationResponse An Organization is the top level object in Humanitec. All other objects belong to an Organization.
 type OrganizationResponse struct {
 	// CreatedAt Timestamp when the Organization was created.
@@ -1287,7 +1299,7 @@ type UpdateActionRequest struct {
 	From  *string      `json:"from,omitempty"`
 	Op    *string      `json:"op,omitempty"`
 	Path  *string      `json:"path,omitempty"`
-	Value *interface{} `json:"value,omitempty"`
+	Value *interface{} `json:"value"`
 }
 
 // UpdateActionResponse A representation of the main object defined in JSON Patch specified in RFC 6902 from the IETF. The main differences are:
@@ -1509,6 +1521,9 @@ type ValueResponse struct {
 
 	// Key The unique key by which the Shared Value can be referenced. pattern: ^[a-zA-Z0-9._-]+$.
 	Key string `json:"key"`
+
+	// SecretKey Location of the secret value in the secret store.
+	SecretKey *string `json:"secret_key"`
 
 	// SecretVersion Version of the current secret value as returned by the secret store.
 	SecretVersion *string `json:"secret_version"`
@@ -1819,19 +1834,19 @@ type DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams struct {
 	Force *bool `form:"force,omitempty" json:"force,omitempty"`
 }
 
-// PostOrgsOrgIdWorkloadProfilesProfileIdVersionsMultipartBody defines parameters for PostOrgsOrgIdWorkloadProfilesProfileIdVersions.
-type PostOrgsOrgIdWorkloadProfilesProfileIdVersionsMultipartBody struct {
-	File *openapi_types.File `json:"file,omitempty"`
-
-	// Metadata Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
-	Metadata *WorkloadProfileVersionRequest `json:"metadata,omitempty"`
-}
-
 // GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams defines parameters for GetOrgsOrgIdWorkloadProfilesProfileQidVersions.
 type GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams struct {
 	// Version Optional query parameter, defines version constraint pattern (https://github.com/Masterminds/semver#checking-version-constraints).
 	//
 	Version *string `form:"version,omitempty" json:"version,omitempty"`
+}
+
+// PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartBody defines parameters for PostOrgsOrgIdWorkloadProfilesProfileQidVersions.
+type PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartBody struct {
+	File *openapi_types.File `json:"file,omitempty"`
+
+	// Metadata Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
+	Metadata *WorkloadProfileVersionRequest `json:"metadata,omitempty"`
 }
 
 // PatchCurrentUserJSONRequestBody defines body for PatchCurrentUser for application/json ContentType.
@@ -1982,7 +1997,7 @@ type PostOrgsOrgIdResourcesDriversJSONRequestBody = CreateDriverRequestRequest
 type PutOrgsOrgIdResourcesDriversDriverIdJSONRequestBody = UpdateDriverRequestRequest
 
 // PostOrgsOrgIdUsersJSONRequestBody defines body for PostOrgsOrgIdUsers for application/json ContentType.
-type PostOrgsOrgIdUsersJSONRequestBody = UserProfileExtendedRequest
+type PostOrgsOrgIdUsersJSONRequestBody = NewServiceUserRequest
 
 // PatchOrgsOrgIdUsersUserIdJSONRequestBody defines body for PatchOrgsOrgIdUsersUserId for application/json ContentType.
 type PatchOrgsOrgIdUsersUserIdJSONRequestBody = RoleRequest
@@ -1990,8 +2005,8 @@ type PatchOrgsOrgIdUsersUserIdJSONRequestBody = RoleRequest
 // PostOrgsOrgIdWorkloadProfilesJSONRequestBody defines body for PostOrgsOrgIdWorkloadProfiles for application/json ContentType.
 type PostOrgsOrgIdWorkloadProfilesJSONRequestBody = WorkloadProfileRequest
 
-// PostOrgsOrgIdWorkloadProfilesProfileIdVersionsMultipartRequestBody defines body for PostOrgsOrgIdWorkloadProfilesProfileIdVersions for multipart/form-data ContentType.
-type PostOrgsOrgIdWorkloadProfilesProfileIdVersionsMultipartRequestBody PostOrgsOrgIdWorkloadProfilesProfileIdVersionsMultipartBody
+// PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartRequestBody defines body for PostOrgsOrgIdWorkloadProfilesProfileQidVersions for multipart/form-data ContentType.
+type PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartRequestBody PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartBody
 
 // Getter for additional properties for ModuleRequest. Returns the specified
 // element and whether it was found
@@ -2774,20 +2789,20 @@ type ClientInterface interface {
 
 	PostOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string, body PostOrgsOrgIdWorkloadProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteOrgsOrgIdWorkloadProfilesProfileId request
-	DeleteOrgsOrgIdWorkloadProfilesProfileId(ctx context.Context, orgId string, profileId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// PostOrgsOrgIdWorkloadProfilesProfileIdVersions request with any body
-	PostOrgsOrgIdWorkloadProfilesProfileIdVersionsWithBody(ctx context.Context, orgId string, profileId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion request
 	DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion(ctx context.Context, orgId string, profileId string, version string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteOrgsOrgIdWorkloadProfilesProfileQid request
+	DeleteOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdWorkloadProfilesProfileQid request
 	GetOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdWorkloadProfilesProfileQidVersions request
 	GetOrgsOrgIdWorkloadProfilesProfileQidVersions(ctx context.Context, orgId string, profileQid string, params *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostOrgsOrgIdWorkloadProfilesProfileQidVersions request with any body
+	PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetTokens request
 	GetTokens(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4959,32 +4974,20 @@ func (c *Client) PostOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteOrgsOrgIdWorkloadProfilesProfileId(ctx context.Context, orgId string, profileId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteOrgsOrgIdWorkloadProfilesProfileIdRequest(c.Server, orgId, profileId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PostOrgsOrgIdWorkloadProfilesProfileIdVersionsWithBody(ctx context.Context, orgId string, profileId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdWorkloadProfilesProfileIdVersionsRequestWithBody(c.Server, orgId, profileId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion(ctx context.Context, orgId string, profileId string, version string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionRequest(c.Server, orgId, profileId, version)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrgsOrgIdWorkloadProfilesProfileQidRequest(c.Server, orgId, profileQid)
 	if err != nil {
 		return nil, err
 	}
@@ -5009,6 +5012,18 @@ func (c *Client) GetOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, org
 
 func (c *Client) GetOrgsOrgIdWorkloadProfilesProfileQidVersions(ctx context.Context, orgId string, profileQid string, params *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdWorkloadProfilesProfileQidVersionsRequest(c.Server, orgId, profileQid, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOrgsOrgIdWorkloadProfilesProfileQidVersionsRequestWithBody(c.Server, orgId, profileQid, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11673,90 +11688,6 @@ func NewPostOrgsOrgIdWorkloadProfilesRequestWithBody(server string, orgId string
 	return req, nil
 }
 
-// NewDeleteOrgsOrgIdWorkloadProfilesProfileIdRequest generates requests for DeleteOrgsOrgIdWorkloadProfilesProfileId
-func NewDeleteOrgsOrgIdWorkloadProfilesProfileIdRequest(server string, orgId string, profileId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileId", runtime.ParamLocationPath, profileId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewPostOrgsOrgIdWorkloadProfilesProfileIdVersionsRequestWithBody generates requests for PostOrgsOrgIdWorkloadProfilesProfileIdVersions with any type of body
-func NewPostOrgsOrgIdWorkloadProfilesProfileIdVersionsRequestWithBody(server string, orgId string, profileId string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileId", runtime.ParamLocationPath, profileId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s/versions", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
 // NewDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionRequest generates requests for DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion
 func NewDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionRequest(server string, orgId string, profileId string, version string) (*http.Request, error) {
 	var err error
@@ -11788,6 +11719,47 @@ func NewDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionRequest(server st
 	}
 
 	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s/versions/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteOrgsOrgIdWorkloadProfilesProfileQidRequest generates requests for DeleteOrgsOrgIdWorkloadProfilesProfileQid
+func NewDeleteOrgsOrgIdWorkloadProfilesProfileQidRequest(server string, orgId string, profileQid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileQid", runtime.ParamLocationPath, profileQid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -11903,6 +11875,49 @@ func NewGetOrgsOrgIdWorkloadProfilesProfileQidVersionsRequest(server string, org
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPostOrgsOrgIdWorkloadProfilesProfileQidVersionsRequestWithBody generates requests for PostOrgsOrgIdWorkloadProfilesProfileQidVersions with any type of body
+func NewPostOrgsOrgIdWorkloadProfilesProfileQidVersionsRequestWithBody(server string, orgId string, profileQid string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileQid", runtime.ParamLocationPath, profileQid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s/versions", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -12526,20 +12541,20 @@ type ClientWithResponsesInterface interface {
 
 	PostOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdWorkloadProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesResponse, error)
 
-	// DeleteOrgsOrgIdWorkloadProfilesProfileId request
-	DeleteOrgsOrgIdWorkloadProfilesProfileIdWithResponse(ctx context.Context, orgId string, profileId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdResponse, error)
-
-	// PostOrgsOrgIdWorkloadProfilesProfileIdVersions request with any body
-	PostOrgsOrgIdWorkloadProfilesProfileIdVersionsWithBodyWithResponse(ctx context.Context, orgId string, profileId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse, error)
-
 	// DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion request
 	DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionWithResponse(ctx context.Context, orgId string, profileId string, version string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse, error)
+
+	// DeleteOrgsOrgIdWorkloadProfilesProfileQid request
+	DeleteOrgsOrgIdWorkloadProfilesProfileQidWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse, error)
 
 	// GetOrgsOrgIdWorkloadProfilesProfileQid request
 	GetOrgsOrgIdWorkloadProfilesProfileQidWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesProfileQidResponse, error)
 
 	// GetOrgsOrgIdWorkloadProfilesProfileQidVersions request
 	GetOrgsOrgIdWorkloadProfilesProfileQidVersionsWithResponse(ctx context.Context, orgId string, profileQid string, params *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error)
+
+	// PostOrgsOrgIdWorkloadProfilesProfileQidVersions request with any body
+	PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBodyWithResponse(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error)
 
 	// GetTokens request
 	GetTokensWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTokensResponse, error)
@@ -15524,53 +15539,6 @@ func (r PostOrgsOrgIdWorkloadProfilesResponse) StatusCode() int {
 	return 0
 }
 
-type DeleteOrgsOrgIdWorkloadProfilesProfileIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON404      *HumanitecErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteOrgsOrgIdWorkloadProfilesProfileIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteOrgsOrgIdWorkloadProfilesProfileIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type PostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *WorkloadProfileVersionResponse
-	JSON400      *HumanitecErrorResponse
-	JSON404      *HumanitecErrorResponse
-	JSON409      *HumanitecErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -15587,6 +15555,28 @@ func (r DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse) Status(
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15633,6 +15623,31 @@ func (r GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) Status() string 
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadProfileVersionResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -17272,24 +17287,6 @@ func (c *ClientWithResponses) PostOrgsOrgIdWorkloadProfilesWithResponse(ctx cont
 	return ParsePostOrgsOrgIdWorkloadProfilesResponse(rsp)
 }
 
-// DeleteOrgsOrgIdWorkloadProfilesProfileIdWithResponse request returning *DeleteOrgsOrgIdWorkloadProfilesProfileIdResponse
-func (c *ClientWithResponses) DeleteOrgsOrgIdWorkloadProfilesProfileIdWithResponse(ctx context.Context, orgId string, profileId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdResponse, error) {
-	rsp, err := c.DeleteOrgsOrgIdWorkloadProfilesProfileId(ctx, orgId, profileId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdResponse(rsp)
-}
-
-// PostOrgsOrgIdWorkloadProfilesProfileIdVersionsWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse
-func (c *ClientWithResponses) PostOrgsOrgIdWorkloadProfilesProfileIdVersionsWithBodyWithResponse(ctx context.Context, orgId string, profileId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse, error) {
-	rsp, err := c.PostOrgsOrgIdWorkloadProfilesProfileIdVersionsWithBody(ctx, orgId, profileId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse(rsp)
-}
-
 // DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionWithResponse request returning *DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse
 func (c *ClientWithResponses) DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionWithResponse(ctx context.Context, orgId string, profileId string, version string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse, error) {
 	rsp, err := c.DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion(ctx, orgId, profileId, version, reqEditors...)
@@ -17297,6 +17294,15 @@ func (c *ClientWithResponses) DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVe
 		return nil, err
 	}
 	return ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse(rsp)
+}
+
+// DeleteOrgsOrgIdWorkloadProfilesProfileQidWithResponse request returning *DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse
+func (c *ClientWithResponses) DeleteOrgsOrgIdWorkloadProfilesProfileQidWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse, error) {
+	rsp, err := c.DeleteOrgsOrgIdWorkloadProfilesProfileQid(ctx, orgId, profileQid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp)
 }
 
 // GetOrgsOrgIdWorkloadProfilesProfileQidWithResponse request returning *GetOrgsOrgIdWorkloadProfilesProfileQidResponse
@@ -17315,6 +17321,15 @@ func (c *ClientWithResponses) GetOrgsOrgIdWorkloadProfilesProfileQidVersionsWith
 		return nil, err
 	}
 	return ParseGetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp)
+}
+
+// PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse
+func (c *ClientWithResponses) PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBodyWithResponse(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error) {
+	rsp, err := c.PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx, orgId, profileQid, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp)
 }
 
 // GetTokensWithResponse request returning *GetTokensResponse
@@ -21723,79 +21738,6 @@ func ParsePostOrgsOrgIdWorkloadProfilesResponse(rsp *http.Response) (*PostOrgsOr
 	return response, nil
 }
 
-// ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdResponse parses an HTTP response from a DeleteOrgsOrgIdWorkloadProfilesProfileIdWithResponse call
-func ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteOrgsOrgIdWorkloadProfilesProfileIdResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParsePostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse parses an HTTP response from a PostOrgsOrgIdWorkloadProfilesProfileIdVersionsWithResponse call
-func ParsePostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse(rsp *http.Response) (*PostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &PostOrgsOrgIdWorkloadProfilesProfileIdVersionsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest WorkloadProfileVersionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse parses an HTTP response from a DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionWithResponse call
 func ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse(rsp *http.Response) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -21805,6 +21747,32 @@ func ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse(rsp *h
 	}
 
 	response := &DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteOrgsOrgIdWorkloadProfilesProfileQidResponse parses an HTTP response from a DeleteOrgsOrgIdWorkloadProfilesProfileQidWithResponse call
+func ParseDeleteOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp *http.Response) (*DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -21882,6 +21850,53 @@ func ParseGetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp *http.Respo
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse parses an HTTP response from a PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithResponse call
+func ParsePostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp *http.Response) (*PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadProfileVersionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	}
 
