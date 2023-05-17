@@ -386,6 +386,9 @@ type CreateResourceDefinitionRequestRequest struct {
 	// Name The display name.
 	Name string `json:"name"`
 
+	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource.
+	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
+
 	// Type The Resource Type.
 	Type string `json:"type"`
 }
@@ -957,10 +960,10 @@ type NewServiceUserRequest struct {
 	Email *string `json:"email,omitempty"`
 
 	// Name The name that should be shown for this service user.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 
 	// Role The role that the service user should have on the organization it is created in
-	Role *string `json:"role,omitempty"`
+	Role string `json:"role"`
 }
 
 // OrganizationResponse An Organization is the top level object in Humanitec. All other objects belong to an Organization.
@@ -988,6 +991,9 @@ type PatchResourceDefinitionRequestRequest struct {
 
 	// Name (Optional) Resource display name
 	Name *string `json:"name"`
+
+	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
+	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
 }
 
 // PlainDeltaResponse Similar to the delta response, except the id and metadata properties.
@@ -1037,6 +1043,24 @@ type PodStateResponse struct {
 	PodName           string                   `json:"podName"`
 	Revision          int                      `json:"revision"`
 	Status            string                   `json:"status"`
+}
+
+// ProvisionDependenciesRequest ProvisionDependencies defines resources which are needed to be co-provisioned with the current resource.
+type ProvisionDependenciesRequest struct {
+	// IsDependent If the co-provisioned resource is dependendent on the current one.
+	IsDependent *bool `json:"is_dependent,omitempty"`
+
+	// MatchDependents If the resources dependant on the main resource, are also dependant on the co-provisioned one.
+	MatchDependents *bool `json:"match_dependents,omitempty"`
+}
+
+// ProvisionDependenciesResponse ProvisionDependencies defines resources which are needed to be co-provisioned with the current resource.
+type ProvisionDependenciesResponse struct {
+	// IsDependent If the co-provisioned resource is dependendent on the current one.
+	IsDependent bool `json:"is_dependent"`
+
+	// MatchDependents If the resources dependant on the main resource, are also dependant on the co-provisioned one.
+	MatchDependents *bool `json:"match_dependents,omitempty"`
 }
 
 // RegistryCredsResponse RegistryCreds represents current registry credentials (either, username- or token-based).
@@ -1208,6 +1232,9 @@ type ResourceDefinitionResponse struct {
 	// OrgId The Organization ID.
 	OrgId string `json:"org_id"`
 
+	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource.
+	Provision *map[string]ProvisionDependenciesResponse `json:"provision,omitempty"`
+
 	// Type The Resource Type.
 	Type string `json:"type"`
 }
@@ -1290,6 +1317,37 @@ type SetResponse struct {
 	Version int `json:"version"`
 }
 
+// TokenDefinitionRequest Defines the token to be created.
+type TokenDefinitionRequest struct {
+	// Description A description of the token. (Optional)
+	Description *string `json:"description,omitempty"`
+
+	// ExpiresAt The time the token expires. If not set, the token will not expire. (Optional)
+	ExpiresAt *string `json:"expires_at,omitempty"`
+
+	// Id Identifier of the token. Must be unique for the user.
+	Id string `json:"id"`
+
+	// Type The type of the token. Can only be "static".
+	Type string `json:"type"`
+}
+
+// TokenInfoResponse Holds metadata about a token. `expires_at` is excluded if token does not expire.
+type TokenInfoResponse struct {
+	CreatedAt   string  `json:"created_at"`
+	CreatedBy   string  `json:"created_by"`
+	Description string  `json:"description"`
+	ExpiresAt   *string `json:"expires_at,omitempty"`
+	Id          string  `json:"id"`
+	Type        string  `json:"type"`
+}
+
+// TokenResponse Token holds the token and its type.
+type TokenResponse struct {
+	Token string  `json:"token"`
+	Type  *string `json:"type,omitempty"`
+}
+
 // UpdateActionRequest A representation of the main object defined in JSON Patch specified in RFC 6902 from the IETF. The main differences are:
 //
 // * Only `add`, `remove` and `replace` are supported
@@ -1360,6 +1418,9 @@ type UpdateResourceDefinitionRequestRequest struct {
 
 	// Name The display name.
 	Name string `json:"name"`
+
+	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
+	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
 }
 
 // UserInviteRequestRequest UserInviteRequest describes a new user invitation.
@@ -1424,6 +1485,24 @@ type UserProfileExtendedResponse struct {
 	Name       string                 `json:"name"`
 	Properties map[string]interface{} `json:"properties"`
 	Roles      map[string]string      `json:"roles"`
+
+	// Type The type of the account. Could be user, service or system
+	Type string `json:"type"`
+}
+
+// UserProfileResponse UserProfile holds the profile information of a user
+type UserProfileResponse struct {
+	// CreatedAt The time the user was first registered with Humanitec
+	CreatedAt string `json:"created_at"`
+
+	// Email The email address of the user from the profile
+	Email *string `json:"email,omitempty"`
+
+	// Id The User ID for this user
+	Id string `json:"id"`
+
+	// Name The name the user goes by
+	Name string `json:"name"`
 
 	// Type The type of the account. Could be user, service or system
 	Type string `json:"type"`
@@ -2007,6 +2086,9 @@ type PostOrgsOrgIdWorkloadProfilesJSONRequestBody = WorkloadProfileRequest
 
 // PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartRequestBody defines body for PostOrgsOrgIdWorkloadProfilesProfileQidVersions for multipart/form-data ContentType.
 type PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartRequestBody PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartBody
+
+// PostUsersUserIdTokensJSONRequestBody defines body for PostUsersUserIdTokens for application/json ContentType.
+type PostUsersUserIdTokensJSONRequestBody = TokenDefinitionRequest
 
 // Getter for additional properties for ModuleRequest. Returns the specified
 // element and whether it was found
@@ -2697,6 +2779,9 @@ type ClientInterface interface {
 
 	PostOrgsOrgIdResourcesAccounts(ctx context.Context, orgId string, body PostOrgsOrgIdResourcesAccountsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DeleteOrgsOrgIdResourcesAccountsAccId request
+	DeleteOrgsOrgIdResourcesAccountsAccId(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetOrgsOrgIdResourcesAccountsAccId request
 	GetOrgsOrgIdResourcesAccountsAccId(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -2804,6 +2889,9 @@ type ClientInterface interface {
 	// PostOrgsOrgIdWorkloadProfilesProfileQidVersions request with any body
 	PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLatestWorkloadProfileVersion request
+	GetLatestWorkloadProfileVersion(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetTokens request
 	GetTokens(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -2812,6 +2900,20 @@ type ClientInterface interface {
 
 	// GetUsersMe request
 	GetUsersMe(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetUsersUserIdTokens request
+	GetUsersUserIdTokens(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostUsersUserIdTokens request with any body
+	PostUsersUserIdTokensWithBody(ctx context.Context, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostUsersUserIdTokens(ctx context.Context, userId string, body PostUsersUserIdTokensJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteUsersUserIdTokensTokenId request
+	DeleteUsersUserIdTokensTokenId(ctx context.Context, userId string, tokenId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetUsersUserIdTokensTokenId request
+	GetUsersUserIdTokensTokenId(ctx context.Context, userId string, tokenId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetCurrentUser(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -4566,6 +4668,18 @@ func (c *Client) PostOrgsOrgIdResourcesAccounts(ctx context.Context, orgId strin
 	return c.Client.Do(req)
 }
 
+func (c *Client) DeleteOrgsOrgIdResourcesAccountsAccId(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrgsOrgIdResourcesAccountsAccIdRequest(c.Server, orgId, accId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetOrgsOrgIdResourcesAccountsAccId(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdResourcesAccountsAccIdRequest(c.Server, orgId, accId)
 	if err != nil {
@@ -5034,6 +5148,18 @@ func (c *Client) PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx con
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetLatestWorkloadProfileVersion(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLatestWorkloadProfileVersionRequest(c.Server, orgId, profileQid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetTokens(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetTokensRequest(c.Server)
 	if err != nil {
@@ -5060,6 +5186,66 @@ func (c *Client) DeleteTokensTokenId(ctx context.Context, tokenId string, reqEdi
 
 func (c *Client) GetUsersMe(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetUsersMeRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetUsersUserIdTokens(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetUsersUserIdTokensRequest(c.Server, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostUsersUserIdTokensWithBody(ctx context.Context, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostUsersUserIdTokensRequestWithBody(c.Server, userId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostUsersUserIdTokens(ctx context.Context, userId string, body PostUsersUserIdTokensJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostUsersUserIdTokensRequest(c.Server, userId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteUsersUserIdTokensTokenId(ctx context.Context, userId string, tokenId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteUsersUserIdTokensTokenIdRequest(c.Server, userId, tokenId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetUsersUserIdTokensTokenId(ctx context.Context, userId string, tokenId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetUsersUserIdTokensTokenIdRequest(c.Server, userId, tokenId)
 	if err != nil {
 		return nil, err
 	}
@@ -10506,6 +10692,47 @@ func NewPostOrgsOrgIdResourcesAccountsRequestWithBody(server string, orgId strin
 	return req, nil
 }
 
+// NewDeleteOrgsOrgIdResourcesAccountsAccIdRequest generates requests for DeleteOrgsOrgIdResourcesAccountsAccId
+func NewDeleteOrgsOrgIdResourcesAccountsAccIdRequest(server string, orgId string, accId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "accId", runtime.ParamLocationPath, accId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/accounts/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdResourcesAccountsAccIdRequest generates requests for GetOrgsOrgIdResourcesAccountsAccId
 func NewGetOrgsOrgIdResourcesAccountsAccIdRequest(server string, orgId string, accId string) (*http.Request, error) {
 	var err error
@@ -11922,6 +12149,47 @@ func NewPostOrgsOrgIdWorkloadProfilesProfileQidVersionsRequestWithBody(server st
 	return req, nil
 }
 
+// NewGetLatestWorkloadProfileVersionRequest generates requests for GetLatestWorkloadProfileVersion
+func NewGetLatestWorkloadProfileVersionRequest(server string, orgId string, profileQid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileQid", runtime.ParamLocationPath, profileQid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s/versions/latest", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetTokensRequest generates requests for GetTokens
 func NewGetTokensRequest(server string) (*http.Request, error) {
 	var err error
@@ -11993,6 +12261,169 @@ func NewGetUsersMeRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/users/me")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetUsersUserIdTokensRequest generates requests for GetUsersUserIdTokens
+func NewGetUsersUserIdTokensRequest(server string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/users/%s/tokens", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostUsersUserIdTokensRequest calls the generic PostUsersUserIdTokens builder with application/json body
+func NewPostUsersUserIdTokensRequest(server string, userId string, body PostUsersUserIdTokensJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostUsersUserIdTokensRequestWithBody(server, userId, "application/json", bodyReader)
+}
+
+// NewPostUsersUserIdTokensRequestWithBody generates requests for PostUsersUserIdTokens with any type of body
+func NewPostUsersUserIdTokensRequestWithBody(server string, userId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/users/%s/tokens", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteUsersUserIdTokensTokenIdRequest generates requests for DeleteUsersUserIdTokensTokenId
+func NewDeleteUsersUserIdTokensTokenIdRequest(server string, userId string, tokenId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "tokenId", runtime.ParamLocationPath, tokenId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/users/%s/tokens/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetUsersUserIdTokensTokenIdRequest generates requests for GetUsersUserIdTokensTokenId
+func NewGetUsersUserIdTokensTokenIdRequest(server string, userId string, tokenId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "tokenId", runtime.ParamLocationPath, tokenId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/users/%s/tokens/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -12449,6 +12880,9 @@ type ClientWithResponsesInterface interface {
 
 	PostOrgsOrgIdResourcesAccountsWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdResourcesAccountsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdResourcesAccountsResponse, error)
 
+	// DeleteOrgsOrgIdResourcesAccountsAccId request
+	DeleteOrgsOrgIdResourcesAccountsAccIdWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdResourcesAccountsAccIdResponse, error)
+
 	// GetOrgsOrgIdResourcesAccountsAccId request
 	GetOrgsOrgIdResourcesAccountsAccIdWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdResourcesAccountsAccIdResponse, error)
 
@@ -12556,6 +12990,9 @@ type ClientWithResponsesInterface interface {
 	// PostOrgsOrgIdWorkloadProfilesProfileQidVersions request with any body
 	PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBodyWithResponse(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error)
 
+	// GetLatestWorkloadProfileVersion request
+	GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error)
+
 	// GetTokens request
 	GetTokensWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTokensResponse, error)
 
@@ -12564,6 +13001,20 @@ type ClientWithResponsesInterface interface {
 
 	// GetUsersMe request
 	GetUsersMeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUsersMeResponse, error)
+
+	// GetUsersUserIdTokens request
+	GetUsersUserIdTokensWithResponse(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*GetUsersUserIdTokensResponse, error)
+
+	// PostUsersUserIdTokens request with any body
+	PostUsersUserIdTokensWithBodyWithResponse(ctx context.Context, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostUsersUserIdTokensResponse, error)
+
+	PostUsersUserIdTokensWithResponse(ctx context.Context, userId string, body PostUsersUserIdTokensJSONRequestBody, reqEditors ...RequestEditorFn) (*PostUsersUserIdTokensResponse, error)
+
+	// DeleteUsersUserIdTokensTokenId request
+	DeleteUsersUserIdTokensTokenIdWithResponse(ctx context.Context, userId string, tokenId string, reqEditors ...RequestEditorFn) (*DeleteUsersUserIdTokensTokenIdResponse, error)
+
+	// GetUsersUserIdTokensTokenId request
+	GetUsersUserIdTokensTokenIdWithResponse(ctx context.Context, userId string, tokenId string, reqEditors ...RequestEditorFn) (*GetUsersUserIdTokensTokenIdResponse, error)
 }
 
 type GetCurrentUserResponse struct {
@@ -13304,6 +13755,8 @@ type GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RuntimeInfoResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -13325,6 +13778,9 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse) StatusCode() int {
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+	JSON403      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -13346,6 +13802,9 @@ func (r PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse) StatusCode() int {
 type PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+	JSON403      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -13642,6 +14101,7 @@ type GetOrgsOrgIdAppsAppIdRuntimeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]EnvironmentRuntimeInfoResponse
+	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -14966,6 +15426,30 @@ func (r PostOrgsOrgIdResourcesAccountsResponse) StatusCode() int {
 	return 0
 }
 
+type DeleteOrgsOrgIdResourcesAccountsAccIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON500      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrgsOrgIdResourcesAccountsAccIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrgsOrgIdResourcesAccountsAccIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetOrgsOrgIdResourcesAccountsAccIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -15405,7 +15889,7 @@ func (r GetOrgsOrgIdUsersResponse) StatusCode() int {
 type PostOrgsOrgIdUsersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *UserProfileExtendedResponse
+	JSON200      *UserProfileResponse
 	JSON400      *HumanitecErrorResponse
 }
 
@@ -15654,6 +16138,29 @@ func (r PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) StatusCode() in
 	return 0
 }
 
+type GetLatestWorkloadProfileVersionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadProfileVersionResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLatestWorkloadProfileVersionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLatestWorkloadProfileVersionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetTokensResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -15713,6 +16220,94 @@ func (r GetUsersMeResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetUsersMeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetUsersUserIdTokensResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]TokenInfoResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetUsersUserIdTokensResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetUsersUserIdTokensResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostUsersUserIdTokensResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TokenResponse
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PostUsersUserIdTokensResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostUsersUserIdTokensResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteUsersUserIdTokensTokenIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteUsersUserIdTokensTokenIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteUsersUserIdTokensTokenIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetUsersUserIdTokensTokenIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TokenInfoResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetUsersUserIdTokensTokenIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetUsersUserIdTokensTokenIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -16991,6 +17586,15 @@ func (c *ClientWithResponses) PostOrgsOrgIdResourcesAccountsWithResponse(ctx con
 	return ParsePostOrgsOrgIdResourcesAccountsResponse(rsp)
 }
 
+// DeleteOrgsOrgIdResourcesAccountsAccIdWithResponse request returning *DeleteOrgsOrgIdResourcesAccountsAccIdResponse
+func (c *ClientWithResponses) DeleteOrgsOrgIdResourcesAccountsAccIdWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdResourcesAccountsAccIdResponse, error) {
+	rsp, err := c.DeleteOrgsOrgIdResourcesAccountsAccId(ctx, orgId, accId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrgsOrgIdResourcesAccountsAccIdResponse(rsp)
+}
+
 // GetOrgsOrgIdResourcesAccountsAccIdWithResponse request returning *GetOrgsOrgIdResourcesAccountsAccIdResponse
 func (c *ClientWithResponses) GetOrgsOrgIdResourcesAccountsAccIdWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdResourcesAccountsAccIdResponse, error) {
 	rsp, err := c.GetOrgsOrgIdResourcesAccountsAccId(ctx, orgId, accId, reqEditors...)
@@ -17332,6 +17936,15 @@ func (c *ClientWithResponses) PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWit
 	return ParsePostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp)
 }
 
+// GetLatestWorkloadProfileVersionWithResponse request returning *GetLatestWorkloadProfileVersionResponse
+func (c *ClientWithResponses) GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error) {
+	rsp, err := c.GetLatestWorkloadProfileVersion(ctx, orgId, profileQid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLatestWorkloadProfileVersionResponse(rsp)
+}
+
 // GetTokensWithResponse request returning *GetTokensResponse
 func (c *ClientWithResponses) GetTokensWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTokensResponse, error) {
 	rsp, err := c.GetTokens(ctx, reqEditors...)
@@ -17357,6 +17970,50 @@ func (c *ClientWithResponses) GetUsersMeWithResponse(ctx context.Context, reqEdi
 		return nil, err
 	}
 	return ParseGetUsersMeResponse(rsp)
+}
+
+// GetUsersUserIdTokensWithResponse request returning *GetUsersUserIdTokensResponse
+func (c *ClientWithResponses) GetUsersUserIdTokensWithResponse(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*GetUsersUserIdTokensResponse, error) {
+	rsp, err := c.GetUsersUserIdTokens(ctx, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetUsersUserIdTokensResponse(rsp)
+}
+
+// PostUsersUserIdTokensWithBodyWithResponse request with arbitrary body returning *PostUsersUserIdTokensResponse
+func (c *ClientWithResponses) PostUsersUserIdTokensWithBodyWithResponse(ctx context.Context, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostUsersUserIdTokensResponse, error) {
+	rsp, err := c.PostUsersUserIdTokensWithBody(ctx, userId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostUsersUserIdTokensResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostUsersUserIdTokensWithResponse(ctx context.Context, userId string, body PostUsersUserIdTokensJSONRequestBody, reqEditors ...RequestEditorFn) (*PostUsersUserIdTokensResponse, error) {
+	rsp, err := c.PostUsersUserIdTokens(ctx, userId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostUsersUserIdTokensResponse(rsp)
+}
+
+// DeleteUsersUserIdTokensTokenIdWithResponse request returning *DeleteUsersUserIdTokensTokenIdResponse
+func (c *ClientWithResponses) DeleteUsersUserIdTokensTokenIdWithResponse(ctx context.Context, userId string, tokenId string, reqEditors ...RequestEditorFn) (*DeleteUsersUserIdTokensTokenIdResponse, error) {
+	rsp, err := c.DeleteUsersUserIdTokensTokenId(ctx, userId, tokenId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteUsersUserIdTokensTokenIdResponse(rsp)
+}
+
+// GetUsersUserIdTokensTokenIdWithResponse request returning *GetUsersUserIdTokensTokenIdResponse
+func (c *ClientWithResponses) GetUsersUserIdTokensTokenIdWithResponse(ctx context.Context, userId string, tokenId string, reqEditors ...RequestEditorFn) (*GetUsersUserIdTokensTokenIdResponse, error) {
+	rsp, err := c.GetUsersUserIdTokensTokenId(ctx, userId, tokenId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetUsersUserIdTokensTokenIdResponse(rsp)
 }
 
 // ParseGetCurrentUserResponse parses an HTTP response from a GetCurrentUserWithResponse call
@@ -18404,6 +19061,20 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse(rsp *http.Response) (*Ge
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
@@ -18422,6 +19093,30 @@ func ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse(rsp *http.Response
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
 	return response, nil
 }
 
@@ -18436,6 +19131,30 @@ func ParsePatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse(rsp *http.Resp
 	response := &PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
@@ -18837,6 +19556,13 @@ func ParseGetOrgsOrgIdAppsAppIdRuntimeResponse(rsp *http.Response) (*GetOrgsOrgI
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -20799,6 +21525,46 @@ func ParsePostOrgsOrgIdResourcesAccountsResponse(rsp *http.Response) (*PostOrgsO
 	return response, nil
 }
 
+// ParseDeleteOrgsOrgIdResourcesAccountsAccIdResponse parses an HTTP response from a DeleteOrgsOrgIdResourcesAccountsAccIdWithResponse call
+func ParseDeleteOrgsOrgIdResourcesAccountsAccIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdResourcesAccountsAccIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrgsOrgIdResourcesAccountsAccIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetOrgsOrgIdResourcesAccountsAccIdResponse parses an HTTP response from a GetOrgsOrgIdResourcesAccountsAccIdWithResponse call
 func ParseGetOrgsOrgIdResourcesAccountsAccIdResponse(rsp *http.Response) (*GetOrgsOrgIdResourcesAccountsAccIdResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -21562,7 +22328,7 @@ func ParsePostOrgsOrgIdUsersResponse(rsp *http.Response) (*PostOrgsOrgIdUsersRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest UserProfileExtendedResponse
+		var dest UserProfileResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -21903,6 +22669,39 @@ func ParsePostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp *http.Resp
 	return response, nil
 }
 
+// ParseGetLatestWorkloadProfileVersionResponse parses an HTTP response from a GetLatestWorkloadProfileVersionWithResponse call
+func ParseGetLatestWorkloadProfileVersionResponse(rsp *http.Response) (*GetLatestWorkloadProfileVersionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLatestWorkloadProfileVersionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadProfileVersionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetTokensResponse parses an HTTP response from a GetTokensWithResponse call
 func ParseGetTokensResponse(rsp *http.Response) (*GetTokensResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -21961,6 +22760,107 @@ func ParseGetUsersMeResponse(rsp *http.Response) (*GetUsersMeResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetUsersUserIdTokensResponse parses an HTTP response from a GetUsersUserIdTokensWithResponse call
+func ParseGetUsersUserIdTokensResponse(rsp *http.Response) (*GetUsersUserIdTokensResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetUsersUserIdTokensResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []TokenInfoResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostUsersUserIdTokensResponse parses an HTTP response from a PostUsersUserIdTokensWithResponse call
+func ParsePostUsersUserIdTokensResponse(rsp *http.Response) (*PostUsersUserIdTokensResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostUsersUserIdTokensResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TokenResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteUsersUserIdTokensTokenIdResponse parses an HTTP response from a DeleteUsersUserIdTokensTokenIdWithResponse call
+func ParseDeleteUsersUserIdTokensTokenIdResponse(rsp *http.Response) (*DeleteUsersUserIdTokensTokenIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteUsersUserIdTokensTokenIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetUsersUserIdTokensTokenIdResponse parses an HTTP response from a GetUsersUserIdTokensTokenIdWithResponse call
+func ParseGetUsersUserIdTokensTokenIdResponse(rsp *http.Response) (*GetUsersUserIdTokensTokenIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetUsersUserIdTokensTokenIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TokenInfoResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
