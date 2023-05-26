@@ -40,6 +40,13 @@ const (
 	Env ValueSource = "env"
 )
 
+// Defines values for WorkloadProfileVersionPropertyType.
+const (
+	Collection WorkloadProfileVersionPropertyType = "collection"
+	Feature    WorkloadProfileVersionPropertyType = "feature"
+	Schema     WorkloadProfileVersionPropertyType = "schema"
+)
+
 // AccountCredsRequest AccountCreds represents an account credentials (either, username- or token-based).
 type AccountCredsRequest struct {
 	// Expires Account credentials expiration timestamp.
@@ -1728,6 +1735,9 @@ type WorkloadProfileResponse struct {
 	OrgId string `json:"org_id"`
 }
 
+// WorkloadProfileVersionPropertyType defines model for WorkloadProfileVersionPropertyType.
+type WorkloadProfileVersionPropertyType string
+
 // WorkloadProfileVersionRequest Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
 type WorkloadProfileVersionRequest struct {
 	// Features A map of Features. If referencing built in Humanitec features, the fully qualified feature name must be used: e.g. `humanitec/annotations`.
@@ -1763,10 +1773,40 @@ type WorkloadProfileVersionResponse struct {
 	OrgId string `json:"org_id"`
 
 	// ProfileId Workload Profile ID
-	ProfileId string `json:"profile_id"`
+	ProfileId      string                                `json:"profile_id"`
+	SpecDefinition *WorkloadProfileVersionSpecDefinition `json:"spec_definition,omitempty"`
 
 	// Version Version
 	Version string `json:"version"`
+}
+
+// WorkloadProfileVersionSpecDefinition defines model for WorkloadProfileVersionSpecDefinition.
+type WorkloadProfileVersionSpecDefinition struct {
+	// Properties Workload spec definition
+	Properties *WorkloadProfileVersionSpecDefinitionProperties `json:"properties,omitempty"`
+}
+
+// WorkloadProfileVersionSpecDefinitionProperties Workload spec definition
+type WorkloadProfileVersionSpecDefinitionProperties map[string]WorkloadProfileVersionSpecDefinitionProperty
+
+// WorkloadProfileVersionSpecDefinitionProperty defines model for WorkloadProfileVersionSpecDefinitionProperty.
+type WorkloadProfileVersionSpecDefinitionProperty struct {
+	FeatureName *string `json:"feature_name,omitempty"`
+
+	// Properties Workload spec definition
+	Properties        *WorkloadProfileVersionSpecDefinitionProperties        `json:"properties,omitempty"`
+	RuntimeProperties *[]WorkloadProfileVersionSpecDefinitionRuntimeProperty `json:"runtime_properties,omitempty"`
+	Title             *string                                                `json:"title,omitempty"`
+	Type              WorkloadProfileVersionPropertyType                     `json:"type"`
+	Version           *string                                                `json:"version,omitempty"`
+}
+
+// WorkloadProfileVersionSpecDefinitionRuntimeProperty defines model for WorkloadProfileVersionSpecDefinitionRuntimeProperty.
+type WorkloadProfileVersionSpecDefinitionRuntimeProperty struct {
+	FeatureName *string                            `json:"feature_name,omitempty"`
+	Title       *string                            `json:"title,omitempty"`
+	Type        WorkloadProfileVersionPropertyType `json:"type"`
+	Version     *string                            `json:"version,omitempty"`
 }
 
 // GetOrgsOrgIdAppsAppIdDeltasParams defines parameters for GetOrgsOrgIdAppsAppIdDeltas.
@@ -2021,8 +2061,8 @@ type PutOrgsOrgIdAppsAppIdValuesKeyJSONRequestBody = ValueEditPayloadRequest
 // PostOrgsOrgIdAppsAppIdWebhooksJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdWebhooks for application/json ContentType.
 type PostOrgsOrgIdAppsAppIdWebhooksJSONRequestBody = WebhookRequest
 
-// PostOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdWebhooksJobId for application/json ContentType.
-type PostOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody = WebhookRequest
+// PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody defines body for PatchOrgsOrgIdAppsAppIdWebhooksJobId for application/json ContentType.
+type PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody = WebhookRequest
 
 // PostOrgsOrgIdArtefactVersionsJSONRequestBody defines body for PostOrgsOrgIdArtefactVersions for application/json ContentType.
 type PostOrgsOrgIdArtefactVersionsJSONRequestBody = AddArtefactVersionPayloadRequest
@@ -2661,10 +2701,10 @@ type ClientInterface interface {
 	// GetOrgsOrgIdAppsAppIdWebhooksJobId request
 	GetOrgsOrgIdAppsAppIdWebhooksJobId(ctx context.Context, orgId string, appId string, jobId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOrgsOrgIdAppsAppIdWebhooksJobId request with any body
-	PostOrgsOrgIdAppsAppIdWebhooksJobIdWithBody(ctx context.Context, orgId string, appId string, jobId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PatchOrgsOrgIdAppsAppIdWebhooksJobId request with any body
+	PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithBody(ctx context.Context, orgId string, appId string, jobId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdWebhooksJobId(ctx context.Context, orgId string, appId string, jobId string, body PostOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchOrgsOrgIdAppsAppIdWebhooksJobId(ctx context.Context, orgId string, appId string, jobId string, body PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdArtefactVersions request
 	GetOrgsOrgIdArtefactVersions(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4152,8 +4192,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdWebhooksJobId(ctx context.Context, orgId s
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdWebhooksJobIdWithBody(ctx context.Context, orgId string, appId string, jobId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody(c.Server, orgId, appId, jobId, contentType, body)
+func (c *Client) PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithBody(ctx context.Context, orgId string, appId string, jobId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody(c.Server, orgId, appId, jobId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4164,8 +4204,8 @@ func (c *Client) PostOrgsOrgIdAppsAppIdWebhooksJobIdWithBody(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdWebhooksJobId(ctx context.Context, orgId string, appId string, jobId string, body PostOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdAppsAppIdWebhooksJobIdRequest(c.Server, orgId, appId, jobId, body)
+func (c *Client) PatchOrgsOrgIdAppsAppIdWebhooksJobId(ctx context.Context, orgId string, appId string, jobId string, body PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdAppsAppIdWebhooksJobIdRequest(c.Server, orgId, appId, jobId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -9140,19 +9180,19 @@ func NewGetOrgsOrgIdAppsAppIdWebhooksJobIdRequest(server string, orgId string, a
 	return req, nil
 }
 
-// NewPostOrgsOrgIdAppsAppIdWebhooksJobIdRequest calls the generic PostOrgsOrgIdAppsAppIdWebhooksJobId builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdWebhooksJobIdRequest(server string, orgId string, appId string, jobId string, body PostOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody) (*http.Request, error) {
+// NewPatchOrgsOrgIdAppsAppIdWebhooksJobIdRequest calls the generic PatchOrgsOrgIdAppsAppIdWebhooksJobId builder with application/json body
+func NewPatchOrgsOrgIdAppsAppIdWebhooksJobIdRequest(server string, orgId string, appId string, jobId string, body PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody(server, orgId, appId, jobId, "application/json", bodyReader)
+	return NewPatchOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody(server, orgId, appId, jobId, "application/json", bodyReader)
 }
 
-// NewPostOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdWebhooksJobId with any type of body
-func NewPostOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody(server string, orgId string, appId string, jobId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPatchOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody generates requests for PatchOrgsOrgIdAppsAppIdWebhooksJobId with any type of body
+func NewPatchOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody(server string, orgId string, appId string, jobId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9191,7 +9231,7 @@ func NewPostOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody(server string, orgId 
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -12762,10 +12802,10 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdAppsAppIdWebhooksJobId request
 	GetOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse(ctx context.Context, orgId string, appId string, jobId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error)
 
-	// PostOrgsOrgIdAppsAppIdWebhooksJobId request with any body
-	PostOrgsOrgIdAppsAppIdWebhooksJobIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, jobId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error)
+	// PatchOrgsOrgIdAppsAppIdWebhooksJobId request with any body
+	PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, jobId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error)
 
-	PostOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse(ctx context.Context, orgId string, appId string, jobId string, body PostOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error)
+	PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse(ctx context.Context, orgId string, appId string, jobId string, body PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error)
 
 	// GetOrgsOrgIdArtefactVersions request
 	GetOrgsOrgIdArtefactVersionsWithResponse(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactVersionsResponse, error)
@@ -14607,8 +14647,8 @@ type PostOrgsOrgIdAppsAppIdWebhooksResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *WebhookResponse
-	JSON400      *ErrorInfoResponse
-	JSON409      *ErrorInfoResponse
+	JSON400      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -14630,6 +14670,7 @@ func (r PostOrgsOrgIdAppsAppIdWebhooksResponse) StatusCode() int {
 type DeleteOrgsOrgIdAppsAppIdWebhooksJobIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -14652,6 +14693,7 @@ type GetOrgsOrgIdAppsAppIdWebhooksJobIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *WebhookResponse
+	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -14670,14 +14712,16 @@ func (r GetOrgsOrgIdAppsAppIdWebhooksJobIdResponse) StatusCode() int {
 	return 0
 }
 
-type PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse struct {
+type PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *WebhookResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse) Status() string {
+func (r PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -14685,7 +14729,7 @@ func (r PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse) StatusCode() int {
+func (r PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15140,7 +15184,6 @@ type PostOrgsOrgIdImagesImageIdBuildsResponse struct {
 	JSON400      *HumanitecErrorResponse
 	JSON401      *HumanitecErrorResponse
 	JSON403      *HumanitecErrorResponse
-	JSON422      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -17210,21 +17253,21 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse(ctx
 	return ParseGetOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp)
 }
 
-// PostOrgsOrgIdAppsAppIdWebhooksJobIdWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdWebhooksJobIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, jobId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error) {
-	rsp, err := c.PostOrgsOrgIdAppsAppIdWebhooksJobIdWithBody(ctx, orgId, appId, jobId, contentType, body, reqEditors...)
+// PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse
+func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, jobId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithBody(ctx, orgId, appId, jobId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp)
+	return ParsePatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse(ctx context.Context, orgId string, appId string, jobId string, body PostOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error) {
-	rsp, err := c.PostOrgsOrgIdAppsAppIdWebhooksJobId(ctx, orgId, appId, jobId, body, reqEditors...)
+func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse(ctx context.Context, orgId string, appId string, jobId string, body PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdAppsAppIdWebhooksJobId(ctx, orgId, appId, jobId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp)
+	return ParsePatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp)
 }
 
 // GetOrgsOrgIdArtefactVersionsWithResponse request returning *GetOrgsOrgIdArtefactVersionsResponse
@@ -20269,14 +20312,14 @@ func ParsePostOrgsOrgIdAppsAppIdWebhooksResponse(rsp *http.Response) (*PostOrgsO
 		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest ErrorInfoResponse
+		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest ErrorInfoResponse
+		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -20298,6 +20341,16 @@ func ParseDeleteOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp *http.Response) (*De
 	response := &DeleteOrgsOrgIdAppsAppIdWebhooksJobIdResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
@@ -20324,20 +20377,27 @@ func ParseGetOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp *http.Response) (*GetOr
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
 }
 
-// ParsePostOrgsOrgIdAppsAppIdWebhooksJobIdResponse parses an HTTP response from a PostOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse call
-func ParsePostOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp *http.Response) (*PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error) {
+// ParsePatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse parses an HTTP response from a PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse call
+func ParsePatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp *http.Response) (*PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOrgsOrgIdAppsAppIdWebhooksJobIdResponse{
+	response := &PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -20349,6 +20409,20 @@ func ParsePostOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp *http.Response) (*Post
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -21051,13 +21125,6 @@ func ParsePostOrgsOrgIdImagesImageIdBuildsResponse(rsp *http.Response) (*PostOrg
 			return nil, err
 		}
 		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
 
 	}
 
