@@ -1748,7 +1748,8 @@ type WorkloadProfileVersionRequest struct {
 	Features *map[string]interface{} `json:"features,omitempty"`
 
 	// Notes Notes
-	Notes *string `json:"notes,omitempty"`
+	Notes          *string                               `json:"notes,omitempty"`
+	SpecDefinition *WorkloadProfileVersionSpecDefinition `json:"spec_definition,omitempty"`
 }
 
 // WorkloadProfileVersionResponse Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
@@ -13705,7 +13706,7 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse) StatusCode() int {
 type PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *AutomationRuleResponse
+	JSON201      *AutomationRuleResponse
 	JSON400      *ErrorInfoResponse
 }
 
@@ -18989,12 +18990,12 @@ func ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse(rsp *http.Response) (*Pos
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest AutomationRuleResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest ErrorInfoResponse
