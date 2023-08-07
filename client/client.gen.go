@@ -40,11 +40,17 @@ const (
 	Env ValueSource = "env"
 )
 
-// Defines values for WorkloadProfileVersionPropertyType.
+// Defines values for WorkloadProfileVersionSpecDefinitionPropertyType.
 const (
-	Collection WorkloadProfileVersionPropertyType = "collection"
-	Feature    WorkloadProfileVersionPropertyType = "feature"
-	Schema     WorkloadProfileVersionPropertyType = "schema"
+	WorkloadProfileVersionSpecDefinitionPropertyTypeCollection WorkloadProfileVersionSpecDefinitionPropertyType = "collection"
+	WorkloadProfileVersionSpecDefinitionPropertyTypeFeature    WorkloadProfileVersionSpecDefinitionPropertyType = "feature"
+	WorkloadProfileVersionSpecDefinitionPropertyTypeSchema     WorkloadProfileVersionSpecDefinitionPropertyType = "schema"
+)
+
+// Defines values for WorkloadProfileVersionSpecDefinitionRuntimePropertyType.
+const (
+	WorkloadProfileVersionSpecDefinitionRuntimePropertyTypeCollection WorkloadProfileVersionSpecDefinitionRuntimePropertyType = "collection"
+	WorkloadProfileVersionSpecDefinitionRuntimePropertyTypeFeature    WorkloadProfileVersionSpecDefinitionRuntimePropertyType = "feature"
 )
 
 // AccountCredsRequest AccountCreds represents an account credentials (either, username- or token-based).
@@ -345,9 +351,6 @@ type CreateDriverRequestRequest struct {
 	// InputsSchema A JSON Schema specifying the driver-specific input parameters.
 	InputsSchema map[string]interface{} `json:"inputs_schema"`
 
-	// IsPublic Defines whether this driver is accessible to all Organizations.
-	IsPublic *bool `json:"is_public,omitempty"`
-
 	// Target The prefix where the driver resides or, if the driver is a virtual driver, the reference to an existing driver using the `driver://` schema of the format `driver://{orgId}/{driverId}`. Only members of the organization the driver belongs to can see 'target'.
 	Target string `json:"target"`
 
@@ -528,7 +531,7 @@ type DeployConditionResponse struct {
 	When    string `json:"when"`
 }
 
-// DeploymentErrorResponse DeploymentError is an error happening during deployment
+// DeploymentErrorResponse Error happening during deployment.
 type DeploymentErrorResponse struct {
 	Code      string `json:"code"`
 	ErrorType string `json:"error_type"`
@@ -604,9 +607,6 @@ type DriverDefinitionResponse struct {
 
 	// InputsSchema A JSON Schema specifying the driver-specific input parameters.
 	InputsSchema map[string]interface{} `json:"inputs_schema"`
-
-	// IsPublic Defines whether this driver is accessible to all Organizations.
-	IsPublic bool `json:"is_public"`
 
 	// OrgId The Organization this driver exists under. Useful as public drivers are accessible to other orgs.
 	OrgId string `json:"org_id"`
@@ -973,6 +973,21 @@ type NewServiceUserRequest struct {
 	Role string `json:"role"`
 }
 
+// NodeBodyResponse NodeBody represents a node of a Resource Dependency Graph.
+type NodeBodyResponse struct {
+	CriteriaId     string                 `json:"criteria_id"`
+	DefId          string                 `json:"def_id"`
+	DependsOn      []string               `json:"depends_on"`
+	Driver         map[string]interface{} `json:"driver"`
+	DriverType     string                 `json:"driver_type"`
+	Guresid        string                 `json:"guresid"`
+	Id             string                 `json:"id"`
+	Resource       map[string]interface{} `json:"resource"`
+	ResourceSchema map[string]interface{} `json:"resource_schema"`
+	Target         *string                `json:"target,omitempty"`
+	Type           string                 `json:"type"`
+}
+
 // OrganizationResponse An Organization is the top level object in Humanitec. All other objects belong to an Organization.
 type OrganizationResponse struct {
 	// CreatedAt Timestamp when the Organization was created.
@@ -1246,6 +1261,15 @@ type ResourceDefinitionResponse struct {
 	Type string `json:"type"`
 }
 
+// ResourceProvisionRequestRequest ResourceProvisionRequest is the payload passed to the resource provisioner, specifying the resources to be provisioned.
+type ResourceProvisionRequestRequest struct {
+	Id string `json:"id"`
+
+	// Resource (Optional) The input parameters for the resource passed from the deployment set.
+	Resource *map[string]interface{} `json:"resource,omitempty"`
+	Type     string                  `json:"type"`
+}
+
 // ResourceTypeResponse Resources Types define the technology that Applications can have dependencies on.
 //
 // Each Resource Type also defines a set of input parameters (`inputs_schema`), and a set of output data (`outputs_schema`). When provisioning a resource, these are treated as inputs and outputs respectively.
@@ -1392,9 +1416,6 @@ type UpdateDriverRequestRequest struct {
 
 	// InputsSchema A JSON Schema specifying the driver-specific input parameters.
 	InputsSchema map[string]interface{} `json:"inputs_schema"`
-
-	// IsPublic Defines whether this driver is accessible to all Organizations.
-	IsPublic *bool `json:"is_public,omitempty"`
 
 	// Target The prefix where the driver resides or, if the driver is a virtual driver, the reference to an existing driver using the `driver://` schema of the format `driver://{orgId}/{driverId}`. Only members of the organization the driver belongs to can see 'target'.
 	Target string `json:"target"`
@@ -1667,7 +1688,7 @@ type ValuesSecretsResponse struct {
 	Values *map[string]interface{} `json:"values,omitempty"`
 }
 
-// WebhookRequest Webhook is a special type of a Job, it performs a HTTPS request to a specified URL with specified headers.
+// WebhookRequest Webhook is a special type of a Job. It performs an HTTPS request to a specified URL with specified headers.
 type WebhookRequest struct {
 	// Disabled Defines whether this job is currently disabled.
 	Disabled *bool             `json:"disabled"`
@@ -1680,11 +1701,11 @@ type WebhookRequest struct {
 	// Triggers A list of Events by which the Job is triggered
 	Triggers *[]EventBaseRequest `json:"triggers,omitempty"`
 
-	// Url Thw webhook's URL (without protocol, only HTTPS is supported)
+	// Url The webhook's URL (without protocol, only HTTPS is supported).
 	Url *string `json:"url"`
 }
 
-// WebhookResponse Webhook is a special type of a Job, it performs a HTTPS request to a specified URL with specified headers.
+// WebhookResponse Webhook is a special type of a Job. It performs an HTTPS request to a specified URL with specified headers.
 type WebhookResponse struct {
 	// CreatedAt The timestamp of when this Job was created.
 	CreatedAt *string `json:"created_at,omitempty"`
@@ -1703,7 +1724,21 @@ type WebhookResponse struct {
 	// Triggers A list of Events by which the Job is triggered
 	Triggers []EventBaseResponse `json:"triggers"`
 
-	// Url Thw webhook's URL (without protocol, only HTTPS is supported)
+	// Url The webhook's URL (without protocol, only HTTPS is supported).
+	Url *string `json:"url"`
+}
+
+// WebhookUpdateResponse Webhook is a special type of a Job. It performs an HTTPS request to a specified URL with specified headers.
+type WebhookUpdateResponse struct {
+	// Disabled Defines whether this job is currently disabled.
+	Disabled *bool             `json:"disabled"`
+	Headers  JSONFieldResponse `json:"headers"`
+	Payload  JSONFieldResponse `json:"payload"`
+
+	// Triggers A list of Events by which the Job is triggered
+	Triggers *[]EventBaseResponse `json:"triggers"`
+
+	// Url The webhook's URL (without protocol, only HTTPS is supported)
 	Url *string `json:"url"`
 }
 
@@ -1734,9 +1769,6 @@ type WorkloadProfileResponse struct {
 	// OrgId Organization ID
 	OrgId string `json:"org_id"`
 }
-
-// WorkloadProfileVersionPropertyType defines model for WorkloadProfileVersionPropertyType.
-type WorkloadProfileVersionPropertyType string
 
 // WorkloadProfileVersionRequest Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
 type WorkloadProfileVersionRequest struct {
@@ -1777,6 +1809,9 @@ type WorkloadProfileVersionResponse struct {
 	ProfileId      string                                `json:"profile_id"`
 	SpecDefinition *WorkloadProfileVersionSpecDefinition `json:"spec_definition,omitempty"`
 
+	// SpecSchema OpenAPI schema used to validate the spec.
+	SpecSchema interface{} `json:"spec_schema"`
+
 	// Version Version
 	Version string `json:"version"`
 }
@@ -1784,7 +1819,8 @@ type WorkloadProfileVersionResponse struct {
 // WorkloadProfileVersionSpecDefinition defines model for WorkloadProfileVersionSpecDefinition.
 type WorkloadProfileVersionSpecDefinition struct {
 	// Properties Workload spec definition
-	Properties *WorkloadProfileVersionSpecDefinitionProperties `json:"properties,omitempty"`
+	Properties        *WorkloadProfileVersionSpecDefinitionProperties        `json:"properties,omitempty"`
+	RuntimeProperties *[]WorkloadProfileVersionSpecDefinitionRuntimeProperty `json:"runtime_properties,omitempty"`
 }
 
 // WorkloadProfileVersionSpecDefinitionProperties Workload spec definition
@@ -1797,18 +1833,33 @@ type WorkloadProfileVersionSpecDefinitionProperty struct {
 	// Properties Workload spec definition
 	Properties        *WorkloadProfileVersionSpecDefinitionProperties        `json:"properties,omitempty"`
 	RuntimeProperties *[]WorkloadProfileVersionSpecDefinitionRuntimeProperty `json:"runtime_properties,omitempty"`
+	Schema            *map[string]interface{}                                `json:"schema,omitempty"`
 	Title             *string                                                `json:"title,omitempty"`
-	Type              WorkloadProfileVersionPropertyType                     `json:"type"`
+	Type              WorkloadProfileVersionSpecDefinitionPropertyType       `json:"type"`
+	UiHints           *WorkloadProfileVersionSpecDefinitionPropertyUIHints   `json:"ui_hints,omitempty"`
 	Version           *string                                                `json:"version,omitempty"`
+}
+
+// WorkloadProfileVersionSpecDefinitionPropertyType defines model for WorkloadProfileVersionSpecDefinitionPropertyType.
+type WorkloadProfileVersionSpecDefinitionPropertyType string
+
+// WorkloadProfileVersionSpecDefinitionPropertyUIHints defines model for WorkloadProfileVersionSpecDefinitionPropertyUIHints.
+type WorkloadProfileVersionSpecDefinitionPropertyUIHints struct {
+	Hidden *bool `json:"hidden,omitempty"`
+	Order  *int  `json:"order,omitempty"`
 }
 
 // WorkloadProfileVersionSpecDefinitionRuntimeProperty defines model for WorkloadProfileVersionSpecDefinitionRuntimeProperty.
 type WorkloadProfileVersionSpecDefinitionRuntimeProperty struct {
-	FeatureName *string                            `json:"feature_name,omitempty"`
-	Title       *string                            `json:"title,omitempty"`
-	Type        WorkloadProfileVersionPropertyType `json:"type"`
-	Version     *string                            `json:"version,omitempty"`
+	FeatureName *string                                                 `json:"feature_name,omitempty"`
+	Title       *string                                                 `json:"title,omitempty"`
+	Type        WorkloadProfileVersionSpecDefinitionRuntimePropertyType `json:"type"`
+	UiHints     *WorkloadProfileVersionSpecDefinitionPropertyUIHints    `json:"ui_hints,omitempty"`
+	Version     *string                                                 `json:"version,omitempty"`
 }
+
+// WorkloadProfileVersionSpecDefinitionRuntimePropertyType defines model for WorkloadProfileVersionSpecDefinitionRuntimePropertyType.
+type WorkloadProfileVersionSpecDefinitionRuntimePropertyType string
 
 // GetOrgsOrgIdAppsAppIdDeltasParams defines parameters for GetOrgsOrgIdAppsAppIdDeltas.
 type GetOrgsOrgIdAppsAppIdDeltasParams struct {
@@ -1835,6 +1886,9 @@ type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONBody = string
 
 // PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdJSONBody defines parameters for PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployId.
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdJSONBody = string
+
+// PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONBody defines parameters for PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph.
+type PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONBody = []ResourceProvisionRequestRequest
 
 // PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONBody defines parameters for PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused.
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONBody = bool
@@ -2001,6 +2055,9 @@ type PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysJSONRequestBody = DeploymentRequest
 
 // PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployId for application/json ContentType.
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdJSONRequestBody = PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdJSONBody
+
+// PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph for application/json ContentType.
+type PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONRequestBody = PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONBody
 
 // PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdEnvsEnvIdRules for application/json ContentType.
 type PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody = AutomationRuleRequest
@@ -2523,6 +2580,11 @@ type ClientInterface interface {
 
 	// GetOrgsOrgIdAppsAppIdEnvsEnvIdResources request
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdResources(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph request with any body
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResId request
 	DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResId(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3391,6 +3453,30 @@ func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployId(ctx context.Context,
 
 func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdResources(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesRequest(c.Server, orgId, appId, envId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphRequestWithBody(c.Server, orgId, appId, envId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphRequest(c.Server, orgId, appId, envId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6589,6 +6675,67 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesRequest(server string, orgId stri
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphRequest calls the generic PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph builder with application/json body
+func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphRequest(server string, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphRequestWithBody(server, orgId, appId, envId, "application/json", bodyReader)
+}
+
+// NewPostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph with any type of body
+func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphRequestWithBody(server string, orgId string, appId string, envId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "envId", runtime.ParamLocationPath, envId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/envs/%s/resources/graph", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -12651,6 +12798,11 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdAppsAppIdEnvsEnvIdResources request
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesResponse, error)
 
+	// PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph request with any body
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse, error)
+
+	PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithResponse(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse, error)
+
 	// DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResId request
 	DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResIdWithResponse(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResIdResponse, error)
 
@@ -13680,6 +13832,30 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]NodeBodyResponse
+	JSON400      *HumanitecErrorResponse
+	JSON500      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -14742,7 +14918,7 @@ func (r GetOrgsOrgIdAppsAppIdWebhooksJobIdResponse) StatusCode() int {
 type PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *WebhookResponse
+	JSON200      *WebhookUpdateResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -15476,7 +15652,6 @@ type PostOrgsOrgIdResourcesAccountsResponse struct {
 	JSON400      *HumanitecErrorResponse
 	JSON401      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
-	JSON422      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
 
@@ -15550,7 +15725,6 @@ type PatchOrgsOrgIdResourcesAccountsAccIdResponse struct {
 	JSON200      *ResourceAccountResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
-	JSON422      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
 
@@ -15672,7 +15846,6 @@ type PatchOrgsOrgIdResourcesDefsDefIdResponse struct {
 	JSON200      *ResourceDefinitionResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
-	JSON422      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
 
@@ -15723,7 +15896,6 @@ type PostOrgsOrgIdResourcesDefsDefIdCriteriaResponse struct {
 	JSON200      *MatchingCriteriaResponse
 	JSON400      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
-	JSON422      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
 
@@ -15819,7 +15991,6 @@ type PostOrgsOrgIdResourcesDriversResponse struct {
 	JSON200      *DriverDefinitionResponse
 	JSON400      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
-	JSON422      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
 
@@ -15891,7 +16062,6 @@ type PutOrgsOrgIdResourcesDriversDriverIdResponse struct {
 	JSON200      *DriverDefinitionResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
-	JSON422      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
 
@@ -16704,6 +16874,23 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesWithRespons
 		return nil, err
 	}
 	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesResponse(rsp)
+}
+
+// PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse, error) {
+	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithBody(ctx, orgId, appId, envId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithResponse(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse, error) {
+	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph(ctx, orgId, appId, envId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse(rsp)
 }
 
 // DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResIdWithResponse request returning *DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResIdResponse
@@ -18960,6 +19147,46 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdResourcesResponse(rsp *http.Response) (*
 	return response, nil
 }
 
+// ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse parses an HTTP response from a PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphWithResponse call
+func ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse(rsp *http.Response) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []NodeBodyResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseDeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResIdResponse parses an HTTP response from a DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResIdWithResponse call
 func ParseDeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdAppsAppIdEnvsEnvIdResourcesTypeResIdResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -20431,7 +20658,7 @@ func ParsePatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp *http.Response) (*Pat
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest WebhookResponse
+		var dest WebhookUpdateResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -21600,13 +21827,6 @@ func ParsePostOrgsOrgIdResourcesAccountsResponse(rsp *http.Response) (*PostOrgsO
 		}
 		response.JSON409 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -21733,13 +21953,6 @@ func ParsePatchOrgsOrgIdResourcesAccountsAccIdResponse(rsp *http.Response) (*Pat
 			return nil, err
 		}
 		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
@@ -21948,13 +22161,6 @@ func ParsePatchOrgsOrgIdResourcesDefsDefIdResponse(rsp *http.Response) (*PatchOr
 		}
 		response.JSON404 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -22048,13 +22254,6 @@ func ParsePostOrgsOrgIdResourcesDefsDefIdCriteriaResponse(rsp *http.Response) (*
 			return nil, err
 		}
 		response.JSON409 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
@@ -22209,13 +22408,6 @@ func ParsePostOrgsOrgIdResourcesDriversResponse(rsp *http.Response) (*PostOrgsOr
 		}
 		response.JSON409 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -22328,13 +22520,6 @@ func ParsePutOrgsOrgIdResourcesDriversDriverIdResponse(rsp *http.Response) (*Put
 			return nil, err
 		}
 		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
