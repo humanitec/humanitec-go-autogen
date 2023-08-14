@@ -3,7 +3,7 @@ module github.com/humanitec/humanitec-go-autogen
 go 1.19
 
 require (
-	github.com/deepmap/oapi-codegen v1.13.3
+	github.com/deepmap/oapi-codegen v1.13.4
 	github.com/stretchr/testify v1.8.4
 )
 
