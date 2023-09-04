@@ -1,6 +1,8 @@
 module github.com/humanitec/humanitec-go-autogen
 
-go 1.19
+go 1.21
+
+toolchain go1.21.0
 
 require (
 	github.com/deepmap/oapi-codegen v1.14.0
