@@ -551,6 +551,9 @@ type DeploymentRequest struct {
 	// DeltaId ID of the Deployment Delta describing the changes to the current Environment for this Deployment.
 	DeltaId *string `json:"delta_id,omitempty"`
 
+	// SetId ID of the Deployment Set describing the state of the Environment after Deployment.
+	SetId *string `json:"set_id,omitempty"`
+
 	// ValueSetVersionId ID of the Value Set Version describe the values to be used for this Deployment.
 	ValueSetVersionId *string `json:"value_set_version_id"`
 }
@@ -997,7 +1000,8 @@ type OrganizationResponse struct {
 	CreatedBy string `json:"created_by"`
 
 	// Id Unique ID for the Organization.
-	Id string `json:"id"`
+	Id      string  `json:"id"`
+	LogoUrl *string `json:"logo_url"`
 
 	// Name Human friendly name for the Organization.
 	Name string `json:"name"`
