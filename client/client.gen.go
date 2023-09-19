@@ -81,17 +81,29 @@ type ActiveResourceResponse struct {
 	// AppId The ID of the App the resource is associated with.
 	AppId string `json:"app_id"`
 
+	// Class The Resource Class of the resource
+	Class string `json:"class"`
+
+	// CriteriaId The Matching Criteria ID.
+	CriteriaId *string `json:"criteria_id,omitempty"`
+
 	// DefId The Resource Definition that this resource was provisioned from.
 	DefId string `json:"def_id"`
 
 	// DeployId The deployment that the resource was last provisioned in.
 	DeployId string `json:"deploy_id"`
 
+	// DriverType The driver to be used to create the resource.
+	DriverType *string `json:"driver_type,omitempty"`
+
 	// EnvId The ID of the Environment the resource is associated with.
 	EnvId string `json:"env_id"`
 
 	// EnvType The Environment Type of the Environment specified by env_id.
 	EnvType string `json:"env_type"`
+
+	// GuResId Globally unique resource id
+	GuResId string `json:"gu_res_id"`
 
 	// OrgId the ID of the Organization the Active Resource is associated with.
 	OrgId string `json:"org_id"`
@@ -860,6 +872,9 @@ type MatchingCriteriaRequest struct {
 	// AppId (Optional) The ID of the Application that the Resources should belong to.
 	AppId *string `json:"app_id,omitempty"`
 
+	// Class (Optional) The class of the Resource in the Deployment Set. Can not be empty, if is not defined, set to `default`.
+	Class *string `json:"class,omitempty"`
+
 	// EnvId (Optional) The ID of the Environment that the Resources should belong to. If `env_type` is also set, it must match the Type of the Environment for the Criteria to match.
 	EnvId *string `json:"env_id,omitempty"`
 
@@ -894,6 +909,9 @@ type MatchingCriteriaResponse struct {
 	// AppId (Optional) The ID of the Application that the Resources should belong to.
 	AppId *string `json:"app_id,omitempty"`
 
+	// Class (Optional) The class of the Resource in the Deployment Set. Can not be empty, if is not defined, set to `default`.
+	Class string `json:"class"`
+
 	// EnvId (Optional) The ID of the Environment that the Resources should belong to. If `env_type` is also set, it must match the Type of the Environment for the Criteria to match.
 	EnvId *string `json:"env_id,omitempty"`
 
@@ -911,6 +929,9 @@ type MatchingCriteriaResponse struct {
 type MatchingCriteriaRuleRequest struct {
 	// AppId (Optional) The ID of the Application that the Resources should belong to.
 	AppId *string `json:"app_id,omitempty"`
+
+	// Class (Optional) The class of the Resource in the Deployment Set. Can not be empty, if is not defined, set to `default`.
+	Class *string `json:"class,omitempty"`
 
 	// EnvId (Optional) The ID of the Environment that the Resources should belong to. If `env_type` is also set, it must match the Type of the Environment for the Criteria to match.
 	EnvId *string `json:"env_id,omitempty"`
@@ -978,6 +999,7 @@ type NewServiceUserRequest struct {
 
 // NodeBodyResponse NodeBody represents a node of a Resource Dependency Graph.
 type NodeBodyResponse struct {
+	Class          string                 `json:"class"`
 	CriteriaId     string                 `json:"criteria_id"`
 	DefId          string                 `json:"def_id"`
 	DependsOn      []string               `json:"depends_on"`
@@ -1267,7 +1289,9 @@ type ResourceDefinitionResponse struct {
 
 // ResourceProvisionRequestRequest ResourceProvisionRequest is the payload passed to the resource provisioner, specifying the resources to be provisioned.
 type ResourceProvisionRequestRequest struct {
-	Id string `json:"id"`
+	// Class (Optional) A resource class
+	Class *string `json:"class,omitempty"`
+	Id    string  `json:"id"`
 
 	// Resource (Optional) The input parameters for the resource passed from the deployment set.
 	Resource *map[string]interface{} `json:"resource,omitempty"`
@@ -1996,6 +2020,10 @@ type GetOrgsOrgIdResourcesDefsParams struct {
 	// ResType (Optional) Filter Resource Definitions that may match a specific Resource Type.
 	//
 	ResType *string `form:"res_type,omitempty" json:"res_type,omitempty"`
+
+	// Class (Optional) Filter Resource Definitions that may match a specific Class.
+	//
+	Class *string `form:"class,omitempty" json:"class,omitempty"`
 }
 
 // DeleteOrgsOrgIdResourcesDefsDefIdParams defines parameters for DeleteOrgsOrgIdResourcesDefsDefId.
@@ -11134,6 +11162,22 @@ func NewGetOrgsOrgIdResourcesDefsRequest(server string, orgId string, params *Ge
 		if params.ResType != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "res_type", runtime.ParamLocationQuery, *params.ResType); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Class != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "class", runtime.ParamLocationQuery, *params.Class); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
