@@ -53,6 +53,26 @@ const (
 	WorkloadProfileVersionSpecDefinitionRuntimePropertyTypeFeature    WorkloadProfileVersionSpecDefinitionRuntimePropertyType = "feature"
 )
 
+// AWSAuthRequest Credentials to authenticate AWS Secret Manager.
+type AWSAuthRequest struct {
+	AccessKeyId     *string `json:"access_key_id,omitempty"`
+	SecretAccessKey *string `json:"secret_access_key,omitempty"`
+}
+
+// AWSSMRequest AWS Secret Manager specification.
+type AWSSMRequest struct {
+	// Auth Credentials to authenticate AWS Secret Manager.
+	Auth     *AWSAuthRequest `json:"auth,omitempty"`
+	Endpoint *string         `json:"endpoint,omitempty"`
+	Region   *string         `json:"region,omitempty"`
+}
+
+// AWSSMResponse AWS Secret Manager specification.
+type AWSSMResponse struct {
+	Endpoint *string `json:"endpoint,omitempty"`
+	Region   *string `json:"region,omitempty"`
+}
+
 // AccountCredsRequest AccountCreds represents an account credentials (either, username- or token-based).
 type AccountCredsRequest struct {
 	// Expires Account credentials expiration timestamp.
@@ -308,6 +328,26 @@ type AutomationRuleResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+// AzureAuthRequest Credentials to authenticate Azure Key Vault.
+type AzureAuthRequest struct {
+	ClientId     *string `json:"client_id,omitempty"`
+	ClientSecret *string `json:"client_secret,omitempty"`
+}
+
+// AzureKVRequest Azure Key Vault specification.
+type AzureKVRequest struct {
+	// Auth Credentials to authenticate Azure Key Vault.
+	Auth     *AzureAuthRequest `json:"auth,omitempty"`
+	TenantId *string           `json:"tenant_id,omitempty"`
+	Url      *string           `json:"url,omitempty"`
+}
+
+// AzureKVResponse Azure Key Vault specification.
+type AzureKVResponse struct {
+	TenantId *string `json:"tenant_id,omitempty"`
+	Url      *string `json:"url,omitempty"`
+}
+
 // ClusterSecretRequest ClusterSecret represents Kubernetes secret reference.
 type ClusterSecretRequest struct {
 	// Namespace Namespace to look for the Kubernetes secret definition in.
@@ -413,6 +453,30 @@ type CreateResourceDefinitionRequestRequest struct {
 
 	// Type The Resource Type.
 	Type string `json:"type"`
+}
+
+// CreateSecretStorePayloadRequest Secret Store represents external secret management system used by an organization to store secrets referenced in Humanitec. It must contain exactly one of the following elements to define Secret Store specification: `awssm` (AWS Secret Manager), `azurekv` (Azure Key Vault), `gcpsm` (GCP Secret Manager), `vault` (HashiCorp Vault).
+type CreateSecretStorePayloadRequest struct {
+	// Awssm AWS Secret Manager specification.
+	Awssm *AWSSMRequest `json:"awssm,omitempty"`
+
+	// Azurekv Azure Key Vault specification.
+	Azurekv *AzureKVRequest `json:"azurekv,omitempty"`
+
+	// ConfigNamespace A Kubernetes namespace where the Secret Store configuration should be stored.
+	ConfigNamespace *string `json:"config_namespace,omitempty"`
+
+	// Gcpsm GCP Secret Manager specification.
+	Gcpsm *GCPSMRequest `json:"gcpsm,omitempty"`
+
+	// Id The Secret Store ID.
+	Id string `json:"id"`
+
+	// Primary Defines whether the Secret Store is the primary secret management system for the organization.
+	Primary bool `json:"primary"`
+
+	// Vault Vault specification.
+	Vault *VaultRequest `json:"vault,omitempty"`
 }
 
 // DeltaMetadataRequest defines model for DeltaMetadataRequest.
@@ -769,6 +833,23 @@ type EventResponse struct {
 	Type string `json:"type"`
 }
 
+// GCPAuthRequest Credentials to authenticate GCP Secret Manager.
+type GCPAuthRequest struct {
+	SecretAccessKey *string `json:"secret_access_key,omitempty"`
+}
+
+// GCPSMRequest GCP Secret Manager specification.
+type GCPSMRequest struct {
+	// Auth Credentials to authenticate GCP Secret Manager.
+	Auth      *GCPAuthRequest `json:"auth,omitempty"`
+	ProjectId *string         `json:"project_id,omitempty"`
+}
+
+// GCPSMResponse GCP Secret Manager specification.
+type GCPSMResponse struct {
+	ProjectId *string `json:"project_id,omitempty"`
+}
+
 // HumanitecErrorResponse HumanitecError represents a standard Humanitec Error
 type HumanitecErrorResponse struct {
 	// Details (Optional) Additional information is enclosed here.
@@ -780,6 +861,9 @@ type HumanitecErrorResponse struct {
 	// Message A Human readable message about the error.
 	Message string `json:"message"`
 }
+
+// HumanitecResponse Humanitec built-in Secret Store specification.
+type HumanitecResponse = map[string]interface{}
 
 // ImageBuildRequest DEPRECATED: This type exists for historical compatibility and should not be used. Please use the [Artefact API](https://api-docs.humanitec.com/#tag/Artefact) instead.
 //
@@ -1329,6 +1413,31 @@ type RuntimeInfoResponse struct {
 	Namespace string                    `json:"namespace"`
 }
 
+// SecretStoreResponse Secret Store represents external secret management system used by an organization to store secrets referenced in Humanitec.
+type SecretStoreResponse struct {
+	// Awssm AWS Secret Manager specification.
+	Awssm *AWSSMResponse `json:"awssm,omitempty"`
+
+	// Azurekv Azure Key Vault specification.
+	Azurekv         *AzureKVResponse `json:"azurekv,omitempty"`
+	ConfigNamespace string           `json:"config_namespace"`
+	CreatedAt       string           `json:"created_at"`
+	CreatedBy       string           `json:"created_by"`
+
+	// Gcpsm GCP Secret Manager specification.
+	Gcpsm *GCPSMResponse `json:"gcpsm,omitempty"`
+
+	// Humanitec Humanitec built-in Secret Store specification.
+	Humanitec *HumanitecResponse `json:"humanitec,omitempty"`
+	Id        string             `json:"id"`
+	Primary   bool               `json:"primary"`
+	UpdatedAt string             `json:"updated_at"`
+	UpdatedBy string             `json:"updated_by"`
+
+	// Vault Vault specification.
+	Vault *VaultResponse `json:"vault,omitempty"`
+}
+
 // SetResponse A Deployment Set (or just "Set") defines all of the non-Environment specific configuration for Modules and External Resources. Each of these Modules or External Resources has a unique name.
 //
 // Deployment Sets are immutable and their ID is a cryptographic hash of their content. This means that a Deployment Set can be globally identified based on its ID. It also means that referencing a Deployment Set by ID will always return the same Deployment Set.
@@ -1477,6 +1586,27 @@ type UpdateResourceDefinitionRequestRequest struct {
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
+}
+
+// UpdateSecretStorePayloadRequest Secret Store represents external secret management system used by an organization to store secrets referenced in Humanitec.
+type UpdateSecretStorePayloadRequest struct {
+	// Awssm AWS Secret Manager specification.
+	Awssm *AWSSMRequest `json:"awssm,omitempty"`
+
+	// Azurekv Azure Key Vault specification.
+	Azurekv *AzureKVRequest `json:"azurekv,omitempty"`
+
+	// ConfigNamespace A Kubernetes namespace where the Secret Store configuration should be stored.
+	ConfigNamespace *string `json:"config_namespace"`
+
+	// Gcpsm GCP Secret Manager specification.
+	Gcpsm *GCPSMRequest `json:"gcpsm,omitempty"`
+
+	// Primary Defines whether the Secret Store is the primary secret management system for the organization.
+	Primary *bool `json:"primary"`
+
+	// Vault Vault specification.
+	Vault *VaultRequest `json:"vault,omitempty"`
 }
 
 // UserInviteRequestRequest UserInviteRequest describes a new user invitation.
@@ -1658,7 +1788,8 @@ type ValueResponse struct {
 	Key string `json:"key"`
 
 	// SecretKey Location of the secret value in the secret store.
-	SecretKey *string `json:"secret_key"`
+	SecretKey     *string `json:"secret_key"`
+	SecretStoreId *string `json:"secret_store_id"`
 
 	// SecretVersion Version of the current secret value as returned by the secret store.
 	SecretVersion *string `json:"secret_version"`
@@ -1714,6 +1845,29 @@ type ValuesSecretsResponse struct {
 
 	// Values Values section of the data set. Passed around as-is.
 	Values *map[string]interface{} `json:"values,omitempty"`
+}
+
+// VaultAuthRequest Credentials to authenticate Vault.
+type VaultAuthRequest struct {
+	Role  *string `json:"role,omitempty"`
+	Token *string `json:"token,omitempty"`
+}
+
+// VaultRequest Vault specification.
+type VaultRequest struct {
+	AgentId *string `json:"agent_id,omitempty"`
+
+	// Auth Credentials to authenticate Vault.
+	Auth *VaultAuthRequest `json:"auth,omitempty"`
+	Path *string           `json:"path,omitempty"`
+	Url  *string           `json:"url,omitempty"`
+}
+
+// VaultResponse Vault specification.
+type VaultResponse struct {
+	AgentId *string `json:"agent_id,omitempty"`
+	Path    *string `json:"path,omitempty"`
+	Url     *string `json:"url,omitempty"`
 }
 
 // WebhookRequest Webhook is a special type of a Job. It performs an HTTPS request to a specified URL with specified headers.
@@ -2204,6 +2358,12 @@ type PostOrgsOrgIdResourcesDriversJSONRequestBody = CreateDriverRequestRequest
 
 // PutOrgsOrgIdResourcesDriversDriverIdJSONRequestBody defines body for PutOrgsOrgIdResourcesDriversDriverId for application/json ContentType.
 type PutOrgsOrgIdResourcesDriversDriverIdJSONRequestBody = UpdateDriverRequestRequest
+
+// PostOrgsOrgIdSecretstoresJSONRequestBody defines body for PostOrgsOrgIdSecretstores for application/json ContentType.
+type PostOrgsOrgIdSecretstoresJSONRequestBody = CreateSecretStorePayloadRequest
+
+// PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody defines body for PatchOrgsOrgIdSecretstoresStoreId for application/json ContentType.
+type PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody = UpdateSecretStorePayloadRequest
 
 // PostOrgsOrgIdUsersJSONRequestBody defines body for PostOrgsOrgIdUsers for application/json ContentType.
 type PostOrgsOrgIdUsersJSONRequestBody = NewServiceUserRequest
@@ -2981,6 +3141,25 @@ type ClientInterface interface {
 
 	// GetOrgsOrgIdResourcesTypes request
 	GetOrgsOrgIdResourcesTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrgsOrgIdSecretstores request
+	GetOrgsOrgIdSecretstores(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostOrgsOrgIdSecretstores request with any body
+	PostOrgsOrgIdSecretstoresWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostOrgsOrgIdSecretstores(ctx context.Context, orgId string, body PostOrgsOrgIdSecretstoresJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteOrgsOrgIdSecretstoresStoreId request
+	DeleteOrgsOrgIdSecretstoresStoreId(ctx context.Context, orgId string, storeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrgsOrgIdSecretstoresStoreId request
+	GetOrgsOrgIdSecretstoresStoreId(ctx context.Context, orgId string, storeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PatchOrgsOrgIdSecretstoresStoreId request with any body
+	PatchOrgsOrgIdSecretstoresStoreIdWithBody(ctx context.Context, orgId string, storeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchOrgsOrgIdSecretstoresStoreId(ctx context.Context, orgId string, storeId string, body PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdUsers request
 	GetOrgsOrgIdUsers(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5117,6 +5296,90 @@ func (c *Client) PutOrgsOrgIdResourcesDriversDriverId(ctx context.Context, orgId
 
 func (c *Client) GetOrgsOrgIdResourcesTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdResourcesTypesRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOrgsOrgIdSecretstores(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrgsOrgIdSecretstoresRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOrgsOrgIdSecretstoresWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOrgsOrgIdSecretstoresRequestWithBody(c.Server, orgId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOrgsOrgIdSecretstores(ctx context.Context, orgId string, body PostOrgsOrgIdSecretstoresJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOrgsOrgIdSecretstoresRequest(c.Server, orgId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteOrgsOrgIdSecretstoresStoreId(ctx context.Context, orgId string, storeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrgsOrgIdSecretstoresStoreIdRequest(c.Server, orgId, storeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOrgsOrgIdSecretstoresStoreId(ctx context.Context, orgId string, storeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrgsOrgIdSecretstoresStoreIdRequest(c.Server, orgId, storeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchOrgsOrgIdSecretstoresStoreIdWithBody(ctx context.Context, orgId string, storeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdSecretstoresStoreIdRequestWithBody(c.Server, orgId, storeId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchOrgsOrgIdSecretstoresStoreId(ctx context.Context, orgId string, storeId string, body PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchOrgsOrgIdSecretstoresStoreIdRequest(c.Server, orgId, storeId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11877,6 +12140,223 @@ func NewGetOrgsOrgIdResourcesTypesRequest(server string, orgId string) (*http.Re
 	return req, nil
 }
 
+// NewGetOrgsOrgIdSecretstoresRequest generates requests for GetOrgsOrgIdSecretstores
+func NewGetOrgsOrgIdSecretstoresRequest(server string, orgId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/secretstores", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostOrgsOrgIdSecretstoresRequest calls the generic PostOrgsOrgIdSecretstores builder with application/json body
+func NewPostOrgsOrgIdSecretstoresRequest(server string, orgId string, body PostOrgsOrgIdSecretstoresJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostOrgsOrgIdSecretstoresRequestWithBody(server, orgId, "application/json", bodyReader)
+}
+
+// NewPostOrgsOrgIdSecretstoresRequestWithBody generates requests for PostOrgsOrgIdSecretstores with any type of body
+func NewPostOrgsOrgIdSecretstoresRequestWithBody(server string, orgId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/secretstores", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteOrgsOrgIdSecretstoresStoreIdRequest generates requests for DeleteOrgsOrgIdSecretstoresStoreId
+func NewDeleteOrgsOrgIdSecretstoresStoreIdRequest(server string, orgId string, storeId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "storeId", runtime.ParamLocationPath, storeId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/secretstores/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOrgsOrgIdSecretstoresStoreIdRequest generates requests for GetOrgsOrgIdSecretstoresStoreId
+func NewGetOrgsOrgIdSecretstoresStoreIdRequest(server string, orgId string, storeId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "storeId", runtime.ParamLocationPath, storeId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/secretstores/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPatchOrgsOrgIdSecretstoresStoreIdRequest calls the generic PatchOrgsOrgIdSecretstoresStoreId builder with application/json body
+func NewPatchOrgsOrgIdSecretstoresStoreIdRequest(server string, orgId string, storeId string, body PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchOrgsOrgIdSecretstoresStoreIdRequestWithBody(server, orgId, storeId, "application/json", bodyReader)
+}
+
+// NewPatchOrgsOrgIdSecretstoresStoreIdRequestWithBody generates requests for PatchOrgsOrgIdSecretstoresStoreId with any type of body
+func NewPatchOrgsOrgIdSecretstoresStoreIdRequestWithBody(server string, orgId string, storeId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "storeId", runtime.ParamLocationPath, storeId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/secretstores/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdUsersRequest generates requests for GetOrgsOrgIdUsers
 func NewGetOrgsOrgIdUsersRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -13214,6 +13694,25 @@ type ClientWithResponsesInterface interface {
 
 	// GetOrgsOrgIdResourcesTypes request
 	GetOrgsOrgIdResourcesTypesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdResourcesTypesResponse, error)
+
+	// GetOrgsOrgIdSecretstores request
+	GetOrgsOrgIdSecretstoresWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdSecretstoresResponse, error)
+
+	// PostOrgsOrgIdSecretstores request with any body
+	PostOrgsOrgIdSecretstoresWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdSecretstoresResponse, error)
+
+	PostOrgsOrgIdSecretstoresWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdSecretstoresJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdSecretstoresResponse, error)
+
+	// DeleteOrgsOrgIdSecretstoresStoreId request
+	DeleteOrgsOrgIdSecretstoresStoreIdWithResponse(ctx context.Context, orgId string, storeId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdSecretstoresStoreIdResponse, error)
+
+	// GetOrgsOrgIdSecretstoresStoreId request
+	GetOrgsOrgIdSecretstoresStoreIdWithResponse(ctx context.Context, orgId string, storeId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdSecretstoresStoreIdResponse, error)
+
+	// PatchOrgsOrgIdSecretstoresStoreId request with any body
+	PatchOrgsOrgIdSecretstoresStoreIdWithBodyWithResponse(ctx context.Context, orgId string, storeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdSecretstoresStoreIdResponse, error)
+
+	PatchOrgsOrgIdSecretstoresStoreIdWithResponse(ctx context.Context, orgId string, storeId string, body PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdSecretstoresStoreIdResponse, error)
 
 	// GetOrgsOrgIdUsers request
 	GetOrgsOrgIdUsersWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdUsersResponse, error)
@@ -16152,6 +16651,122 @@ func (r GetOrgsOrgIdResourcesTypesResponse) StatusCode() int {
 	return 0
 }
 
+type GetOrgsOrgIdSecretstoresResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]SecretStoreResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrgsOrgIdSecretstoresResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrgsOrgIdSecretstoresResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostOrgsOrgIdSecretstoresResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *SecretStoreResponse
+	JSON400      *HumanitecErrorResponse
+	JSON401      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PostOrgsOrgIdSecretstoresResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostOrgsOrgIdSecretstoresResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteOrgsOrgIdSecretstoresStoreIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrgsOrgIdSecretstoresStoreIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrgsOrgIdSecretstoresStoreIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetOrgsOrgIdSecretstoresStoreIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SecretStoreResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrgsOrgIdSecretstoresStoreIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrgsOrgIdSecretstoresStoreIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PatchOrgsOrgIdSecretstoresStoreIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SecretStoreResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PatchOrgsOrgIdSecretstoresStoreIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PatchOrgsOrgIdSecretstoresStoreIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetOrgsOrgIdUsersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -18107,6 +18722,67 @@ func (c *ClientWithResponses) GetOrgsOrgIdResourcesTypesWithResponse(ctx context
 		return nil, err
 	}
 	return ParseGetOrgsOrgIdResourcesTypesResponse(rsp)
+}
+
+// GetOrgsOrgIdSecretstoresWithResponse request returning *GetOrgsOrgIdSecretstoresResponse
+func (c *ClientWithResponses) GetOrgsOrgIdSecretstoresWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdSecretstoresResponse, error) {
+	rsp, err := c.GetOrgsOrgIdSecretstores(ctx, orgId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrgsOrgIdSecretstoresResponse(rsp)
+}
+
+// PostOrgsOrgIdSecretstoresWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdSecretstoresResponse
+func (c *ClientWithResponses) PostOrgsOrgIdSecretstoresWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdSecretstoresResponse, error) {
+	rsp, err := c.PostOrgsOrgIdSecretstoresWithBody(ctx, orgId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOrgsOrgIdSecretstoresResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostOrgsOrgIdSecretstoresWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdSecretstoresJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdSecretstoresResponse, error) {
+	rsp, err := c.PostOrgsOrgIdSecretstores(ctx, orgId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOrgsOrgIdSecretstoresResponse(rsp)
+}
+
+// DeleteOrgsOrgIdSecretstoresStoreIdWithResponse request returning *DeleteOrgsOrgIdSecretstoresStoreIdResponse
+func (c *ClientWithResponses) DeleteOrgsOrgIdSecretstoresStoreIdWithResponse(ctx context.Context, orgId string, storeId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdSecretstoresStoreIdResponse, error) {
+	rsp, err := c.DeleteOrgsOrgIdSecretstoresStoreId(ctx, orgId, storeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrgsOrgIdSecretstoresStoreIdResponse(rsp)
+}
+
+// GetOrgsOrgIdSecretstoresStoreIdWithResponse request returning *GetOrgsOrgIdSecretstoresStoreIdResponse
+func (c *ClientWithResponses) GetOrgsOrgIdSecretstoresStoreIdWithResponse(ctx context.Context, orgId string, storeId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdSecretstoresStoreIdResponse, error) {
+	rsp, err := c.GetOrgsOrgIdSecretstoresStoreId(ctx, orgId, storeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrgsOrgIdSecretstoresStoreIdResponse(rsp)
+}
+
+// PatchOrgsOrgIdSecretstoresStoreIdWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdSecretstoresStoreIdResponse
+func (c *ClientWithResponses) PatchOrgsOrgIdSecretstoresStoreIdWithBodyWithResponse(ctx context.Context, orgId string, storeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdSecretstoresStoreIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdSecretstoresStoreIdWithBody(ctx, orgId, storeId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchOrgsOrgIdSecretstoresStoreIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchOrgsOrgIdSecretstoresStoreIdWithResponse(ctx context.Context, orgId string, storeId string, body PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdSecretstoresStoreIdResponse, error) {
+	rsp, err := c.PatchOrgsOrgIdSecretstoresStoreId(ctx, orgId, storeId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchOrgsOrgIdSecretstoresStoreIdResponse(rsp)
 }
 
 // GetOrgsOrgIdUsersWithResponse request returning *GetOrgsOrgIdUsersResponse
@@ -22608,6 +23284,178 @@ func ParseGetOrgsOrgIdResourcesTypesResponse(rsp *http.Response) (*GetOrgsOrgIdR
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOrgsOrgIdSecretstoresResponse parses an HTTP response from a GetOrgsOrgIdSecretstoresWithResponse call
+func ParseGetOrgsOrgIdSecretstoresResponse(rsp *http.Response) (*GetOrgsOrgIdSecretstoresResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrgsOrgIdSecretstoresResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []SecretStoreResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostOrgsOrgIdSecretstoresResponse parses an HTTP response from a PostOrgsOrgIdSecretstoresWithResponse call
+func ParsePostOrgsOrgIdSecretstoresResponse(rsp *http.Response) (*PostOrgsOrgIdSecretstoresResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostOrgsOrgIdSecretstoresResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest SecretStoreResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteOrgsOrgIdSecretstoresStoreIdResponse parses an HTTP response from a DeleteOrgsOrgIdSecretstoresStoreIdWithResponse call
+func ParseDeleteOrgsOrgIdSecretstoresStoreIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdSecretstoresStoreIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrgsOrgIdSecretstoresStoreIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOrgsOrgIdSecretstoresStoreIdResponse parses an HTTP response from a GetOrgsOrgIdSecretstoresStoreIdWithResponse call
+func ParseGetOrgsOrgIdSecretstoresStoreIdResponse(rsp *http.Response) (*GetOrgsOrgIdSecretstoresStoreIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrgsOrgIdSecretstoresStoreIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SecretStoreResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePatchOrgsOrgIdSecretstoresStoreIdResponse parses an HTTP response from a PatchOrgsOrgIdSecretstoresStoreIdWithResponse call
+func ParsePatchOrgsOrgIdSecretstoresStoreIdResponse(rsp *http.Response) (*PatchOrgsOrgIdSecretstoresStoreIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PatchOrgsOrgIdSecretstoresStoreIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SecretStoreResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
