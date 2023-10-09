@@ -18,6 +18,14 @@ import (
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 )
 
+// Defines values for ApprovalRequestStatus.
+const (
+	Approved  ApprovalRequestStatus = "approved"
+	Cancelled ApprovalRequestStatus = "cancelled"
+	Denied    ApprovalRequestStatus = "denied"
+	Waiting   ApprovalRequestStatus = "waiting"
+)
+
 // Defines values for ValueSetVersionResultOf.
 const (
 	AppValueCreate            ValueSetVersionResultOf = "app_value_create"
@@ -195,6 +203,48 @@ type ApplicationResponse struct {
 	// Name The Human-friendly name for the Application.
 	Name string `json:"name"`
 }
+
+// ApprovalRequest An approval object
+type ApprovalRequest struct {
+	// AppId The id of the Application.
+	AppId *string `json:"app_id,omitempty"`
+
+	// ApprovedAt The date and time when the request was approved or denied.
+	ApprovedAt *time.Time `json:"approved_at,omitempty"`
+
+	// ApprovedBy The user who approved or denied the request.
+	ApprovedBy *string `json:"approved_by,omitempty"`
+
+	// CreatedAt The date and time when the approval request was created.
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// EnvId The environment for which the approver needs to have deploy permission to approve the job.
+	EnvId *string `json:"env_id,omitempty"`
+
+	// Id The id of the approval object.
+	Id *string `json:"id,omitempty"`
+
+	// JobId The id of the Run's Job.
+	JobId *string `json:"job_id,omitempty"`
+
+	// Message A human-readable message indicating the reason for approval.
+	Message *string `json:"message,omitempty"`
+
+	// OrgId The id of the Organization.
+	OrgId *string `json:"org_id,omitempty"`
+
+	// PipelineId The id of the Pipeline.
+	PipelineId *string `json:"pipeline_id,omitempty"`
+
+	// RunId The id of the Pipeline's Run.
+	RunId *string `json:"run_id,omitempty"`
+
+	// Status The current status of the approval request.
+	Status *ApprovalRequestStatus `json:"status,omitempty"`
+}
+
+// ApprovalRequestStatus The current status of the approval request.
+type ApprovalRequestStatus string
 
 // ArtefactResponse Artefacts can be registered with Humanitec. Continuous Integration (CI) pipelines notify Humanitec when a new version of an Artefact becomes available. Humanitec tracks the Artefact along with metadata about how it was built.
 type ArtefactResponse struct {
@@ -436,8 +486,8 @@ type CreateResourceDefinitionRequestRequest struct {
 	// DriverAccount (Optional) Security account required by the driver.
 	DriverAccount *string `json:"driver_account,omitempty"`
 
-	// DriverInputs ValuesSecrets stores data that should be passed around split by sensitivity.
-	DriverInputs *ValuesSecretsRequest `json:"driver_inputs,omitempty"`
+	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
+	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
 
 	// DriverType The driver to be used to create the resource.
 	DriverType string `json:"driver_type"`
@@ -803,6 +853,19 @@ type ErrorInfoResponse struct {
 	Error string `json:"error"`
 }
 
+// ErrorResponse A standard error response
+type ErrorResponse struct {
+	// Details An optional payload of metadata associated with the error.
+	Details *map[string]interface{} `json:"details,omitempty"`
+
+	// Error A short code representing the class of error. This code can be used for tracking and observability or to
+	// find appropriate troubleshooting documentation.
+	Error string `json:"error"`
+
+	// Message A human-readable explanation of the error.
+	Message string `json:"message"`
+}
+
 // EventBaseRequest Properties which identify an event .
 type EventBaseRequest struct {
 	// Scope Event scope
@@ -1118,14 +1181,71 @@ type PatchResourceDefinitionRequestRequest struct {
 	// DriverAccount (Optional) Security account required by the driver.
 	DriverAccount *string `json:"driver_account"`
 
-	// DriverInputs ValuesSecrets stores data that should be passed around split by sensitivity.
-	DriverInputs *ValuesSecretsRequest `json:"driver_inputs,omitempty"`
+	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
+	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
 
 	// Name (Optional) Resource display name
 	Name *string `json:"name"`
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
+}
+
+// PipelineResponse An object containing the details of a Pipeline.
+type PipelineResponse struct {
+	// AppId The id of the Application containing this Pipeline.
+	AppId string `json:"app_id"`
+
+	// CreatedAt The date and time when the Pipeline was created.
+	CreatedAt time.Time `json:"created_at"`
+
+	// Etag The current entity tag value for this Pipeline.
+	Etag string `json:"etag"`
+
+	// Id The id of the Pipeline.
+	Id string `json:"id"`
+
+	// Metadata The map of key value pipeline additional information
+	Metadata *map[string]string `json:"metadata,omitempty"`
+
+	// Name The name of the Pipeline.
+	Name string `json:"name"`
+
+	// OrgId The id of the Organization containing this Pipeline.
+	OrgId string `json:"org_id"`
+
+	// Status The current status of the Pipeline.
+	Status string `json:"status"`
+
+	// TriggerTypes The list of trigger types in the current schema.
+	TriggerTypes []string `json:"trigger_types"`
+
+	// Version The unique id of the current Pipeline Version.
+	Version string `json:"version"`
+}
+
+// PipelineSchemaRequest A request containing the pipeline schema.
+type PipelineSchemaRequest = map[string]interface{}
+
+// PipelineVersionResponse An object containing the details of a Pipeline.
+type PipelineVersionResponse struct {
+	// AppId The id of the Application containing this Run.
+	AppId string `json:"app_id"`
+
+	// CreatedAt The date and time when the specific pipeline version was created.
+	CreatedAt time.Time `json:"created_at"`
+
+	// CreatedBy User id of the pipeline version.
+	CreatedBy string `json:"created_by"`
+
+	// Id The unique id of the current Pipeline Version.
+	Id string `json:"id"`
+
+	// OrgId The id of the Organization containing this Run.
+	OrgId string `json:"org_id"`
+
+	// PipelineId The id of the Pipeline associated with the Run.
+	PipelineId string `json:"pipeline_id"`
 }
 
 // PlainDeltaResponse Similar to the delta response, except the id and metadata properties.
@@ -1343,8 +1463,8 @@ type ResourceDefinitionResponse struct {
 	// DriverAccount (Optional) Security account required by the driver.
 	DriverAccount *string `json:"driver_account,omitempty"`
 
-	// DriverInputs ValuesSecrets stores data that should be passed around split by sensitivity.
-	DriverInputs *ValuesSecretsResponse `json:"driver_inputs,omitempty"`
+	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
+	DriverInputs *ValuesSecretsRefsResponse `json:"driver_inputs,omitempty"`
 
 	// DriverType The driver to be used to create the resource.
 	DriverType *string `json:"driver_type,omitempty"`
@@ -1407,10 +1527,205 @@ type RoleRequest struct {
 	Role *string `json:"role,omitempty"`
 }
 
+// RunCreateRequest The parameters for creating a new Run for the Pipeline.
+type RunCreateRequest struct {
+	// Inputs The inputs provided for this Run.
+	Inputs *map[string]interface{} `json:"inputs,omitempty"`
+}
+
+// RunJobListResponse Details of a Job within the Run.
+type RunJobListResponse struct {
+	// AppId The id of the Application containing this Job.
+	AppId *string `json:"app_id,omitempty"`
+
+	// CancellationRequestedAt The date and time when cancellation of this Job was requested.
+	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
+
+	// CompletedAt The date and time when this Job entered a successful, failed, or cancelled status.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+
+	// CreatedAt The date and time when this Job was first created within the Run.
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Etag The current entity tag value for this Job.
+	Etag *string `json:"etag,omitempty"`
+
+	// Id The id of the Job within the Run.
+	Id *string `json:"id,omitempty"`
+
+	// OrgId The id of the Organization containing this Job.
+	OrgId *string `json:"org_id,omitempty"`
+
+	// PipelineId The id of the Pipeline.
+	PipelineId *string `json:"pipeline_id,omitempty"`
+
+	// PipelineVersion The id of the Pipeline Version associated with the Run.
+	PipelineVersion *string `json:"pipeline_version,omitempty"`
+
+	// RunId The id of the Run containing this Job.
+	RunId *string `json:"run_id,omitempty"`
+
+	// Status The current status of this Job.
+	Status *string `json:"status,omitempty"`
+
+	// StatusMessage A human-readable message indicating the reason for the status.
+	StatusMessage *string `json:"status_message,omitempty"`
+
+	// TimeoutSeconds The timeout for this Job.
+	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
+
+	// WaitingFor An event on which job is waiting
+	WaitingFor *string `json:"waiting_for,omitempty"`
+}
+
+// RunJobResponse defines model for RunJobResponse.
+type RunJobResponse struct {
+	// AppId The id of the Application containing this Job.
+	AppId *string `json:"app_id,omitempty"`
+
+	// CancellationRequestedAt The date and time when cancellation of this Job was requested.
+	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
+
+	// CompletedAt The date and time when this Job entered a successful, failed, or cancelled status.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+
+	// CreatedAt The date and time when this Job was first created within the Run.
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Etag The current entity tag value for this Job.
+	Etag *string `json:"etag,omitempty"`
+
+	// Id The id of the Job within the Run.
+	Id *string `json:"id,omitempty"`
+
+	// OrgId The id of the Organization containing this Job.
+	OrgId *string `json:"org_id,omitempty"`
+
+	// PipelineId The id of the Pipeline.
+	PipelineId *string `json:"pipeline_id,omitempty"`
+
+	// PipelineVersion The id of the Pipeline Version associated with the Run.
+	PipelineVersion *string `json:"pipeline_version,omitempty"`
+
+	// RunId The id of the Run containing this Job.
+	RunId *string `json:"run_id,omitempty"`
+
+	// Status The current status of this Job.
+	Status *string `json:"status,omitempty"`
+
+	// StatusMessage A human-readable message indicating the reason for the status.
+	StatusMessage *string `json:"status_message,omitempty"`
+
+	// Steps The collection of Steps that completed along with the current Step being executed.
+	Steps *[]RunJobStep `json:"steps,omitempty"`
+
+	// TimeoutSeconds The timeout for this Job.
+	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
+
+	// WaitingFor An event on which job is waiting
+	WaitingFor *string `json:"waiting_for,omitempty"`
+}
+
+// RunJobStep A Step within a Job.
+type RunJobStep struct {
+	// CompletedAt The date and time when this Step entered a successful, failed, or cancelled status.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+
+	// CreatedAt The date and time when this Step was first created within the Job.
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Index The index of the Step within the Pipeline Schema.
+	Index *int `json:"index,omitempty"`
+
+	// Status The current status of this Step within the Job.
+	Status *string `json:"status,omitempty"`
+
+	// StatusMessage A human-readable message indicating the reason for the status.
+	StatusMessage *string `json:"status_message,omitempty"`
+
+	// TimeoutSeconds The timeout for this Job.
+	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
+}
+
+// RunJobStepLog An item from the logs of a Step.
+type RunJobStepLog struct {
+	// At The date and time when this message was emitted or captured.
+	At time.Time `json:"at"`
+
+	// Level The log level of the message.
+	Level string `json:"level"`
+
+	// Message The content of the message.
+	Message string `json:"message"`
+}
+
+// RunResponse Details of a Run within the Pipeline.
+type RunResponse struct {
+	// AppId The id of the Application containing this Run.
+	AppId *string `json:"app_id,omitempty"`
+
+	// CancellationRequestedAt The date and time when cancellation of this Run was requested.
+	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
+
+	// CompletedAt The date and time when this Run entered a successful, failed, or cancelled status.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+
+	// CreatedAt The date and time when this Run was first created.
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Etag The current entity tag value for this Run.
+	Etag *string `json:"etag,omitempty"`
+
+	// ExecutingAt The date and time when this Run entered executing status.
+	ExecutingAt *time.Time `json:"executing_at,omitempty"`
+
+	// Id The unique id of the Run.
+	Id *string `json:"id,omitempty"`
+
+	// Inputs The inputs that were provided for this Run.
+	Inputs *map[string]interface{} `json:"inputs,omitempty"`
+
+	// OrgId The id of the Organization containing this Run.
+	OrgId *string `json:"org_id,omitempty"`
+
+	// PipelineId The id of the Pipeline associated with the Run.
+	PipelineId *string `json:"pipeline_id,omitempty"`
+
+	// PipelineVersion The id of the Pipeline Version associated with the Run.
+	PipelineVersion *string `json:"pipeline_version,omitempty"`
+
+	// RunAs The user id that the pipeline run is executing as when it calls Humanitec APIs.
+	RunAs *string `json:"run_as,omitempty"`
+
+	// Status The current status of this Run.
+	Status *string `json:"status,omitempty"`
+
+	// StatusMessage A human-readable message indicating the reason for the status.
+	StatusMessage *string `json:"status_message,omitempty"`
+
+	// TimeoutSeconds The timeout for this Run.
+	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
+}
+
 // RuntimeInfoResponse RuntimeInfo object returned by the runtime endpoint. Represents a list post statuses grouped by modules and controllers (deployments and stateful sets).
 type RuntimeInfoResponse struct {
 	Modules   map[string]ModuleResponse `json:"modules"`
 	Namespace string                    `json:"namespace"`
+}
+
+// SecretReference defines model for SecretReference.
+type SecretReference struct {
+	// Ref secret reference in the format of the target store. It can't be defined if `value` is defined.
+	Ref *string `json:"ref,omitempty"`
+
+	// Store Secret Store id. This can't be `humanitec` (our internal Secret Store). It's mandatory if `ref` is defined and can't be used (in phase 0) if `value` is defined.
+	Store *string `json:"store,omitempty"`
+
+	// Value base64 encoded value to store in the secret store. It can't be defined if `ref` is defined.
+	Value *string `json:"value,omitempty"`
+
+	// Version Optional, only valid if `ref` is defined. It's the version of the secret as defined in the target store.
+	Version *string `json:"version,omitempty"`
 }
 
 // SecretStoreResponse Secret Store represents external secret management system used by an organization to store secrets referenced in Humanitec.
@@ -1578,8 +1893,8 @@ type UpdateResourceDefinitionRequestRequest struct {
 	// DriverAccount (Optional) Security account required by the driver.
 	DriverAccount *string `json:"driver_account"`
 
-	// DriverInputs ValuesSecrets stores data that should be passed around split by sensitivity.
-	DriverInputs *ValuesSecretsRequest `json:"driver_inputs,omitempty"`
+	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
+	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
 
 	// Name The display name.
 	Name string `json:"name"`
@@ -1750,24 +2065,27 @@ type UserRoleResponse struct {
 
 // ValueCreatePayloadRequest defines model for ValueCreatePayloadRequest.
 type ValueCreatePayloadRequest struct {
-	Description *string `json:"description"`
-	IsSecret    *bool   `json:"is_secret,omitempty"`
-	Key         string  `json:"key"`
-	Value       string  `json:"value"`
+	Description *string          `json:"description"`
+	IsSecret    *bool            `json:"is_secret,omitempty"`
+	Key         string           `json:"key"`
+	SecretRef   *SecretReference `json:"secret_ref"`
+	Value       *string          `json:"value"`
 }
 
 // ValueEditPayloadRequest defines model for ValueEditPayloadRequest.
 type ValueEditPayloadRequest struct {
-	Description *string `json:"description"`
-	IsSecret    *bool   `json:"is_secret,omitempty"`
-	Key         *string `json:"key,omitempty"`
-	Value       *string `json:"value"`
+	Description *string          `json:"description"`
+	IsSecret    *bool            `json:"is_secret,omitempty"`
+	Key         *string          `json:"key,omitempty"`
+	SecretRef   *SecretReference `json:"secret_ref"`
+	Value       *string          `json:"value"`
 }
 
 // ValuePatchPayloadRequest defines model for ValuePatchPayloadRequest.
 type ValuePatchPayloadRequest struct {
-	Description *string `json:"description"`
-	Value       *string `json:"value"`
+	Description *string          `json:"description"`
+	SecretRef   *SecretReference `json:"secret_ref"`
+	Value       *string          `json:"value"`
 }
 
 // ValueResponse Shared Values can be used to manage variables and configuration that might vary between environments. They are also the way that secrets can be stored securely.
@@ -1829,18 +2147,24 @@ type ValueSetVersionResultOf string
 // ValueSource Source of the value, "app" for app level, "env" for app env level.
 type ValueSource string
 
-// ValuesSecretsRequest ValuesSecrets stores data that should be passed around split by sensitivity.
-type ValuesSecretsRequest struct {
-	// Secrets Secrets section of the data set. Sensitive information is stored in the Vault and replaced with the Vault paths when sent outside.
+// ValuesSecretsRefsRequest ValuesSecretsRefs stores data that should be passed around split by sensitivity.
+type ValuesSecretsRefsRequest struct {
+	// SecretRefs Secrets section of the data set. Sensitive information is stored in the primary organization secret store and replaced with the secret store paths when sent outside. Can't be used together with `secrets`. It currently doesn't support list as inputs.
+	SecretRefs *map[string]interface{} `json:"secret_refs,omitempty"`
+
+	// Secrets Secrets section of the data set. Sensitive information is stored in the primary organization secret store and replaced with the secret store paths when sent outside. Can't be used together with `secret_refs`.
 	Secrets *map[string]interface{} `json:"secrets,omitempty"`
 
 	// Values Values section of the data set. Passed around as-is.
 	Values *map[string]interface{} `json:"values,omitempty"`
 }
 
-// ValuesSecretsResponse ValuesSecrets stores data that should be passed around split by sensitivity.
-type ValuesSecretsResponse struct {
-	// Secrets Secrets section of the data set. Sensitive information is stored in the Vault and replaced with the Vault paths when sent outside.
+// ValuesSecretsRefsResponse ValuesSecretsRefs stores data that should be passed around split by sensitivity.
+type ValuesSecretsRefsResponse struct {
+	// SecretRefs Secrets section of the data set. Sensitive information is stored in the primary organization secret store and replaced with the secret store paths when sent outside. Can't be used together with `secrets`. It currently doesn't support list as inputs.
+	SecretRefs *map[string]interface{} `json:"secret_refs,omitempty"`
+
+	// Secrets Secrets section of the data set. Sensitive information is stored in the primary organization secret store and replaced with the secret store paths when sent outside. Can't be used together with `secret_refs`.
 	Secrets *map[string]interface{} `json:"secrets,omitempty"`
 
 	// Values Values section of the data set. Passed around as-is.
@@ -1922,6 +2246,24 @@ type WebhookUpdateResponse struct {
 
 	// Url The webhook's URL (without protocol, only HTTPS is supported)
 	Url *string `json:"url"`
+}
+
+// WorkloadProfileChartVersionResponse Each Workload Profile Chart has one or more Versions associated with it.
+type WorkloadProfileChartVersionResponse struct {
+	// CreatedAt Creation date
+	CreatedAt time.Time `json:"created_at"`
+
+	// CreatedBy User created the profile
+	CreatedBy string `json:"created_by"`
+
+	// Id Workload Profile Chart Version ID
+	Id string `json:"id"`
+
+	// OrgId Organization ID
+	OrgId string `json:"org_id"`
+
+	// Version Version
+	Version string `json:"version"`
 }
 
 // WorkloadProfileRequest Workload Profiles provide the baseline configuration for Workloads in Applications in Humanitec. Developers can configure various features of a workload profile to suit their needs. Examples of features might be `schedules` used in Kubernetes CronJobs or `ingress` which might be used to expose Pods controlled by a Kubernetes Deployment.
@@ -2043,6 +2385,99 @@ type WorkloadProfileVersionSpecDefinitionRuntimeProperty struct {
 // WorkloadProfileVersionSpecDefinitionRuntimePropertyType defines model for WorkloadProfileVersionSpecDefinitionRuntimePropertyType.
 type WorkloadProfileVersionSpecDefinitionRuntimePropertyType string
 
+// AppIdPathParam defines model for appIdPathParam.
+type AppIdPathParam = string
+
+// ApprovalIdPathParam defines model for approvalIdPathParam.
+type ApprovalIdPathParam = string
+
+// ByAppIdQueryParam defines model for byAppIdQueryParam.
+type ByAppIdQueryParam = []string
+
+// ByApprovalStatusQueryParam defines model for byApprovalStatusQueryParam.
+type ByApprovalStatusQueryParam = string
+
+// ByCompletedQueryParam defines model for byCompletedQueryParam.
+type ByCompletedQueryParam = bool
+
+// ByCreatedAfterParam defines model for byCreatedAfterParam.
+type ByCreatedAfterParam = time.Time
+
+// ByCreatedBeforeParam defines model for byCreatedBeforeParam.
+type ByCreatedBeforeParam = time.Time
+
+// ByMetadata defines model for byMetadata.
+type ByMetadata map[string]string
+
+// ByPipelineIdQueryParam defines model for byPipelineIdQueryParam.
+type ByPipelineIdQueryParam = []string
+
+// ByStatusQueryParam defines model for byStatusQueryParam.
+type ByStatusQueryParam = []string
+
+// ByTriggerTypeQueryParam defines model for byTriggerTypeQueryParam.
+type ByTriggerTypeQueryParam = string
+
+// ByVersionQueryParam defines model for byVersionQueryParam.
+type ByVersionQueryParam = string
+
+// IdempotencyKey defines model for idempotencyKey.
+type IdempotencyKey = string
+
+// IfMatchHeaderParam defines model for ifMatchHeaderParam.
+type IfMatchHeaderParam = string
+
+// JobIdPathParam defines model for jobIdPathParam.
+type JobIdPathParam = string
+
+// OrgIdPathParam defines model for orgIdPathParam.
+type OrgIdPathParam = string
+
+// PageTokenQueryParam defines model for pageTokenQueryParam.
+type PageTokenQueryParam = string
+
+// PerPageQueryParam defines model for perPageQueryParam.
+type PerPageQueryParam = int
+
+// PipelineIdPathParam defines model for pipelineIdPathParam.
+type PipelineIdPathParam = string
+
+// RunIdPathParam defines model for runIdPathParam.
+type RunIdPathParam = string
+
+// StepIndexPathParam defines model for stepIndexPathParam.
+type StepIndexPathParam = int
+
+// N400BadRequest HumanitecError represents a standard Humanitec Error
+type N400BadRequest = HumanitecErrorResponse
+
+// N403Forbidden A standard error response
+type N403Forbidden = ErrorResponse
+
+// N404NotFound HumanitecError represents a standard Humanitec Error
+type N404NotFound = HumanitecErrorResponse
+
+// N409Conflict HumanitecError represents a standard Humanitec Error
+type N409Conflict = HumanitecErrorResponse
+
+// N412PreconditionFailed A standard error response
+type N412PreconditionFailed = ErrorResponse
+
+// N422UnprocessableContent A standard error response
+type N422UnprocessableContent = ErrorResponse
+
+// ListApprovalRequestsParams defines parameters for ListApprovalRequests.
+type ListApprovalRequestsParams struct {
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+
+	// Status Optional filter by status.
+	Status *ByApprovalStatusQueryParam `form:"status,omitempty" json:"status,omitempty"`
+}
+
 // GetOrgsOrgIdAppsAppIdDeltasParams defines parameters for GetOrgsOrgIdAppsAppIdDeltas.
 type GetOrgsOrgIdAppsAppIdDeltasParams struct {
 	// Archived If true, return archived Deltas.
@@ -2083,6 +2518,118 @@ type GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsParams struct {
 	// KeyChanged (Optional) Return only value set version where the specified key changed
 	//
 	KeyChanged *string `form:"key_changed,omitempty" json:"key_changed,omitempty"`
+}
+
+// ListPipelinesParams defines parameters for ListPipelines.
+type ListPipelinesParams struct {
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+
+	// Trigger An optional filter by trigger type.
+	Trigger *ByTriggerTypeQueryParam `form:"trigger,omitempty" json:"trigger,omitempty"`
+
+	// Metadata Optional filter by pipeline metadata
+	Metadata *ByMetadata `json:"metadata,omitempty"`
+}
+
+// DeletePipelineParams defines parameters for DeletePipeline.
+type DeletePipelineParams struct {
+	// IfMatch Indicate that the request should only succeed if there is an etag match
+	IfMatch *IfMatchHeaderParam `json:"If-Match,omitempty"`
+}
+
+// GetPipelineParams defines parameters for GetPipeline.
+type GetPipelineParams struct {
+	// Version An optional Pipeline Version ID.
+	Version *ByVersionQueryParam `form:"version,omitempty" json:"version,omitempty"`
+}
+
+// UpdatePipelineParams defines parameters for UpdatePipeline.
+type UpdatePipelineParams struct {
+	// IfMatch Indicate that the request should only succeed if there is an etag match
+	IfMatch *IfMatchHeaderParam `json:"If-Match,omitempty"`
+}
+
+// ListPipelineRunsParams defines parameters for ListPipelineRuns.
+type ListPipelineRunsParams struct {
+	// Status Optional filter by status.
+	Status *ByStatusQueryParam `form:"status,omitempty" json:"status,omitempty"`
+
+	// Completed Optional filer by completed or not.
+	Completed *ByCompletedQueryParam `form:"completed,omitempty" json:"completed,omitempty"`
+
+	// CreatedAfter Optional filter by creation after date time.
+	CreatedAfter *ByCreatedAfterParam `form:"created_after,omitempty" json:"created_after,omitempty"`
+
+	// CreatedBefore Optional filter by creation before date time
+	CreatedBefore *ByCreatedBeforeParam `form:"created_before,omitempty" json:"created_before,omitempty"`
+
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// CreatePipelineRunParams defines parameters for CreatePipelineRun.
+type CreatePipelineRunParams struct {
+	// IdempotencyKey The HTTP Idempotency-Key
+	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
+}
+
+// DeleteRunParams defines parameters for DeleteRun.
+type DeleteRunParams struct {
+	// IfMatch Indicate that the request should only succeed if there is an etag match
+	IfMatch *IfMatchHeaderParam `json:"If-Match,omitempty"`
+}
+
+// CancelRunParams defines parameters for CancelRun.
+type CancelRunParams struct {
+	// IfMatch Indicate that the request should only succeed if there is an etag match
+	IfMatch *IfMatchHeaderParam `json:"If-Match,omitempty"`
+}
+
+// ListRunJobsParams defines parameters for ListRunJobs.
+type ListRunJobsParams struct {
+	// Status Optional filter by status.
+	Status *ByStatusQueryParam `form:"status,omitempty" json:"status,omitempty"`
+
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// ListRunJobStepLogsParams defines parameters for ListRunJobStepLogs.
+type ListRunJobStepLogsParams struct {
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// RestartRunParams defines parameters for RestartRun.
+type RestartRunParams struct {
+	// IdempotencyKey The HTTP Idempotency-Key
+	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
+}
+
+// GetPipelineSchemaParams defines parameters for GetPipelineSchema.
+type GetPipelineSchemaParams struct {
+	// Version An optional Pipeline Version ID.
+	Version *ByVersionQueryParam `form:"version,omitempty" json:"version,omitempty"`
+	Accept  *string              `json:"Accept,omitempty"`
+}
+
+// ListPipelineVersionsParams defines parameters for ListPipelineVersions.
+type ListPipelineVersionsParams struct {
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 }
 
 // GetOrgsOrgIdAppsAppIdRuntimeParams defines parameters for GetOrgsOrgIdAppsAppIdRuntime.
@@ -2153,6 +2700,51 @@ type GetOrgsOrgIdArtefactsArtefactIdVersionsParams struct {
 	Limit *string `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListPipelineRunsByOrgParams defines parameters for ListPipelineRunsByOrg.
+type ListPipelineRunsByOrgParams struct {
+	// App An optional Application ID
+	App *ByAppIdQueryParam `form:"app,omitempty" json:"app,omitempty"`
+
+	// Pipeline An optional Pipeline ID.
+	Pipeline *ByPipelineIdQueryParam `form:"pipeline,omitempty" json:"pipeline,omitempty"`
+
+	// Status Optional filter by status.
+	Status *ByStatusQueryParam `form:"status,omitempty" json:"status,omitempty"`
+
+	// Completed Optional filer by completed or not.
+	Completed *ByCompletedQueryParam `form:"completed,omitempty" json:"completed,omitempty"`
+
+	// CreatedAfter Optional filter by creation after date time.
+	CreatedAfter *ByCreatedAfterParam `form:"created_after,omitempty" json:"created_after,omitempty"`
+
+	// CreatedBefore Optional filter by creation before date time
+	CreatedBefore *ByCreatedBeforeParam `form:"created_before,omitempty" json:"created_before,omitempty"`
+
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// ListPipelinesByOrgParams defines parameters for ListPipelinesByOrg.
+type ListPipelinesByOrgParams struct {
+	// App An optional Application ID
+	App *ByAppIdQueryParam `form:"app,omitempty" json:"app,omitempty"`
+
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+
+	// Trigger An optional filter by trigger type.
+	Trigger *ByTriggerTypeQueryParam `form:"trigger,omitempty" json:"trigger,omitempty"`
+
+	// Metadata Optional filter by pipeline metadata
+	Metadata *ByMetadata `json:"metadata,omitempty"`
+}
+
 // GetOrgsOrgIdResourcesDefsParams defines parameters for GetOrgsOrgIdResourcesDefs.
 type GetOrgsOrgIdResourcesDefsParams struct {
 	// App (Optional) Filter Resource Definitions that may match a specific Application.
@@ -2192,6 +2784,11 @@ type DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams struct {
 	// Force If set to `true`, the Matching Criteria is deleted immediately, even if this action affects existing Active Resources.
 	//
 	Force *bool `form:"force,omitempty" json:"force,omitempty"`
+}
+
+// PostWorkloadProfileChartVersionMultipartBody defines parameters for PostWorkloadProfileChartVersion.
+type PostWorkloadProfileChartVersionMultipartBody struct {
+	File *openapi_types.File `json:"file,omitempty"`
 }
 
 // GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams defines parameters for GetOrgsOrgIdWorkloadProfilesProfileQidVersions.
@@ -2274,6 +2871,9 @@ type PatchOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyJSONRequestBody = ValuePatchPayloa
 
 // PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKey for application/json ContentType.
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyJSONRequestBody = ValueEditPayloadRequest
+
+// CreatePipelineRunJSONRequestBody defines body for CreatePipelineRun for application/json ContentType.
+type CreatePipelineRunJSONRequestBody = RunCreateRequest
 
 // PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdSetsSetId for application/json ContentType.
 type PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody = DeltaRequest
@@ -2370,6 +2970,9 @@ type PostOrgsOrgIdUsersJSONRequestBody = NewServiceUserRequest
 
 // PatchOrgsOrgIdUsersUserIdJSONRequestBody defines body for PatchOrgsOrgIdUsersUserId for application/json ContentType.
 type PatchOrgsOrgIdUsersUserIdJSONRequestBody = RoleRequest
+
+// PostWorkloadProfileChartVersionMultipartRequestBody defines body for PostWorkloadProfileChartVersion for multipart/form-data ContentType.
+type PostWorkloadProfileChartVersionMultipartRequestBody PostWorkloadProfileChartVersionMultipartBody
 
 // PostOrgsOrgIdWorkloadProfilesJSONRequestBody defines body for PostOrgsOrgIdWorkloadProfiles for application/json ContentType.
 type PostOrgsOrgIdWorkloadProfilesJSONRequestBody = WorkloadProfileRequest
@@ -2701,6 +3304,9 @@ type ClientInterface interface {
 	// GetOrgsOrgIdAppsAppId request
 	GetOrgsOrgIdAppsAppId(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListApprovalRequests request
+	ListApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetOrgsOrgIdAppsAppIdDeltas request
 	GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -2860,6 +3466,65 @@ type ClientInterface interface {
 
 	// DeleteOrgsOrgIdAppsAppIdJobs request
 	DeleteOrgsOrgIdAppsAppIdJobs(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListPipelines request
+	ListPipelines(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePipeline request with any body
+	CreatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeletePipeline request
+	DeletePipeline(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *DeletePipelineParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPipeline request
+	GetPipeline(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdatePipeline request with any body
+	UpdatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *UpdatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListPipelineRuns request
+	ListPipelineRuns(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePipelineRun request with any body
+	CreatePipelineRunWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreatePipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, body CreatePipelineRunJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteRun request
+	DeleteRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRun request
+	GetRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CancelRun request
+	CancelRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListRunJobs request
+	ListRunJobs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRunJob request
+	GetRunJob(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetApprovalRequest request
+	GetApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApproveApprovalRequest request
+	ApproveApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DenyApprovalRequest request
+	DenyApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListRunJobStepLogs request
+	ListRunJobStepLogs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RestartRun request
+	RestartRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPipelineSchema request
+	GetPipelineSchema(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListPipelineVersions request
+	ListPipelineVersions(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdRuntime request
 	GetOrgsOrgIdAppsAppIdRuntime(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdRuntimeParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3041,6 +3706,15 @@ type ClientInterface interface {
 
 	PostOrgsOrgIdInvitations(ctx context.Context, orgId string, body PostOrgsOrgIdInvitationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListPipelineRunsByOrg request
+	ListPipelineRunsByOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetLatestPipelineSchema request
+	GetLatestPipelineSchema(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListPipelinesByOrg request
+	ListPipelinesByOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesByOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetOrgsOrgIdRegistries request
 	GetOrgsOrgIdRegistries(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3179,6 +3853,12 @@ type ClientInterface interface {
 	PatchOrgsOrgIdUsersUserIdWithBody(ctx context.Context, orgId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PatchOrgsOrgIdUsersUserId(ctx context.Context, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetWorkloadProfileChartVersions request
+	GetWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostWorkloadProfileChartVersion request with any body
+	PostWorkloadProfileChartVersionWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdWorkloadProfiles request
 	GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3340,6 +4020,18 @@ func (c *Client) DeleteOrgsOrgIdAppsAppId(ctx context.Context, orgId string, app
 
 func (c *Client) GetOrgsOrgIdAppsAppId(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdRequest(c.Server, orgId, appId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListApprovalRequestsRequest(c.Server, orgId, appId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4060,6 +4752,246 @@ func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKey(ctx context.Context, or
 
 func (c *Client) DeleteOrgsOrgIdAppsAppIdJobs(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteOrgsOrgIdAppsAppIdJobsRequest(c.Server, orgId, appId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListPipelines(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelinesRequest(c.Server, orgId, appId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePipelineRequestWithBody(c.Server, orgId, appId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeletePipeline(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *DeletePipelineParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeletePipelineRequest(c.Server, orgId, appId, pipelineId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPipeline(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPipelineRequest(c.Server, orgId, appId, pipelineId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *UpdatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdatePipelineRequestWithBody(c.Server, orgId, appId, pipelineId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListPipelineRuns(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelineRunsRequest(c.Server, orgId, appId, pipelineId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePipelineRunWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePipelineRunRequestWithBody(c.Server, orgId, appId, pipelineId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, body CreatePipelineRunJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePipelineRunRequest(c.Server, orgId, appId, pipelineId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRunRequest(c.Server, orgId, appId, pipelineId, runId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CancelRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCancelRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListRunJobs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListRunJobsRequest(c.Server, orgId, appId, pipelineId, runId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetRunJob(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRunJobRequest(c.Server, orgId, appId, pipelineId, runId, jobId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApproveApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApproveApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DenyApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDenyApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListRunJobStepLogs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListRunJobStepLogsRequest(c.Server, orgId, appId, pipelineId, runId, jobId, stepIndex, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RestartRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRestartRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPipelineSchema(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPipelineSchemaRequest(c.Server, orgId, appId, pipelineId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListPipelineVersions(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelineVersionsRequest(c.Server, orgId, appId, pipelineId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4862,6 +5794,42 @@ func (c *Client) PostOrgsOrgIdInvitations(ctx context.Context, orgId string, bod
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListPipelineRunsByOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelineRunsByOrgRequest(c.Server, orgId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLatestPipelineSchema(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLatestPipelineSchemaRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListPipelinesByOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesByOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelinesByOrgRequest(c.Server, orgId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetOrgsOrgIdRegistries(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdRegistriesRequest(c.Server, orgId)
 	if err != nil {
@@ -5474,6 +6442,30 @@ func (c *Client) PatchOrgsOrgIdUsersUserId(ctx context.Context, orgId string, us
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWorkloadProfileChartVersionsRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostWorkloadProfileChartVersionWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostWorkloadProfileChartVersionRequestWithBody(c.Server, orgId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdWorkloadProfilesRequest(c.Server, orgId)
 	if err != nil {
@@ -5959,6 +6951,101 @@ func NewGetOrgsOrgIdAppsAppIdRequest(server string, orgId string, appId string) 
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListApprovalRequestsRequest generates requests for ListApprovalRequests
+func NewListApprovalRequestsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/approvals", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -8279,6 +9366,1461 @@ func NewDeleteOrgsOrgIdAppsAppIdJobsRequest(server string, orgId string, appId s
 	}
 
 	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListPipelinesRequest generates requests for ListPipelines
+func NewListPipelinesRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Trigger != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "trigger", runtime.ParamLocationQuery, *params.Trigger); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Metadata != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("deepObject", true, "metadata", runtime.ParamLocationQuery, *params.Metadata); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePipelineRequestWithBody generates requests for CreatePipeline with any type of body
+func NewCreatePipelineRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeletePipelineRequest generates requests for DeletePipeline
+func NewDeletePipelineRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *DeletePipelineParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params.IfMatch != nil {
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "If-Match", runtime.ParamLocationHeader, *params.IfMatch)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+	}
+
+	return req, nil
+}
+
+// NewGetPipelineRequest generates requests for GetPipeline
+func NewGetPipelineRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Version != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "version", runtime.ParamLocationQuery, *params.Version); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdatePipelineRequestWithBody generates requests for UpdatePipeline with any type of body
+func NewUpdatePipelineRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *UpdatePipelineParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params.IfMatch != nil {
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "If-Match", runtime.ParamLocationHeader, *params.IfMatch)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+	}
+
+	return req, nil
+}
+
+// NewListPipelineRunsRequest generates requests for ListPipelineRuns
+func NewListPipelineRunsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Completed != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "completed", runtime.ParamLocationQuery, *params.Completed); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.CreatedAfter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "created_after", runtime.ParamLocationQuery, *params.CreatedAfter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.CreatedBefore != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "created_before", runtime.ParamLocationQuery, *params.CreatedBefore); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePipelineRunRequest calls the generic CreatePipelineRun builder with application/json body
+func NewCreatePipelineRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, body CreatePipelineRunJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePipelineRunRequestWithBody(server, orgId, appId, pipelineId, params, "application/json", bodyReader)
+}
+
+// NewCreatePipelineRunRequestWithBody generates requests for CreatePipelineRun with any type of body
+func NewCreatePipelineRunRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params.IdempotencyKey != nil {
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Idempotency-Key", runtime.ParamLocationHeader, *params.IdempotencyKey)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+	}
+
+	return req, nil
+}
+
+// NewDeleteRunRequest generates requests for DeleteRun
+func NewDeleteRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s", pathParam0, pathParam1, pathParam2, pathParam3)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params.IfMatch != nil {
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "If-Match", runtime.ParamLocationHeader, *params.IfMatch)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+	}
+
+	return req, nil
+}
+
+// NewGetRunRequest generates requests for GetRun
+func NewGetRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s", pathParam0, pathParam1, pathParam2, pathParam3)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCancelRunRequest generates requests for CancelRun
+func NewCancelRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s/cancel", pathParam0, pathParam1, pathParam2, pathParam3)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params.IfMatch != nil {
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "If-Match", runtime.ParamLocationHeader, *params.IfMatch)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+	}
+
+	return req, nil
+}
+
+// NewListRunJobsRequest generates requests for ListRunJobs
+func NewListRunJobsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s/jobs", pathParam0, pathParam1, pathParam2, pathParam3)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetRunJobRequest generates requests for GetRunJob
+func NewGetRunJobRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam4 string
+
+	pathParam4, err = runtime.StyleParamWithLocation("simple", false, "jobId", runtime.ParamLocationPath, jobId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s/jobs/%s", pathParam0, pathParam1, pathParam2, pathParam3, pathParam4)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetApprovalRequestRequest generates requests for GetApprovalRequest
+func NewGetApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam4 string
+
+	pathParam4, err = runtime.StyleParamWithLocation("simple", false, "jobId", runtime.ParamLocationPath, jobId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam5 string
+
+	pathParam5, err = runtime.StyleParamWithLocation("simple", false, "approvalId", runtime.ParamLocationPath, approvalId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s/jobs/%s/approvals/%s", pathParam0, pathParam1, pathParam2, pathParam3, pathParam4, pathParam5)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewApproveApprovalRequestRequest generates requests for ApproveApprovalRequest
+func NewApproveApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam4 string
+
+	pathParam4, err = runtime.StyleParamWithLocation("simple", false, "jobId", runtime.ParamLocationPath, jobId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam5 string
+
+	pathParam5, err = runtime.StyleParamWithLocation("simple", false, "approvalId", runtime.ParamLocationPath, approvalId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s/jobs/%s/approvals/%s/approve", pathParam0, pathParam1, pathParam2, pathParam3, pathParam4, pathParam5)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDenyApprovalRequestRequest generates requests for DenyApprovalRequest
+func NewDenyApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam4 string
+
+	pathParam4, err = runtime.StyleParamWithLocation("simple", false, "jobId", runtime.ParamLocationPath, jobId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam5 string
+
+	pathParam5, err = runtime.StyleParamWithLocation("simple", false, "approvalId", runtime.ParamLocationPath, approvalId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s/jobs/%s/approvals/%s/deny", pathParam0, pathParam1, pathParam2, pathParam3, pathParam4, pathParam5)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListRunJobStepLogsRequest generates requests for ListRunJobStepLogs
+func NewListRunJobStepLogsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam4 string
+
+	pathParam4, err = runtime.StyleParamWithLocation("simple", false, "jobId", runtime.ParamLocationPath, jobId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam5 string
+
+	pathParam5, err = runtime.StyleParamWithLocation("simple", false, "stepIndex", runtime.ParamLocationPath, stepIndex)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s/jobs/%s/steps/%s/logs", pathParam0, pathParam1, pathParam2, pathParam3, pathParam4, pathParam5)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewRestartRunRequest generates requests for RestartRun
+func NewRestartRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "runId", runtime.ParamLocationPath, runId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/runs/%s/restart", pathParam0, pathParam1, pathParam2, pathParam3)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params.IdempotencyKey != nil {
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Idempotency-Key", runtime.ParamLocationHeader, *params.IdempotencyKey)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+	}
+
+	return req, nil
+}
+
+// NewGetPipelineSchemaRequest generates requests for GetPipelineSchema
+func NewGetPipelineSchemaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/schema", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Version != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "version", runtime.ParamLocationQuery, *params.Version); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params.Accept != nil {
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Accept", runtime.ParamLocationHeader, *params.Accept)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Accept", headerParam0)
+	}
+
+	return req, nil
+}
+
+// NewListPipelineVersionsRequest generates requests for ListPipelineVersions
+func NewListPipelineVersionsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/versions", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -10820,6 +13362,328 @@ func NewPostOrgsOrgIdInvitationsRequestWithBody(server string, orgId string, con
 	return req, nil
 }
 
+// NewListPipelineRunsByOrgRequest generates requests for ListPipelineRunsByOrg
+func NewListPipelineRunsByOrgRequest(server string, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/pipeline-runs", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.App != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "app", runtime.ParamLocationQuery, *params.App); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Pipeline != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pipeline", runtime.ParamLocationQuery, *params.Pipeline); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Completed != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "completed", runtime.ParamLocationQuery, *params.Completed); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.CreatedAfter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "created_after", runtime.ParamLocationQuery, *params.CreatedAfter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.CreatedBefore != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "created_before", runtime.ParamLocationQuery, *params.CreatedBefore); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetLatestPipelineSchemaRequest generates requests for GetLatestPipelineSchema
+func NewGetLatestPipelineSchemaRequest(server string, orgId OrgIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/pipeline-schemas/latest", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListPipelinesByOrgRequest generates requests for ListPipelinesByOrg
+func NewListPipelinesByOrgRequest(server string, orgId OrgIdPathParam, params *ListPipelinesByOrgParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/pipelines", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.App != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "app", runtime.ParamLocationQuery, *params.App); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Trigger != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "trigger", runtime.ParamLocationQuery, *params.Trigger); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Metadata != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("deepObject", true, "metadata", runtime.ParamLocationQuery, *params.Metadata); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdRegistriesRequest generates requests for GetOrgsOrgIdRegistries
 func NewGetOrgsOrgIdRegistriesRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -12574,6 +15438,76 @@ func NewPatchOrgsOrgIdUsersUserIdRequestWithBody(server string, orgId string, us
 	return req, nil
 }
 
+// NewGetWorkloadProfileChartVersionsRequest generates requests for GetWorkloadProfileChartVersions
+func NewGetWorkloadProfileChartVersionsRequest(server string, orgId OrgIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/workload-profile-chart-versions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostWorkloadProfileChartVersionRequestWithBody generates requests for PostWorkloadProfileChartVersion with any type of body
+func NewPostWorkloadProfileChartVersionRequestWithBody(server string, orgId OrgIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/workload-profile-chart-versions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdWorkloadProfilesRequest generates requests for GetOrgsOrgIdWorkloadProfiles
 func NewGetOrgsOrgIdWorkloadProfilesRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -13254,6 +16188,9 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdAppsAppId request
 	GetOrgsOrgIdAppsAppIdWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdResponse, error)
 
+	// ListApprovalRequests request
+	ListApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListApprovalRequestsResponse, error)
+
 	// GetOrgsOrgIdAppsAppIdDeltas request
 	GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error)
 
@@ -13413,6 +16350,65 @@ type ClientWithResponsesInterface interface {
 
 	// DeleteOrgsOrgIdAppsAppIdJobs request
 	DeleteOrgsOrgIdAppsAppIdJobsWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdJobsResponse, error)
+
+	// ListPipelines request
+	ListPipelinesWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*ListPipelinesResponse, error)
+
+	// CreatePipeline request with any body
+	CreatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineResponse, error)
+
+	// DeletePipeline request
+	DeletePipelineWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *DeletePipelineParams, reqEditors ...RequestEditorFn) (*DeletePipelineResponse, error)
+
+	// GetPipeline request
+	GetPipelineWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineParams, reqEditors ...RequestEditorFn) (*GetPipelineResponse, error)
+
+	// UpdatePipeline request with any body
+	UpdatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *UpdatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePipelineResponse, error)
+
+	// ListPipelineRuns request
+	ListPipelineRunsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams, reqEditors ...RequestEditorFn) (*ListPipelineRunsResponse, error)
+
+	// CreatePipelineRun request with any body
+	CreatePipelineRunWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineRunResponse, error)
+
+	CreatePipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, body CreatePipelineRunJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePipelineRunResponse, error)
+
+	// DeleteRun request
+	DeleteRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams, reqEditors ...RequestEditorFn) (*DeleteRunResponse, error)
+
+	// GetRun request
+	GetRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*GetRunResponse, error)
+
+	// CancelRun request
+	CancelRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams, reqEditors ...RequestEditorFn) (*CancelRunResponse, error)
+
+	// ListRunJobs request
+	ListRunJobsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams, reqEditors ...RequestEditorFn) (*ListRunJobsResponse, error)
+
+	// GetRunJob request
+	GetRunJobWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*GetRunJobResponse, error)
+
+	// GetApprovalRequest request
+	GetApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*GetApprovalRequestResponse, error)
+
+	// ApproveApprovalRequest request
+	ApproveApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*ApproveApprovalRequestResponse, error)
+
+	// DenyApprovalRequest request
+	DenyApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*DenyApprovalRequestResponse, error)
+
+	// ListRunJobStepLogs request
+	ListRunJobStepLogsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams, reqEditors ...RequestEditorFn) (*ListRunJobStepLogsResponse, error)
+
+	// RestartRun request
+	RestartRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*RestartRunResponse, error)
+
+	// GetPipelineSchema request
+	GetPipelineSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams, reqEditors ...RequestEditorFn) (*GetPipelineSchemaResponse, error)
+
+	// ListPipelineVersions request
+	ListPipelineVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams, reqEditors ...RequestEditorFn) (*ListPipelineVersionsResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdRuntime request
 	GetOrgsOrgIdAppsAppIdRuntimeWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdRuntimeParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdRuntimeResponse, error)
@@ -13594,6 +16590,15 @@ type ClientWithResponsesInterface interface {
 
 	PostOrgsOrgIdInvitationsWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdInvitationsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdInvitationsResponse, error)
 
+	// ListPipelineRunsByOrg request
+	ListPipelineRunsByOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams, reqEditors ...RequestEditorFn) (*ListPipelineRunsByOrgResponse, error)
+
+	// GetLatestPipelineSchema request
+	GetLatestPipelineSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetLatestPipelineSchemaResponse, error)
+
+	// ListPipelinesByOrg request
+	ListPipelinesByOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesByOrgParams, reqEditors ...RequestEditorFn) (*ListPipelinesByOrgResponse, error)
+
 	// GetOrgsOrgIdRegistries request
 	GetOrgsOrgIdRegistriesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdRegistriesResponse, error)
 
@@ -13733,6 +16738,12 @@ type ClientWithResponsesInterface interface {
 
 	PatchOrgsOrgIdUsersUserIdWithResponse(ctx context.Context, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdUsersUserIdResponse, error)
 
+	// GetWorkloadProfileChartVersions request
+	GetWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetWorkloadProfileChartVersionsResponse, error)
+
+	// PostWorkloadProfileChartVersion request with any body
+	PostWorkloadProfileChartVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostWorkloadProfileChartVersionResponse, error)
+
 	// GetOrgsOrgIdWorkloadProfiles request
 	GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error)
 
@@ -13854,8 +16865,8 @@ type GetOrgsOrgIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *OrganizationResponse
-	JSON400      *ErrorInfoResponse
-	JSON409      *ErrorInfoResponse
+	JSON400      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -13961,6 +16972,29 @@ func (r GetOrgsOrgIdAppsAppIdResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrgsOrgIdAppsAppIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListApprovalRequestsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]ApprovalRequest
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListApprovalRequestsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListApprovalRequestsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -14881,6 +17915,469 @@ func (r DeleteOrgsOrgIdAppsAppIdJobsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DeleteOrgsOrgIdAppsAppIdJobsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListPipelinesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]PipelineResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPipelinesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPipelinesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreatePipelineResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *PipelineResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePipelineResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePipelineResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeletePipelineResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+	JSON412      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeletePipelineResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeletePipelineResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetPipelineResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PipelineResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPipelineResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPipelineResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdatePipelineResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PipelineResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+	JSON412      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdatePipelineResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdatePipelineResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListPipelineRunsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]RunResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPipelineRunsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPipelineRunsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreatePipelineRunResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *RunResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+	JSON422      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePipelineRunResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePipelineRunResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteRunResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+	JSON412      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteRunResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteRunResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetRunResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RunResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRunResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRunResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CancelRunResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+	JSON412      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CancelRunResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CancelRunResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListRunJobsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]RunJobListResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListRunJobsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListRunJobsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetRunJobResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RunJobResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRunJobResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRunJobResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetApprovalRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ApprovalRequest
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetApprovalRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetApprovalRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApproveApprovalRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ApprovalRequest
+	JSON400      *HumanitecErrorResponse
+	JSON403      *ErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ApproveApprovalRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApproveApprovalRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DenyApprovalRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ApprovalRequest
+	JSON400      *HumanitecErrorResponse
+	JSON403      *ErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DenyApprovalRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DenyApprovalRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListRunJobStepLogsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]RunJobStepLog
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListRunJobStepLogsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListRunJobStepLogsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RestartRunResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *RunResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+	JSON422      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r RestartRunResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RestartRunResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetPipelineSchemaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *map[string]interface{}
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPipelineSchemaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPipelineSchemaResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListPipelineVersionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]PipelineVersionResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPipelineVersionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPipelineVersionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15997,6 +19494,77 @@ func (r PostOrgsOrgIdInvitationsResponse) StatusCode() int {
 	return 0
 }
 
+type ListPipelineRunsByOrgResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]RunResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPipelineRunsByOrgResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPipelineRunsByOrgResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetLatestPipelineSchemaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *map[string]interface{}
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLatestPipelineSchemaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLatestPipelineSchemaResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListPipelinesByOrgResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]PipelineResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPipelinesByOrgResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPipelinesByOrgResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetOrgsOrgIdRegistriesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -16880,6 +20448,52 @@ func (r PatchOrgsOrgIdUsersUserIdResponse) StatusCode() int {
 	return 0
 }
 
+type GetWorkloadProfileChartVersionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]WorkloadProfileChartVersionResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWorkloadProfileChartVersionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWorkloadProfileChartVersionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostWorkloadProfileChartVersionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *WorkloadProfileChartVersionResponse
+	JSON400      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PostWorkloadProfileChartVersionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostWorkloadProfileChartVersionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetOrgsOrgIdWorkloadProfilesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -17303,6 +20917,15 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseGetOrgsOrgIdAppsAppIdResponse(rsp)
+}
+
+// ListApprovalRequestsWithResponse request returning *ListApprovalRequestsResponse
+func (c *ClientWithResponses) ListApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListApprovalRequestsResponse, error) {
+	rsp, err := c.ListApprovalRequests(ctx, orgId, appId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListApprovalRequestsResponse(rsp)
 }
 
 // GetOrgsOrgIdAppsAppIdDeltasWithResponse request returning *GetOrgsOrgIdAppsAppIdDeltasResponse
@@ -17823,6 +21446,185 @@ func (c *ClientWithResponses) DeleteOrgsOrgIdAppsAppIdJobsWithResponse(ctx conte
 		return nil, err
 	}
 	return ParseDeleteOrgsOrgIdAppsAppIdJobsResponse(rsp)
+}
+
+// ListPipelinesWithResponse request returning *ListPipelinesResponse
+func (c *ClientWithResponses) ListPipelinesWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*ListPipelinesResponse, error) {
+	rsp, err := c.ListPipelines(ctx, orgId, appId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPipelinesResponse(rsp)
+}
+
+// CreatePipelineWithBodyWithResponse request with arbitrary body returning *CreatePipelineResponse
+func (c *ClientWithResponses) CreatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineResponse, error) {
+	rsp, err := c.CreatePipelineWithBody(ctx, orgId, appId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePipelineResponse(rsp)
+}
+
+// DeletePipelineWithResponse request returning *DeletePipelineResponse
+func (c *ClientWithResponses) DeletePipelineWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *DeletePipelineParams, reqEditors ...RequestEditorFn) (*DeletePipelineResponse, error) {
+	rsp, err := c.DeletePipeline(ctx, orgId, appId, pipelineId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeletePipelineResponse(rsp)
+}
+
+// GetPipelineWithResponse request returning *GetPipelineResponse
+func (c *ClientWithResponses) GetPipelineWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineParams, reqEditors ...RequestEditorFn) (*GetPipelineResponse, error) {
+	rsp, err := c.GetPipeline(ctx, orgId, appId, pipelineId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPipelineResponse(rsp)
+}
+
+// UpdatePipelineWithBodyWithResponse request with arbitrary body returning *UpdatePipelineResponse
+func (c *ClientWithResponses) UpdatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *UpdatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePipelineResponse, error) {
+	rsp, err := c.UpdatePipelineWithBody(ctx, orgId, appId, pipelineId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdatePipelineResponse(rsp)
+}
+
+// ListPipelineRunsWithResponse request returning *ListPipelineRunsResponse
+func (c *ClientWithResponses) ListPipelineRunsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams, reqEditors ...RequestEditorFn) (*ListPipelineRunsResponse, error) {
+	rsp, err := c.ListPipelineRuns(ctx, orgId, appId, pipelineId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPipelineRunsResponse(rsp)
+}
+
+// CreatePipelineRunWithBodyWithResponse request with arbitrary body returning *CreatePipelineRunResponse
+func (c *ClientWithResponses) CreatePipelineRunWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineRunResponse, error) {
+	rsp, err := c.CreatePipelineRunWithBody(ctx, orgId, appId, pipelineId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePipelineRunResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreatePipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, body CreatePipelineRunJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePipelineRunResponse, error) {
+	rsp, err := c.CreatePipelineRun(ctx, orgId, appId, pipelineId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePipelineRunResponse(rsp)
+}
+
+// DeleteRunWithResponse request returning *DeleteRunResponse
+func (c *ClientWithResponses) DeleteRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams, reqEditors ...RequestEditorFn) (*DeleteRunResponse, error) {
+	rsp, err := c.DeleteRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteRunResponse(rsp)
+}
+
+// GetRunWithResponse request returning *GetRunResponse
+func (c *ClientWithResponses) GetRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*GetRunResponse, error) {
+	rsp, err := c.GetRun(ctx, orgId, appId, pipelineId, runId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRunResponse(rsp)
+}
+
+// CancelRunWithResponse request returning *CancelRunResponse
+func (c *ClientWithResponses) CancelRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams, reqEditors ...RequestEditorFn) (*CancelRunResponse, error) {
+	rsp, err := c.CancelRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCancelRunResponse(rsp)
+}
+
+// ListRunJobsWithResponse request returning *ListRunJobsResponse
+func (c *ClientWithResponses) ListRunJobsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams, reqEditors ...RequestEditorFn) (*ListRunJobsResponse, error) {
+	rsp, err := c.ListRunJobs(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListRunJobsResponse(rsp)
+}
+
+// GetRunJobWithResponse request returning *GetRunJobResponse
+func (c *ClientWithResponses) GetRunJobWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*GetRunJobResponse, error) {
+	rsp, err := c.GetRunJob(ctx, orgId, appId, pipelineId, runId, jobId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRunJobResponse(rsp)
+}
+
+// GetApprovalRequestWithResponse request returning *GetApprovalRequestResponse
+func (c *ClientWithResponses) GetApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*GetApprovalRequestResponse, error) {
+	rsp, err := c.GetApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetApprovalRequestResponse(rsp)
+}
+
+// ApproveApprovalRequestWithResponse request returning *ApproveApprovalRequestResponse
+func (c *ClientWithResponses) ApproveApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*ApproveApprovalRequestResponse, error) {
+	rsp, err := c.ApproveApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApproveApprovalRequestResponse(rsp)
+}
+
+// DenyApprovalRequestWithResponse request returning *DenyApprovalRequestResponse
+func (c *ClientWithResponses) DenyApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*DenyApprovalRequestResponse, error) {
+	rsp, err := c.DenyApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDenyApprovalRequestResponse(rsp)
+}
+
+// ListRunJobStepLogsWithResponse request returning *ListRunJobStepLogsResponse
+func (c *ClientWithResponses) ListRunJobStepLogsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams, reqEditors ...RequestEditorFn) (*ListRunJobStepLogsResponse, error) {
+	rsp, err := c.ListRunJobStepLogs(ctx, orgId, appId, pipelineId, runId, jobId, stepIndex, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListRunJobStepLogsResponse(rsp)
+}
+
+// RestartRunWithResponse request returning *RestartRunResponse
+func (c *ClientWithResponses) RestartRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*RestartRunResponse, error) {
+	rsp, err := c.RestartRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRestartRunResponse(rsp)
+}
+
+// GetPipelineSchemaWithResponse request returning *GetPipelineSchemaResponse
+func (c *ClientWithResponses) GetPipelineSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams, reqEditors ...RequestEditorFn) (*GetPipelineSchemaResponse, error) {
+	rsp, err := c.GetPipelineSchema(ctx, orgId, appId, pipelineId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPipelineSchemaResponse(rsp)
+}
+
+// ListPipelineVersionsWithResponse request returning *ListPipelineVersionsResponse
+func (c *ClientWithResponses) ListPipelineVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams, reqEditors ...RequestEditorFn) (*ListPipelineVersionsResponse, error) {
+	rsp, err := c.ListPipelineVersions(ctx, orgId, appId, pipelineId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPipelineVersionsResponse(rsp)
 }
 
 // GetOrgsOrgIdAppsAppIdRuntimeWithResponse request returning *GetOrgsOrgIdAppsAppIdRuntimeResponse
@@ -18401,6 +22203,33 @@ func (c *ClientWithResponses) PostOrgsOrgIdInvitationsWithResponse(ctx context.C
 	return ParsePostOrgsOrgIdInvitationsResponse(rsp)
 }
 
+// ListPipelineRunsByOrgWithResponse request returning *ListPipelineRunsByOrgResponse
+func (c *ClientWithResponses) ListPipelineRunsByOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams, reqEditors ...RequestEditorFn) (*ListPipelineRunsByOrgResponse, error) {
+	rsp, err := c.ListPipelineRunsByOrg(ctx, orgId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPipelineRunsByOrgResponse(rsp)
+}
+
+// GetLatestPipelineSchemaWithResponse request returning *GetLatestPipelineSchemaResponse
+func (c *ClientWithResponses) GetLatestPipelineSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetLatestPipelineSchemaResponse, error) {
+	rsp, err := c.GetLatestPipelineSchema(ctx, orgId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLatestPipelineSchemaResponse(rsp)
+}
+
+// ListPipelinesByOrgWithResponse request returning *ListPipelinesByOrgResponse
+func (c *ClientWithResponses) ListPipelinesByOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesByOrgParams, reqEditors ...RequestEditorFn) (*ListPipelinesByOrgResponse, error) {
+	rsp, err := c.ListPipelinesByOrg(ctx, orgId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPipelinesByOrgResponse(rsp)
+}
+
 // GetOrgsOrgIdRegistriesWithResponse request returning *GetOrgsOrgIdRegistriesResponse
 func (c *ClientWithResponses) GetOrgsOrgIdRegistriesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdRegistriesResponse, error) {
 	rsp, err := c.GetOrgsOrgIdRegistries(ctx, orgId, reqEditors...)
@@ -18846,6 +22675,24 @@ func (c *ClientWithResponses) PatchOrgsOrgIdUsersUserIdWithResponse(ctx context.
 	return ParsePatchOrgsOrgIdUsersUserIdResponse(rsp)
 }
 
+// GetWorkloadProfileChartVersionsWithResponse request returning *GetWorkloadProfileChartVersionsResponse
+func (c *ClientWithResponses) GetWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetWorkloadProfileChartVersionsResponse, error) {
+	rsp, err := c.GetWorkloadProfileChartVersions(ctx, orgId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWorkloadProfileChartVersionsResponse(rsp)
+}
+
+// PostWorkloadProfileChartVersionWithBodyWithResponse request with arbitrary body returning *PostWorkloadProfileChartVersionResponse
+func (c *ClientWithResponses) PostWorkloadProfileChartVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostWorkloadProfileChartVersionResponse, error) {
+	rsp, err := c.PostWorkloadProfileChartVersionWithBody(ctx, orgId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostWorkloadProfileChartVersionResponse(rsp)
+}
+
 // GetOrgsOrgIdWorkloadProfilesWithResponse request returning *GetOrgsOrgIdWorkloadProfilesResponse
 func (c *ClientWithResponses) GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error) {
 	rsp, err := c.GetOrgsOrgIdWorkloadProfiles(ctx, orgId, reqEditors...)
@@ -19104,14 +22951,14 @@ func ParseGetOrgsOrgIdResponse(rsp *http.Response) (*GetOrgsOrgIdResponse, error
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest ErrorInfoResponse
+		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest ErrorInfoResponse
+		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -19255,6 +23102,39 @@ func ParseGetOrgsOrgIdAppsAppIdResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAp
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListApprovalRequestsResponse parses an HTTP response from a ListApprovalRequestsWithResponse call
+func ParseListApprovalRequestsResponse(rsp *http.Response) (*ListApprovalRequestsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListApprovalRequestsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ApprovalRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -20552,6 +24432,818 @@ func ParseDeleteOrgsOrgIdAppsAppIdJobsResponse(rsp *http.Response) (*DeleteOrgsO
 	response := &DeleteOrgsOrgIdAppsAppIdJobsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseListPipelinesResponse parses an HTTP response from a ListPipelinesWithResponse call
+func ParseListPipelinesResponse(rsp *http.Response) (*ListPipelinesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPipelinesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []PipelineResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreatePipelineResponse parses an HTTP response from a CreatePipelineWithResponse call
+func ParseCreatePipelineResponse(rsp *http.Response) (*CreatePipelineResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePipelineResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest PipelineResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeletePipelineResponse parses an HTTP response from a DeletePipelineWithResponse call
+func ParseDeletePipelineResponse(rsp *http.Response) (*DeletePipelineResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeletePipelineResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPipelineResponse parses an HTTP response from a GetPipelineWithResponse call
+func ParseGetPipelineResponse(rsp *http.Response) (*GetPipelineResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPipelineResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PipelineResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdatePipelineResponse parses an HTTP response from a UpdatePipelineWithResponse call
+func ParseUpdatePipelineResponse(rsp *http.Response) (*UpdatePipelineResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdatePipelineResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PipelineResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListPipelineRunsResponse parses an HTTP response from a ListPipelineRunsWithResponse call
+func ParseListPipelineRunsResponse(rsp *http.Response) (*ListPipelineRunsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPipelineRunsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []RunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreatePipelineRunResponse parses an HTTP response from a CreatePipelineRunWithResponse call
+func ParseCreatePipelineRunResponse(rsp *http.Response) (*CreatePipelineRunResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePipelineRunResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest RunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteRunResponse parses an HTTP response from a DeleteRunWithResponse call
+func ParseDeleteRunResponse(rsp *http.Response) (*DeleteRunResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteRunResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetRunResponse parses an HTTP response from a GetRunWithResponse call
+func ParseGetRunResponse(rsp *http.Response) (*GetRunResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRunResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCancelRunResponse parses an HTTP response from a CancelRunWithResponse call
+func ParseCancelRunResponse(rsp *http.Response) (*CancelRunResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CancelRunResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListRunJobsResponse parses an HTTP response from a ListRunJobsWithResponse call
+func ParseListRunJobsResponse(rsp *http.Response) (*ListRunJobsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListRunJobsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []RunJobListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetRunJobResponse parses an HTTP response from a GetRunJobWithResponse call
+func ParseGetRunJobResponse(rsp *http.Response) (*GetRunJobResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRunJobResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RunJobResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetApprovalRequestResponse parses an HTTP response from a GetApprovalRequestWithResponse call
+func ParseGetApprovalRequestResponse(rsp *http.Response) (*GetApprovalRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetApprovalRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ApprovalRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApproveApprovalRequestResponse parses an HTTP response from a ApproveApprovalRequestWithResponse call
+func ParseApproveApprovalRequestResponse(rsp *http.Response) (*ApproveApprovalRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApproveApprovalRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ApprovalRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDenyApprovalRequestResponse parses an HTTP response from a DenyApprovalRequestWithResponse call
+func ParseDenyApprovalRequestResponse(rsp *http.Response) (*DenyApprovalRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DenyApprovalRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ApprovalRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListRunJobStepLogsResponse parses an HTTP response from a ListRunJobStepLogsWithResponse call
+func ParseListRunJobStepLogsResponse(rsp *http.Response) (*ListRunJobStepLogsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListRunJobStepLogsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []RunJobStepLog
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRestartRunResponse parses an HTTP response from a RestartRunWithResponse call
+func ParseRestartRunResponse(rsp *http.Response) (*RestartRunResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RestartRunResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest RunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPipelineSchemaResponse parses an HTTP response from a GetPipelineSchemaWithResponse call
+func ParseGetPipelineSchemaResponse(rsp *http.Response) (*GetPipelineSchemaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPipelineSchemaResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case rsp.StatusCode == 200:
+		// Content-type (application/x.humanitec-pipelines-v1.0+yaml) unsupported
+
+	}
+
+	return response, nil
+}
+
+// ParseListPipelineVersionsResponse parses an HTTP response from a ListPipelineVersionsWithResponse call
+func ParseListPipelineVersionsResponse(rsp *http.Response) (*ListPipelineVersionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPipelineVersionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []PipelineVersionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
@@ -22168,6 +26860,119 @@ func ParsePostOrgsOrgIdInvitationsResponse(rsp *http.Response) (*PostOrgsOrgIdIn
 	return response, nil
 }
 
+// ParseListPipelineRunsByOrgResponse parses an HTTP response from a ListPipelineRunsByOrgWithResponse call
+func ParseListPipelineRunsByOrgResponse(rsp *http.Response) (*ListPipelineRunsByOrgResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPipelineRunsByOrgResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []RunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetLatestPipelineSchemaResponse parses an HTTP response from a GetLatestPipelineSchemaWithResponse call
+func ParseGetLatestPipelineSchemaResponse(rsp *http.Response) (*GetLatestPipelineSchemaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLatestPipelineSchemaResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListPipelinesByOrgResponse parses an HTTP response from a ListPipelinesByOrgWithResponse call
+func ParseListPipelinesByOrgResponse(rsp *http.Response) (*ListPipelinesByOrgResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPipelinesByOrgResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []PipelineResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetOrgsOrgIdRegistriesResponse parses an HTTP response from a GetOrgsOrgIdRegistriesWithResponse call
 func ParseGetOrgsOrgIdRegistriesResponse(rsp *http.Response) (*GetOrgsOrgIdRegistriesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -23607,6 +28412,72 @@ func ParsePatchOrgsOrgIdUsersUserIdResponse(rsp *http.Response) (*PatchOrgsOrgId
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetWorkloadProfileChartVersionsResponse parses an HTTP response from a GetWorkloadProfileChartVersionsWithResponse call
+func ParseGetWorkloadProfileChartVersionsResponse(rsp *http.Response) (*GetWorkloadProfileChartVersionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWorkloadProfileChartVersionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []WorkloadProfileChartVersionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostWorkloadProfileChartVersionResponse parses an HTTP response from a PostWorkloadProfileChartVersionWithResponse call
+func ParsePostWorkloadProfileChartVersionResponse(rsp *http.Response) (*PostWorkloadProfileChartVersionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostWorkloadProfileChartVersionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest WorkloadProfileChartVersionResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	}
 
