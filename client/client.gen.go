@@ -1719,15 +1719,15 @@ type RuntimeInfoResponse struct {
 	Namespace string                    `json:"namespace"`
 }
 
-// SecretReference SecretReference stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
+// SecretReference It stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
 type SecretReference struct {
-	// Ref secret reference in the format of the target store. It can't be defined if `value` is defined.
+	// Ref Secret reference in the format of the target store. It can't be defined if `value` is defined.
 	Ref *string `json:"ref,omitempty"`
 
 	// Store Secret Store id. This can't be `humanitec` (our internal Secret Store). It's mandatory if `ref` is defined and can't be used if `value` is defined.
 	Store *string `json:"store,omitempty"`
 
-	// Value base64 encoded value to store in the secret store. It can't be defined if `ref` is defined.
+	// Value Value to store in the secret store. It can't be defined if `ref` is defined.
 	Value *string `json:"value,omitempty"`
 
 	// Version Optional, only valid if `ref` is defined. It's the version of the secret as defined in the target store.
@@ -2071,7 +2071,7 @@ type ValueCreatePayloadRequest struct {
 	IsSecret    *bool   `json:"is_secret,omitempty"`
 	Key         string  `json:"key"`
 
-	// SecretRef SecretReference stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
+	// SecretRef It stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
 	SecretRef *SecretReference `json:"secret_ref"`
 	Value     *string          `json:"value"`
 }
@@ -2082,7 +2082,7 @@ type ValueEditPayloadRequest struct {
 	IsSecret    *bool   `json:"is_secret,omitempty"`
 	Key         *string `json:"key,omitempty"`
 
-	// SecretRef SecretReference stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
+	// SecretRef It stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
 	SecretRef *SecretReference `json:"secret_ref"`
 	Value     *string          `json:"value"`
 }
@@ -2091,7 +2091,7 @@ type ValueEditPayloadRequest struct {
 type ValuePatchPayloadRequest struct {
 	Description *string `json:"description"`
 
-	// SecretRef SecretReference stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
+	// SecretRef It stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
 	SecretRef *SecretReference `json:"secret_ref"`
 	Value     *string          `json:"value"`
 }
