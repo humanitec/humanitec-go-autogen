@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Humanitec API",
-    "version": "0.23.1",
+    "version": "0.23.2",
     "description": "# Introduction\nThe *Humanitec API* allows you to automate and integrate Humanitec into your developer and operational workflows.\nThe API is a REST based API. It is based around a set of concepts:\n\n* Core\n* External Resources\n* Sets and Deltas\n\n## Authentication\nAlmost all requests made to the Humanitec API require Authentication. Humanitec provides 2 ways of authenticating with the API: `Bearer` and `JWT`.\n\n### Bearer Authentication\nThis form of authentication makes use of a **static token**. It is intended to be used when machines interact with the Humanitec API. Bearer tokens should be used for very narrow purposes. This allows for the token to be revoked if it is compromised and so limit the scope of exposure.\nNew Bearer tokens can be obtained via the UI:\n\n1. Log into Humanitec at https://app.humanitec.io\n1. Go to **Organization Settings**\n1. Select **API tokens**\n1. Enter a *name* for the new token and click on **Generate new token**\n\nThe token is passed to the API via the `Authorization` header. Assuming the issued token is `HUMANITEC_TOKEN`, the request could be made as follows:\n\n```\n    curl -H 'Authorization: Bearer HUMANITEC_TOKEN' https://api.humanitec.io/orgs/my-org/apps\n```\n\n### JWT Authentication\nThis form of authentication makes use of a **JSON Web Token (JWT)**. It is intended to be used when humans interact with the Humanitec API. JWTs expire after a period of time. This means that a new JWT will need to be generated regularly. This makes them well suited to working in short sessions, but not for automation. (See Bearer Authentication.)\nThe token is passed to the API via the `Authorization` header. Assuming the issued token is `HUMANITEC_JWT`, the request could be made as follows:\n\n```\n    curl -H 'Authorization: JWT HUMANITEC_JWT' https://api.humanitec.io/orgs/my-org/apps\n```\n\n## Content Types\nAll of the Humanitec API unless explicitly only accepts content types of `application/json` and will always return valid `application/json` or an empty response.\n\n## Response Codes\n### Success\nAny response code in the `2xx` range should be regarded as success.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `200` | Success |\n| `201` | Success (In future, `201` will be replaced by `200`) |\n| `204` | Success, but no content in response |\n\n_Note: We plan to simplify the interface by replacing 201 with 200 status codes._\n\n### Failure\nAny response code in the `4xx` should be regarded as an error which can be rectified by the client. `5xx` error codes indicate errors that cannot be corrected by the client.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `400` | General error. (Body will contain details) |\n| `401` | Attempt to access protected resource without `Authorization` Header. |\n| `403` | The `Bearer` or `JWT` does not grant access to the requested resource. |\n| `404` | Resource not found. |\n| `405` | Method not allowed |\n| `409` | Conflict. Usually indicated a resource with that ID already exists. |\n| `422` | Unprocessable Entity. The body was not valid JSON, was empty or contained an object different from what was expected. |\n| `429` | Too many requests - request rate limit has been reached. |\n| `500` | Internal Error. If it occurs repeatedly, contact support. |\n",
     "contact": {
       "name": "API Support",
@@ -14839,7 +14839,9 @@
                   "value": "<secret>"
                 },
                 "user": {
-                  "value": "<secret>"
+                  "ref": "vault/path/to/data/secrets/user",
+                  "store": "my-external-vault",
+                  "version": "1"
                 }
               }
             },
@@ -14946,7 +14948,9 @@
                   "value": "<secret>"
                 },
                 "user": {
-                  "value": "<secret>"
+                  "ref": "vault/path/to/data/secrets/user",
+                  "store": "my-external-vault",
+                  "version": "1"
                 }
               }
             },
@@ -15392,7 +15396,7 @@
           "secret_refs": {
             "credentials": {
               "password": {
-                "value": "P@ssw0rd"
+                "value": "<secret>"
               },
               "user": {
                 "ref": "vault/path/to/data/secrets/user",
@@ -15435,7 +15439,7 @@
           "secret_refs": {
             "credentials": {
               "password": {
-                "value": "P@ssw0rd"
+                "value": "<secret>"
               },
               "user": {
                 "ref": "vault/path/to/data/secrets/user",
@@ -16719,14 +16723,14 @@
       "SecretReference": {
         "type": "object",
         "nullable": true,
-        "description": "SecretReference stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.",
+        "description": "It stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.",
         "properties": {
           "store": {
             "description": "Secret Store id. This can't be `humanitec` (our internal Secret Store). It's mandatory if `ref` is defined and can't be used if `value` is defined.",
             "type": "string"
           },
           "ref": {
-            "description": "secret reference in the format of the target store. It can't be defined if `value` is defined.",
+            "description": "Secret reference in the format of the target store. It can't be defined if `value` is defined.",
             "type": "string"
           },
           "version": {
@@ -16734,7 +16738,7 @@
             "type": "string"
           },
           "value": {
-            "description": "base64 encoded value to store in the secret store. It can't be defined if `ref` is defined.",
+            "description": "Value to store in the secret store. It can't be defined if `ref` is defined.",
             "type": "string"
           }
         }
