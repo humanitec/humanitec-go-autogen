@@ -922,7 +922,18 @@ type HumanitecErrorResponse struct {
 	Error string `json:"error"`
 
 	// Message A Human readable message about the error.
-	Message string `json:"message"`
+	Message    string `json:"message"`
+	StatusCode *int   `json:"status_code,omitempty"`
+}
+
+// HumanitecPublicKey HumanitecPublicKey stores a Public Key Humanitec shared with an organization.
+type HumanitecPublicKey struct {
+	Active    bool      `json:"active"`
+	CreatedAt time.Time `json:"created_at"`
+	ExpiredAt time.Time `json:"expired_at"`
+	Id        string    `json:"id"`
+	PubKey    string    `json:"pub_key"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // HumanitecResponse Humanitec built-in Secret Store specification.
@@ -997,6 +1008,12 @@ type JSONPatchResponse struct {
 
 // JSONPatchesResponse defines model for JSONPatchesResponse.
 type JSONPatchesResponse = []JSONPatchResponse
+
+// LogoResponse defines model for LogoResponse.
+type LogoResponse struct {
+	DarkUrl  *string `json:"dark_url"`
+	LightUrl *string `json:"light_url"`
+}
 
 // MatchingCriteriaRequest Matching Criteria are a set of rules used to choose which Resource Definition to use to provision a particular Resource Type.
 //
@@ -1169,8 +1186,8 @@ type OrganizationResponse struct {
 	CreatedBy string `json:"created_by"`
 
 	// Id Unique ID for the Organization.
-	Id      string  `json:"id"`
-	LogoUrl *string `json:"logo_url"`
+	Id   string        `json:"id"`
+	Logo *LogoResponse `json:"logo,omitempty"`
 
 	// Name Human friendly name for the Organization.
 	Name string `json:"name"`
@@ -1191,8 +1208,8 @@ type PatchResourceDefinitionRequestRequest struct {
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
 }
 
-// PipelineResponse An object containing the details of a Pipeline.
-type PipelineResponse struct {
+// Pipeline An object containing the details of a Pipeline.
+type Pipeline struct {
 	// AppId The id of the Application containing this Pipeline.
 	AppId string `json:"app_id"`
 
@@ -1224,11 +1241,8 @@ type PipelineResponse struct {
 	Version string `json:"version"`
 }
 
-// PipelineSchemaRequest A request containing the pipeline schema.
-type PipelineSchemaRequest = map[string]interface{}
-
-// PipelineVersionResponse An object containing the details of a Pipeline.
-type PipelineVersionResponse struct {
+// PipelineVersion An object containing the details of a Pipeline.
+type PipelineVersion struct {
 	// AppId The id of the Application containing this Run.
 	AppId string `json:"app_id"`
 
@@ -1313,6 +1327,18 @@ type ProvisionDependenciesResponse struct {
 
 	// MatchDependents If the resources dependant on the main resource, are also dependant on the co-provisioned one.
 	MatchDependents *bool `json:"match_dependents,omitempty"`
+}
+
+// PublicKey PublicKey stores a Public Key an organization shares with Humanitec.
+type PublicKey struct {
+	CreatedAt time.Time `json:"created_at"`
+	CreatedBy string    `json:"created_by"`
+	ExpiredAt time.Time `json:"expired_at"`
+
+	// Fingerprint Key is the sha256 public key fingerprint, it's computed and stored when a new key is uploaded.
+	Fingerprint string `json:"fingerprint"`
+	Id          string `json:"id"`
+	Key         string `json:"key"`
 }
 
 // RegistryCredsResponse RegistryCreds represents current registry credentials (either, username- or token-based).
@@ -1520,6 +1546,9 @@ type ResourceTypeResponse struct {
 
 	// Type Unique resource type identifier (system-wide, across all organizations).
 	Type string `json:"type"`
+
+	// Use Kind of dependency between resource of this type and a workload. It should be one of: `direct`, `indirect`, `implicit`.
+	Use string `json:"use"`
 }
 
 // RoleRequest Role defines the role that will be used in request
@@ -2276,6 +2305,15 @@ type WebhookUpdateResponse struct {
 	Url *string `json:"url"`
 }
 
+// WorkloadProfileChartReference References a workload profile chart.
+type WorkloadProfileChartReference struct {
+	// Id Workload Profile Chart ID
+	Id string `json:"id"`
+
+	// Version Version
+	Version string `json:"version"`
+}
+
 // WorkloadProfileChartVersionResponse Each Workload Profile Chart has one or more Versions associated with it.
 type WorkloadProfileChartVersionResponse struct {
 	// CreatedAt Creation date
@@ -2334,6 +2372,12 @@ type WorkloadProfileVersionRequest struct {
 	// Notes Notes
 	Notes          *string                               `json:"notes,omitempty"`
 	SpecDefinition *WorkloadProfileVersionSpecDefinition `json:"spec_definition,omitempty"`
+
+	// Version Version
+	Version string `json:"version"`
+
+	// WorkloadProfileChart References a workload profile chart.
+	WorkloadProfileChart WorkloadProfileChartReference `json:"workload_profile_chart"`
 }
 
 // WorkloadProfileVersionResponse Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
@@ -2366,6 +2410,9 @@ type WorkloadProfileVersionResponse struct {
 
 	// Version Version
 	Version string `json:"version"`
+
+	// WorkloadProfileChart References a workload profile chart.
+	WorkloadProfileChart WorkloadProfileChartReference `json:"workload_profile_chart"`
 }
 
 // WorkloadProfileVersionSpecDefinition defines model for WorkloadProfileVersionSpecDefinition.
@@ -2473,6 +2520,9 @@ type PerPageQueryParam = int
 // PipelineIdPathParam defines model for pipelineIdPathParam.
 type PipelineIdPathParam = string
 
+// ProfileQidPathParam defines model for profileQidPathParam.
+type ProfileQidPathParam = string
+
 // RunIdPathParam defines model for runIdPathParam.
 type RunIdPathParam = string
 
@@ -2505,7 +2555,7 @@ type ListApprovalRequestsParams struct {
 	// Page The page token to request from
 	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 
-	// Pipeline An optional Pipeline ID.
+	// Pipeline An optional list of Pipeline IDs.
 	Pipeline *ByPipelineIdQueryParam `form:"pipeline,omitempty" json:"pipeline,omitempty"`
 
 	// Run An optional Pipeline Run ID.
@@ -2653,8 +2703,8 @@ type RestartRunParams struct {
 	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
 
-// GetPipelineSchemaParams defines parameters for GetPipelineSchema.
-type GetPipelineSchemaParams struct {
+// GetPipelineDefinitionParams defines parameters for GetPipelineDefinition.
+type GetPipelineDefinitionParams struct {
 	// Version An optional Pipeline Version ID.
 	Version *ByVersionQueryParam `form:"version,omitempty" json:"version,omitempty"`
 	Accept  *string              `json:"Accept,omitempty"`
@@ -2737,12 +2787,27 @@ type GetOrgsOrgIdArtefactsArtefactIdVersionsParams struct {
 	Limit *string `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// GetHumanitecPublicKeysParams defines parameters for GetHumanitecPublicKeys.
+type GetHumanitecPublicKeysParams struct {
+	// Active If set to true, the response includes only the active key, if set to false only non-active keys, otherwise both active and non-active keys.
+	Active *bool `form:"active,omitempty" json:"active,omitempty"`
+}
+
+// GetPublicKeysParams defines parameters for GetPublicKeys.
+type GetPublicKeysParams struct {
+	// Fingerprint The fingerprint of the requested key. If a value is provided, the result will contain a single key, if any.
+	Fingerprint *string `form:"fingerprint,omitempty" json:"fingerprint,omitempty"`
+}
+
+// CreatePublicKeyJSONBody defines parameters for CreatePublicKey.
+type CreatePublicKeyJSONBody = string
+
 // ListPipelineRunsByOrgParams defines parameters for ListPipelineRunsByOrg.
 type ListPipelineRunsByOrgParams struct {
-	// App An optional Application ID
+	// App An optional list of Application IDs.
 	App *ByAppIdQueryParam `form:"app,omitempty" json:"app,omitempty"`
 
-	// Pipeline An optional Pipeline ID.
+	// Pipeline An optional list of Pipeline IDs.
 	Pipeline *ByPipelineIdQueryParam `form:"pipeline,omitempty" json:"pipeline,omitempty"`
 
 	// Status Optional filter by status.
@@ -2764,9 +2829,9 @@ type ListPipelineRunsByOrgParams struct {
 	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 }
 
-// ListPipelinesByOrgParams defines parameters for ListPipelinesByOrg.
-type ListPipelinesByOrgParams struct {
-	// App An optional Application ID
+// ListPipelinesInOrgParams defines parameters for ListPipelinesInOrg.
+type ListPipelinesInOrgParams struct {
+	// App An optional list of Application IDs.
 	App *ByAppIdQueryParam `form:"app,omitempty" json:"app,omitempty"`
 
 	// PerPage The maximum number of items to return in a page of results
@@ -2823,24 +2888,36 @@ type DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams struct {
 	Force *bool `form:"force,omitempty" json:"force,omitempty"`
 }
 
-// PostWorkloadProfileChartVersionMultipartBody defines parameters for PostWorkloadProfileChartVersion.
-type PostWorkloadProfileChartVersionMultipartBody struct {
+// ListWorkloadProfileChartVersionsParams defines parameters for ListWorkloadProfileChartVersions.
+type ListWorkloadProfileChartVersionsParams struct {
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// CreateWorkloadProfileChartVersionMultipartBody defines parameters for CreateWorkloadProfileChartVersion.
+type CreateWorkloadProfileChartVersionMultipartBody struct {
 	File *openapi_types.File `json:"file,omitempty"`
 }
 
-// GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams defines parameters for GetOrgsOrgIdWorkloadProfilesProfileQidVersions.
-type GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams struct {
-	// Version Optional query parameter, defines version constraint pattern (https://github.com/Masterminds/semver#checking-version-constraints).
-	//
-	Version *string `form:"version,omitempty" json:"version,omitempty"`
+// GetOrgsOrgIdWorkloadProfilesParams defines parameters for GetOrgsOrgIdWorkloadProfiles.
+type GetOrgsOrgIdWorkloadProfilesParams struct {
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 }
 
-// PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartBody defines parameters for PostOrgsOrgIdWorkloadProfilesProfileQidVersions.
-type PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartBody struct {
-	File *openapi_types.File `json:"file,omitempty"`
+// ListWorkloadProfileVersionsParams defines parameters for ListWorkloadProfileVersions.
+type ListWorkloadProfileVersionsParams struct {
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
 
-	// Metadata Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
-	Metadata *WorkloadProfileVersionRequest `json:"metadata,omitempty"`
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 }
 
 // PatchCurrentUserJSONRequestBody defines body for PatchCurrentUser for application/json ContentType.
@@ -2966,6 +3043,9 @@ type PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody = ImageBuildRequest
 // PostOrgsOrgIdInvitationsJSONRequestBody defines body for PostOrgsOrgIdInvitations for application/json ContentType.
 type PostOrgsOrgIdInvitationsJSONRequestBody = UserInviteRequestRequest
 
+// CreatePublicKeyJSONRequestBody defines body for CreatePublicKey for application/json ContentType.
+type CreatePublicKeyJSONRequestBody = CreatePublicKeyJSONBody
+
 // PostOrgsOrgIdRegistriesJSONRequestBody defines body for PostOrgsOrgIdRegistries for application/json ContentType.
 type PostOrgsOrgIdRegistriesJSONRequestBody = RegistryRequest
 
@@ -3008,14 +3088,14 @@ type PostOrgsOrgIdUsersJSONRequestBody = NewServiceUserRequest
 // PatchOrgsOrgIdUsersUserIdJSONRequestBody defines body for PatchOrgsOrgIdUsersUserId for application/json ContentType.
 type PatchOrgsOrgIdUsersUserIdJSONRequestBody = RoleRequest
 
-// PostWorkloadProfileChartVersionMultipartRequestBody defines body for PostWorkloadProfileChartVersion for multipart/form-data ContentType.
-type PostWorkloadProfileChartVersionMultipartRequestBody PostWorkloadProfileChartVersionMultipartBody
+// CreateWorkloadProfileChartVersionMultipartRequestBody defines body for CreateWorkloadProfileChartVersion for multipart/form-data ContentType.
+type CreateWorkloadProfileChartVersionMultipartRequestBody CreateWorkloadProfileChartVersionMultipartBody
 
 // PostOrgsOrgIdWorkloadProfilesJSONRequestBody defines body for PostOrgsOrgIdWorkloadProfiles for application/json ContentType.
 type PostOrgsOrgIdWorkloadProfilesJSONRequestBody = WorkloadProfileRequest
 
-// PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartRequestBody defines body for PostOrgsOrgIdWorkloadProfilesProfileQidVersions for multipart/form-data ContentType.
-type PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartRequestBody PostOrgsOrgIdWorkloadProfilesProfileQidVersionsMultipartBody
+// CreateWorkloadProfileVersionJSONRequestBody defines body for CreateWorkloadProfileVersion for application/json ContentType.
+type CreateWorkloadProfileVersionJSONRequestBody = WorkloadProfileVersionRequest
 
 // PostUsersUserIdTokensJSONRequestBody defines body for PostUsersUserIdTokens for application/json ContentType.
 type PostUsersUserIdTokensJSONRequestBody = TokenDefinitionRequest
@@ -3557,8 +3637,8 @@ type ClientInterface interface {
 	// RestartRun request
 	RestartRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetPipelineSchema request
-	GetPipelineSchema(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetPipelineDefinition request
+	GetPipelineDefinition(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineDefinitionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListPipelineVersions request
 	ListPipelineVersions(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3721,6 +3801,9 @@ type ClientInterface interface {
 	// GetOrgsOrgIdEvents request
 	GetOrgsOrgIdEvents(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetHumanitecPublicKeys request
+	GetHumanitecPublicKeys(ctx context.Context, orgId string, params *GetHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetOrgsOrgIdImages request
 	GetOrgsOrgIdImages(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3743,14 +3826,28 @@ type ClientInterface interface {
 
 	PostOrgsOrgIdInvitations(ctx context.Context, orgId string, body PostOrgsOrgIdInvitationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetPublicKeys request
+	GetPublicKeys(ctx context.Context, orgId string, params *GetPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePublicKey request with any body
+	CreatePublicKeyWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreatePublicKey(ctx context.Context, orgId string, body CreatePublicKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeletePublicKey request
+	DeletePublicKey(ctx context.Context, orgId string, keyId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPublicKey request
+	GetPublicKey(ctx context.Context, orgId string, keyId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListPipelineRunsByOrg request
 	ListPipelineRunsByOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetLatestPipelineSchema request
-	GetLatestPipelineSchema(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetLatestPipelineDefinitionSchema request
+	GetLatestPipelineDefinitionSchema(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListPipelinesByOrg request
-	ListPipelinesByOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesByOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListPipelinesInOrg request
+	ListPipelinesInOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesInOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdRegistries request
 	GetOrgsOrgIdRegistries(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3891,14 +3988,14 @@ type ClientInterface interface {
 
 	PatchOrgsOrgIdUsersUserId(ctx context.Context, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetWorkloadProfileChartVersions request
-	GetWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListWorkloadProfileChartVersions request
+	ListWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostWorkloadProfileChartVersion request with any body
-	PostWorkloadProfileChartVersionWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateWorkloadProfileChartVersion request with any body
+	CreateWorkloadProfileChartVersionWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdWorkloadProfiles request
-	GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdWorkloadProfiles request with any body
 	PostOrgsOrgIdWorkloadProfilesWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3914,14 +4011,16 @@ type ClientInterface interface {
 	// GetOrgsOrgIdWorkloadProfilesProfileQid request
 	GetOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdWorkloadProfilesProfileQidVersions request
-	GetOrgsOrgIdWorkloadProfilesProfileQidVersions(ctx context.Context, orgId string, profileQid string, params *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListWorkloadProfileVersions request
+	ListWorkloadProfileVersions(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOrgsOrgIdWorkloadProfilesProfileQidVersions request with any body
-	PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateWorkloadProfileVersion request with any body
+	CreateWorkloadProfileVersionWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetLatestWorkloadProfileVersion request
-	GetLatestWorkloadProfileVersion(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetLatestWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetTokens request
 	GetTokens(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5015,8 +5114,8 @@ func (c *Client) RestartRun(ctx context.Context, orgId OrgIdPathParam, appId App
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetPipelineSchema(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetPipelineSchemaRequest(c.Server, orgId, appId, pipelineId, params)
+func (c *Client) GetPipelineDefinition(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineDefinitionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPipelineDefinitionRequest(c.Server, orgId, appId, pipelineId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5735,6 +5834,18 @@ func (c *Client) GetOrgsOrgIdEvents(ctx context.Context, orgId string, reqEditor
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetHumanitecPublicKeys(ctx context.Context, orgId string, params *GetHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHumanitecPublicKeysRequest(c.Server, orgId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetOrgsOrgIdImages(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdImagesRequest(c.Server, orgId)
 	if err != nil {
@@ -5831,6 +5942,66 @@ func (c *Client) PostOrgsOrgIdInvitations(ctx context.Context, orgId string, bod
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetPublicKeys(ctx context.Context, orgId string, params *GetPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPublicKeysRequest(c.Server, orgId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePublicKeyWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePublicKeyRequestWithBody(c.Server, orgId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePublicKey(ctx context.Context, orgId string, body CreatePublicKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePublicKeyRequest(c.Server, orgId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeletePublicKey(ctx context.Context, orgId string, keyId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeletePublicKeyRequest(c.Server, orgId, keyId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPublicKey(ctx context.Context, orgId string, keyId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPublicKeyRequest(c.Server, orgId, keyId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListPipelineRunsByOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListPipelineRunsByOrgRequest(c.Server, orgId, params)
 	if err != nil {
@@ -5843,8 +6014,8 @@ func (c *Client) ListPipelineRunsByOrg(ctx context.Context, orgId OrgIdPathParam
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetLatestPipelineSchema(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetLatestPipelineSchemaRequest(c.Server, orgId)
+func (c *Client) GetLatestPipelineDefinitionSchema(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLatestPipelineDefinitionSchemaRequest(c.Server, orgId)
 	if err != nil {
 		return nil, err
 	}
@@ -5855,8 +6026,8 @@ func (c *Client) GetLatestPipelineSchema(ctx context.Context, orgId OrgIdPathPar
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListPipelinesByOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesByOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListPipelinesByOrgRequest(c.Server, orgId, params)
+func (c *Client) ListPipelinesInOrg(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesInOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelinesInOrgRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6479,8 +6650,8 @@ func (c *Client) PatchOrgsOrgIdUsersUserId(ctx context.Context, orgId string, us
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetWorkloadProfileChartVersionsRequest(c.Server, orgId)
+func (c *Client) ListWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWorkloadProfileChartVersionsRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6491,8 +6662,8 @@ func (c *Client) GetWorkloadProfileChartVersions(ctx context.Context, orgId OrgI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostWorkloadProfileChartVersionWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostWorkloadProfileChartVersionRequestWithBody(c.Server, orgId, contentType, body)
+func (c *Client) CreateWorkloadProfileChartVersionWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWorkloadProfileChartVersionRequestWithBody(c.Server, orgId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6503,8 +6674,8 @@ func (c *Client) PostWorkloadProfileChartVersionWithBody(ctx context.Context, or
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdWorkloadProfilesRequest(c.Server, orgId)
+func (c *Client) GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrgsOrgIdWorkloadProfilesRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6575,8 +6746,8 @@ func (c *Client) GetOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, org
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdWorkloadProfilesProfileQidVersions(ctx context.Context, orgId string, profileQid string, params *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdWorkloadProfilesProfileQidVersionsRequest(c.Server, orgId, profileQid, params)
+func (c *Client) ListWorkloadProfileVersions(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWorkloadProfileVersionsRequest(c.Server, orgId, profileQid, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6587,8 +6758,8 @@ func (c *Client) GetOrgsOrgIdWorkloadProfilesProfileQidVersions(ctx context.Cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdWorkloadProfilesProfileQidVersionsRequestWithBody(c.Server, orgId, profileQid, contentType, body)
+func (c *Client) CreateWorkloadProfileVersionWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWorkloadProfileVersionRequestWithBody(c.Server, orgId, profileQid, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6599,7 +6770,19 @@ func (c *Client) PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx con
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetLatestWorkloadProfileVersion(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWorkloadProfileVersionRequest(c.Server, orgId, profileQid, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLatestWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLatestWorkloadProfileVersionRequest(c.Server, orgId, profileQid)
 	if err != nil {
 		return nil, err
@@ -10730,8 +10913,8 @@ func NewRestartRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathPa
 	return req, nil
 }
 
-// NewGetPipelineSchemaRequest generates requests for GetPipelineSchema
-func NewGetPipelineSchemaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams) (*http.Request, error) {
+// NewGetPipelineDefinitionRequest generates requests for GetPipelineDefinition
+func NewGetPipelineDefinitionRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineDefinitionParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13180,6 +13363,62 @@ func NewGetOrgsOrgIdEventsRequest(server string, orgId string) (*http.Request, e
 	return req, nil
 }
 
+// NewGetHumanitecPublicKeysRequest generates requests for GetHumanitecPublicKeys
+func NewGetHumanitecPublicKeysRequest(server string, orgId string, params *GetHumanitecPublicKeysParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/humanitec-keys", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Active != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "active", runtime.ParamLocationQuery, *params.Active); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdImagesRequest generates requests for GetOrgsOrgIdImages
 func NewGetOrgsOrgIdImagesRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -13431,6 +13670,191 @@ func NewPostOrgsOrgIdInvitationsRequestWithBody(server string, orgId string, con
 	return req, nil
 }
 
+// NewGetPublicKeysRequest generates requests for GetPublicKeys
+func NewGetPublicKeysRequest(server string, orgId string, params *GetPublicKeysParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/keys", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Fingerprint != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fingerprint", runtime.ParamLocationQuery, *params.Fingerprint); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePublicKeyRequest calls the generic CreatePublicKey builder with application/json body
+func NewCreatePublicKeyRequest(server string, orgId string, body CreatePublicKeyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePublicKeyRequestWithBody(server, orgId, "application/json", bodyReader)
+}
+
+// NewCreatePublicKeyRequestWithBody generates requests for CreatePublicKey with any type of body
+func NewCreatePublicKeyRequestWithBody(server string, orgId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/keys", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeletePublicKeyRequest generates requests for DeletePublicKey
+func NewDeletePublicKeyRequest(server string, orgId string, keyId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "keyId", runtime.ParamLocationPath, keyId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/keys/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetPublicKeyRequest generates requests for GetPublicKey
+func NewGetPublicKeyRequest(server string, orgId string, keyId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "keyId", runtime.ParamLocationPath, keyId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/keys/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListPipelineRunsByOrgRequest generates requests for ListPipelineRunsByOrg
 func NewListPipelineRunsByOrgRequest(server string, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams) (*http.Request, error) {
 	var err error
@@ -13599,8 +14023,8 @@ func NewListPipelineRunsByOrgRequest(server string, orgId OrgIdPathParam, params
 	return req, nil
 }
 
-// NewGetLatestPipelineSchemaRequest generates requests for GetLatestPipelineSchema
-func NewGetLatestPipelineSchemaRequest(server string, orgId OrgIdPathParam) (*http.Request, error) {
+// NewGetLatestPipelineDefinitionSchemaRequest generates requests for GetLatestPipelineDefinitionSchema
+func NewGetLatestPipelineDefinitionSchemaRequest(server string, orgId OrgIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13633,8 +14057,8 @@ func NewGetLatestPipelineSchemaRequest(server string, orgId OrgIdPathParam) (*ht
 	return req, nil
 }
 
-// NewListPipelinesByOrgRequest generates requests for ListPipelinesByOrg
-func NewListPipelinesByOrgRequest(server string, orgId OrgIdPathParam, params *ListPipelinesByOrgParams) (*http.Request, error) {
+// NewListPipelinesInOrgRequest generates requests for ListPipelinesInOrg
+func NewListPipelinesInOrgRequest(server string, orgId OrgIdPathParam, params *ListPipelinesInOrgParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15507,8 +15931,8 @@ func NewPatchOrgsOrgIdUsersUserIdRequestWithBody(server string, orgId string, us
 	return req, nil
 }
 
-// NewGetWorkloadProfileChartVersionsRequest generates requests for GetWorkloadProfileChartVersions
-func NewGetWorkloadProfileChartVersionsRequest(server string, orgId OrgIdPathParam) (*http.Request, error) {
+// NewListWorkloadProfileChartVersionsRequest generates requests for ListWorkloadProfileChartVersions
+func NewListWorkloadProfileChartVersionsRequest(server string, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15533,6 +15957,44 @@ func NewGetWorkloadProfileChartVersionsRequest(server string, orgId OrgIdPathPar
 		return nil, err
 	}
 
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
@@ -15541,8 +16003,8 @@ func NewGetWorkloadProfileChartVersionsRequest(server string, orgId OrgIdPathPar
 	return req, nil
 }
 
-// NewPostWorkloadProfileChartVersionRequestWithBody generates requests for PostWorkloadProfileChartVersion with any type of body
-func NewPostWorkloadProfileChartVersionRequestWithBody(server string, orgId OrgIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateWorkloadProfileChartVersionRequestWithBody generates requests for CreateWorkloadProfileChartVersion with any type of body
+func NewCreateWorkloadProfileChartVersionRequestWithBody(server string, orgId OrgIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15578,7 +16040,7 @@ func NewPostWorkloadProfileChartVersionRequestWithBody(server string, orgId OrgI
 }
 
 // NewGetOrgsOrgIdWorkloadProfilesRequest generates requests for GetOrgsOrgIdWorkloadProfiles
-func NewGetOrgsOrgIdWorkloadProfilesRequest(server string, orgId string) (*http.Request, error) {
+func NewGetOrgsOrgIdWorkloadProfilesRequest(server string, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15601,6 +16063,44 @@ func NewGetOrgsOrgIdWorkloadProfilesRequest(server string, orgId string) (*http.
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -15788,8 +16288,8 @@ func NewGetOrgsOrgIdWorkloadProfilesProfileQidRequest(server string, orgId strin
 	return req, nil
 }
 
-// NewGetOrgsOrgIdWorkloadProfilesProfileQidVersionsRequest generates requests for GetOrgsOrgIdWorkloadProfilesProfileQidVersions
-func NewGetOrgsOrgIdWorkloadProfilesProfileQidVersionsRequest(server string, orgId string, profileQid string, params *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams) (*http.Request, error) {
+// NewListWorkloadProfileVersionsRequest generates requests for ListWorkloadProfileVersions
+func NewListWorkloadProfileVersionsRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15824,9 +16324,25 @@ func NewGetOrgsOrgIdWorkloadProfilesProfileQidVersionsRequest(server string, org
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.Version != nil {
+		if params.PerPage != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "version", runtime.ParamLocationQuery, *params.Version); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -15851,8 +16367,19 @@ func NewGetOrgsOrgIdWorkloadProfilesProfileQidVersionsRequest(server string, org
 	return req, nil
 }
 
-// NewPostOrgsOrgIdWorkloadProfilesProfileQidVersionsRequestWithBody generates requests for PostOrgsOrgIdWorkloadProfilesProfileQidVersions with any type of body
-func NewPostOrgsOrgIdWorkloadProfilesProfileQidVersionsRequestWithBody(server string, orgId string, profileQid string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateWorkloadProfileVersionRequest calls the generic CreateWorkloadProfileVersion builder with application/json body
+func NewCreateWorkloadProfileVersionRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateWorkloadProfileVersionRequestWithBody(server, orgId, profileQid, "application/json", bodyReader)
+}
+
+// NewCreateWorkloadProfileVersionRequestWithBody generates requests for CreateWorkloadProfileVersion with any type of body
+func NewCreateWorkloadProfileVersionRequestWithBody(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15895,7 +16422,7 @@ func NewPostOrgsOrgIdWorkloadProfilesProfileQidVersionsRequestWithBody(server st
 }
 
 // NewGetLatestWorkloadProfileVersionRequest generates requests for GetLatestWorkloadProfileVersion
-func NewGetLatestWorkloadProfileVersionRequest(server string, orgId string, profileQid string) (*http.Request, error) {
+func NewGetLatestWorkloadProfileVersionRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16473,8 +17000,8 @@ type ClientWithResponsesInterface interface {
 	// RestartRun request
 	RestartRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*RestartRunResponse, error)
 
-	// GetPipelineSchema request
-	GetPipelineSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams, reqEditors ...RequestEditorFn) (*GetPipelineSchemaResponse, error)
+	// GetPipelineDefinition request
+	GetPipelineDefinitionWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineDefinitionParams, reqEditors ...RequestEditorFn) (*GetPipelineDefinitionResponse, error)
 
 	// ListPipelineVersions request
 	ListPipelineVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams, reqEditors ...RequestEditorFn) (*ListPipelineVersionsResponse, error)
@@ -16637,6 +17164,9 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdEvents request
 	GetOrgsOrgIdEventsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEventsResponse, error)
 
+	// GetHumanitecPublicKeys request
+	GetHumanitecPublicKeysWithResponse(ctx context.Context, orgId string, params *GetHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*GetHumanitecPublicKeysResponse, error)
+
 	// GetOrgsOrgIdImages request
 	GetOrgsOrgIdImagesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdImagesResponse, error)
 
@@ -16659,14 +17189,28 @@ type ClientWithResponsesInterface interface {
 
 	PostOrgsOrgIdInvitationsWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdInvitationsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdInvitationsResponse, error)
 
+	// GetPublicKeys request
+	GetPublicKeysWithResponse(ctx context.Context, orgId string, params *GetPublicKeysParams, reqEditors ...RequestEditorFn) (*GetPublicKeysResponse, error)
+
+	// CreatePublicKey request with any body
+	CreatePublicKeyWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePublicKeyResponse, error)
+
+	CreatePublicKeyWithResponse(ctx context.Context, orgId string, body CreatePublicKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePublicKeyResponse, error)
+
+	// DeletePublicKey request
+	DeletePublicKeyWithResponse(ctx context.Context, orgId string, keyId string, reqEditors ...RequestEditorFn) (*DeletePublicKeyResponse, error)
+
+	// GetPublicKey request
+	GetPublicKeyWithResponse(ctx context.Context, orgId string, keyId string, reqEditors ...RequestEditorFn) (*GetPublicKeyResponse, error)
+
 	// ListPipelineRunsByOrg request
 	ListPipelineRunsByOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams, reqEditors ...RequestEditorFn) (*ListPipelineRunsByOrgResponse, error)
 
-	// GetLatestPipelineSchema request
-	GetLatestPipelineSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetLatestPipelineSchemaResponse, error)
+	// GetLatestPipelineDefinitionSchema request
+	GetLatestPipelineDefinitionSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetLatestPipelineDefinitionSchemaResponse, error)
 
-	// ListPipelinesByOrg request
-	ListPipelinesByOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesByOrgParams, reqEditors ...RequestEditorFn) (*ListPipelinesByOrgResponse, error)
+	// ListPipelinesInOrg request
+	ListPipelinesInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesInOrgParams, reqEditors ...RequestEditorFn) (*ListPipelinesInOrgResponse, error)
 
 	// GetOrgsOrgIdRegistries request
 	GetOrgsOrgIdRegistriesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdRegistriesResponse, error)
@@ -16807,14 +17351,14 @@ type ClientWithResponsesInterface interface {
 
 	PatchOrgsOrgIdUsersUserIdWithResponse(ctx context.Context, orgId string, userId string, body PatchOrgsOrgIdUsersUserIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdUsersUserIdResponse, error)
 
-	// GetWorkloadProfileChartVersions request
-	GetWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetWorkloadProfileChartVersionsResponse, error)
+	// ListWorkloadProfileChartVersions request
+	ListWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileChartVersionsResponse, error)
 
-	// PostWorkloadProfileChartVersion request with any body
-	PostWorkloadProfileChartVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostWorkloadProfileChartVersionResponse, error)
+	// CreateWorkloadProfileChartVersion request with any body
+	CreateWorkloadProfileChartVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileChartVersionResponse, error)
 
 	// GetOrgsOrgIdWorkloadProfiles request
-	GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error)
+	GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error)
 
 	// PostOrgsOrgIdWorkloadProfiles request with any body
 	PostOrgsOrgIdWorkloadProfilesWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesResponse, error)
@@ -16830,14 +17374,16 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdWorkloadProfilesProfileQid request
 	GetOrgsOrgIdWorkloadProfilesProfileQidWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesProfileQidResponse, error)
 
-	// GetOrgsOrgIdWorkloadProfilesProfileQidVersions request
-	GetOrgsOrgIdWorkloadProfilesProfileQidVersionsWithResponse(ctx context.Context, orgId string, profileQid string, params *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error)
+	// ListWorkloadProfileVersions request
+	ListWorkloadProfileVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileVersionsResponse, error)
 
-	// PostOrgsOrgIdWorkloadProfilesProfileQidVersions request with any body
-	PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBodyWithResponse(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error)
+	// CreateWorkloadProfileVersion request with any body
+	CreateWorkloadProfileVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileVersionResponse, error)
+
+	CreateWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileVersionResponse, error)
 
 	// GetLatestWorkloadProfileVersion request
-	GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error)
+	GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error)
 
 	// GetTokens request
 	GetTokensWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTokensResponse, error)
@@ -17993,7 +18539,7 @@ func (r DeleteOrgsOrgIdAppsAppIdJobsResponse) StatusCode() int {
 type ListPipelinesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]PipelineResponse
+	JSON200      *[]Pipeline
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -18017,7 +18563,7 @@ func (r ListPipelinesResponse) StatusCode() int {
 type CreatePipelineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *PipelineResponse
+	JSON201      *Pipeline
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
@@ -18067,7 +18613,7 @@ func (r DeletePipelineResponse) StatusCode() int {
 type GetPipelineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *PipelineResponse
+	JSON200      *Pipeline
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -18091,7 +18637,7 @@ func (r GetPipelineResponse) StatusCode() int {
 type UpdatePipelineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *PipelineResponse
+	JSON200      *Pipeline
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
@@ -18405,7 +18951,7 @@ func (r RestartRunResponse) StatusCode() int {
 	return 0
 }
 
-type GetPipelineSchemaResponse struct {
+type GetPipelineDefinitionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *map[string]interface{}
@@ -18414,7 +18960,7 @@ type GetPipelineSchemaResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetPipelineSchemaResponse) Status() string {
+func (r GetPipelineDefinitionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18422,7 +18968,7 @@ func (r GetPipelineSchemaResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetPipelineSchemaResponse) StatusCode() int {
+func (r GetPipelineDefinitionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -18432,7 +18978,7 @@ func (r GetPipelineSchemaResponse) StatusCode() int {
 type ListPipelineVersionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]PipelineVersionResponse
+	JSON200      *[]PipelineVersion
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -19426,6 +19972,28 @@ func (r GetOrgsOrgIdEventsResponse) StatusCode() int {
 	return 0
 }
 
+type GetHumanitecPublicKeysResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]HumanitecPublicKey
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHumanitecPublicKeysResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHumanitecPublicKeysResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetOrgsOrgIdImagesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -19563,6 +20131,100 @@ func (r PostOrgsOrgIdInvitationsResponse) StatusCode() int {
 	return 0
 }
 
+type GetPublicKeysResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]PublicKey
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPublicKeysResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPublicKeysResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreatePublicKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PublicKey
+	JSON400      *HumanitecErrorResponse
+	JSON403      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePublicKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePublicKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeletePublicKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeletePublicKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeletePublicKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetPublicKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PublicKey
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPublicKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPublicKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListPipelineRunsByOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -19587,7 +20249,7 @@ func (r ListPipelineRunsByOrgResponse) StatusCode() int {
 	return 0
 }
 
-type GetLatestPipelineSchemaResponse struct {
+type GetLatestPipelineDefinitionSchemaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *map[string]interface{}
@@ -19595,7 +20257,7 @@ type GetLatestPipelineSchemaResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetLatestPipelineSchemaResponse) Status() string {
+func (r GetLatestPipelineDefinitionSchemaResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19603,23 +20265,23 @@ func (r GetLatestPipelineSchemaResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetLatestPipelineSchemaResponse) StatusCode() int {
+func (r GetLatestPipelineDefinitionSchemaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ListPipelinesByOrgResponse struct {
+type ListPipelinesInOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]PipelineResponse
+	JSON200      *[]Pipeline
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ListPipelinesByOrgResponse) Status() string {
+func (r ListPipelinesInOrgResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19627,7 +20289,7 @@ func (r ListPipelinesByOrgResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListPipelinesByOrgResponse) StatusCode() int {
+func (r ListPipelinesInOrgResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -20517,14 +21179,14 @@ func (r PatchOrgsOrgIdUsersUserIdResponse) StatusCode() int {
 	return 0
 }
 
-type GetWorkloadProfileChartVersionsResponse struct {
+type ListWorkloadProfileChartVersionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]WorkloadProfileChartVersionResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetWorkloadProfileChartVersionsResponse) Status() string {
+func (r ListWorkloadProfileChartVersionsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20532,14 +21194,14 @@ func (r GetWorkloadProfileChartVersionsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetWorkloadProfileChartVersionsResponse) StatusCode() int {
+func (r ListWorkloadProfileChartVersionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostWorkloadProfileChartVersionResponse struct {
+type CreateWorkloadProfileChartVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *WorkloadProfileChartVersionResponse
@@ -20548,7 +21210,7 @@ type PostWorkloadProfileChartVersionResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PostWorkloadProfileChartVersionResponse) Status() string {
+func (r CreateWorkloadProfileChartVersionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20556,7 +21218,7 @@ func (r PostWorkloadProfileChartVersionResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostWorkloadProfileChartVersionResponse) StatusCode() int {
+func (r CreateWorkloadProfileChartVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -20588,7 +21250,7 @@ func (r GetOrgsOrgIdWorkloadProfilesResponse) StatusCode() int {
 type PostOrgsOrgIdWorkloadProfilesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *WorkloadProfileResponse
+	JSON201      *WorkloadProfileResponse
 	JSON400      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
 }
@@ -20676,7 +21338,7 @@ func (r GetOrgsOrgIdWorkloadProfilesProfileQidResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse struct {
+type ListWorkloadProfileVersionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]WorkloadProfileVersionResponse
@@ -20684,7 +21346,7 @@ type GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) Status() string {
+func (r ListWorkloadProfileVersionsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20692,24 +21354,24 @@ func (r GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) Status() string 
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) StatusCode() int {
+func (r ListWorkloadProfileVersionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse struct {
+type CreateWorkloadProfileVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *WorkloadProfileVersionResponse
+	JSON201      *WorkloadProfileVersionResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) Status() string {
+func (r CreateWorkloadProfileVersionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20717,7 +21379,7 @@ func (r PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) Status() string
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse) StatusCode() int {
+func (r CreateWorkloadProfileVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21678,13 +22340,13 @@ func (c *ClientWithResponses) RestartRunWithResponse(ctx context.Context, orgId 
 	return ParseRestartRunResponse(rsp)
 }
 
-// GetPipelineSchemaWithResponse request returning *GetPipelineSchemaResponse
-func (c *ClientWithResponses) GetPipelineSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineSchemaParams, reqEditors ...RequestEditorFn) (*GetPipelineSchemaResponse, error) {
-	rsp, err := c.GetPipelineSchema(ctx, orgId, appId, pipelineId, params, reqEditors...)
+// GetPipelineDefinitionWithResponse request returning *GetPipelineDefinitionResponse
+func (c *ClientWithResponses) GetPipelineDefinitionWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineDefinitionParams, reqEditors ...RequestEditorFn) (*GetPipelineDefinitionResponse, error) {
+	rsp, err := c.GetPipelineDefinition(ctx, orgId, appId, pipelineId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetPipelineSchemaResponse(rsp)
+	return ParseGetPipelineDefinitionResponse(rsp)
 }
 
 // ListPipelineVersionsWithResponse request returning *ListPipelineVersionsResponse
@@ -22202,6 +22864,15 @@ func (c *ClientWithResponses) GetOrgsOrgIdEventsWithResponse(ctx context.Context
 	return ParseGetOrgsOrgIdEventsResponse(rsp)
 }
 
+// GetHumanitecPublicKeysWithResponse request returning *GetHumanitecPublicKeysResponse
+func (c *ClientWithResponses) GetHumanitecPublicKeysWithResponse(ctx context.Context, orgId string, params *GetHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*GetHumanitecPublicKeysResponse, error) {
+	rsp, err := c.GetHumanitecPublicKeys(ctx, orgId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHumanitecPublicKeysResponse(rsp)
+}
+
 // GetOrgsOrgIdImagesWithResponse request returning *GetOrgsOrgIdImagesResponse
 func (c *ClientWithResponses) GetOrgsOrgIdImagesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdImagesResponse, error) {
 	rsp, err := c.GetOrgsOrgIdImages(ctx, orgId, reqEditors...)
@@ -22272,6 +22943,50 @@ func (c *ClientWithResponses) PostOrgsOrgIdInvitationsWithResponse(ctx context.C
 	return ParsePostOrgsOrgIdInvitationsResponse(rsp)
 }
 
+// GetPublicKeysWithResponse request returning *GetPublicKeysResponse
+func (c *ClientWithResponses) GetPublicKeysWithResponse(ctx context.Context, orgId string, params *GetPublicKeysParams, reqEditors ...RequestEditorFn) (*GetPublicKeysResponse, error) {
+	rsp, err := c.GetPublicKeys(ctx, orgId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPublicKeysResponse(rsp)
+}
+
+// CreatePublicKeyWithBodyWithResponse request with arbitrary body returning *CreatePublicKeyResponse
+func (c *ClientWithResponses) CreatePublicKeyWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePublicKeyResponse, error) {
+	rsp, err := c.CreatePublicKeyWithBody(ctx, orgId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePublicKeyResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreatePublicKeyWithResponse(ctx context.Context, orgId string, body CreatePublicKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePublicKeyResponse, error) {
+	rsp, err := c.CreatePublicKey(ctx, orgId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePublicKeyResponse(rsp)
+}
+
+// DeletePublicKeyWithResponse request returning *DeletePublicKeyResponse
+func (c *ClientWithResponses) DeletePublicKeyWithResponse(ctx context.Context, orgId string, keyId string, reqEditors ...RequestEditorFn) (*DeletePublicKeyResponse, error) {
+	rsp, err := c.DeletePublicKey(ctx, orgId, keyId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeletePublicKeyResponse(rsp)
+}
+
+// GetPublicKeyWithResponse request returning *GetPublicKeyResponse
+func (c *ClientWithResponses) GetPublicKeyWithResponse(ctx context.Context, orgId string, keyId string, reqEditors ...RequestEditorFn) (*GetPublicKeyResponse, error) {
+	rsp, err := c.GetPublicKey(ctx, orgId, keyId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPublicKeyResponse(rsp)
+}
+
 // ListPipelineRunsByOrgWithResponse request returning *ListPipelineRunsByOrgResponse
 func (c *ClientWithResponses) ListPipelineRunsByOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelineRunsByOrgParams, reqEditors ...RequestEditorFn) (*ListPipelineRunsByOrgResponse, error) {
 	rsp, err := c.ListPipelineRunsByOrg(ctx, orgId, params, reqEditors...)
@@ -22281,22 +22996,22 @@ func (c *ClientWithResponses) ListPipelineRunsByOrgWithResponse(ctx context.Cont
 	return ParseListPipelineRunsByOrgResponse(rsp)
 }
 
-// GetLatestPipelineSchemaWithResponse request returning *GetLatestPipelineSchemaResponse
-func (c *ClientWithResponses) GetLatestPipelineSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetLatestPipelineSchemaResponse, error) {
-	rsp, err := c.GetLatestPipelineSchema(ctx, orgId, reqEditors...)
+// GetLatestPipelineDefinitionSchemaWithResponse request returning *GetLatestPipelineDefinitionSchemaResponse
+func (c *ClientWithResponses) GetLatestPipelineDefinitionSchemaWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetLatestPipelineDefinitionSchemaResponse, error) {
+	rsp, err := c.GetLatestPipelineDefinitionSchema(ctx, orgId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetLatestPipelineSchemaResponse(rsp)
+	return ParseGetLatestPipelineDefinitionSchemaResponse(rsp)
 }
 
-// ListPipelinesByOrgWithResponse request returning *ListPipelinesByOrgResponse
-func (c *ClientWithResponses) ListPipelinesByOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesByOrgParams, reqEditors ...RequestEditorFn) (*ListPipelinesByOrgResponse, error) {
-	rsp, err := c.ListPipelinesByOrg(ctx, orgId, params, reqEditors...)
+// ListPipelinesInOrgWithResponse request returning *ListPipelinesInOrgResponse
+func (c *ClientWithResponses) ListPipelinesInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListPipelinesInOrgParams, reqEditors ...RequestEditorFn) (*ListPipelinesInOrgResponse, error) {
+	rsp, err := c.ListPipelinesInOrg(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListPipelinesByOrgResponse(rsp)
+	return ParseListPipelinesInOrgResponse(rsp)
 }
 
 // GetOrgsOrgIdRegistriesWithResponse request returning *GetOrgsOrgIdRegistriesResponse
@@ -22744,27 +23459,27 @@ func (c *ClientWithResponses) PatchOrgsOrgIdUsersUserIdWithResponse(ctx context.
 	return ParsePatchOrgsOrgIdUsersUserIdResponse(rsp)
 }
 
-// GetWorkloadProfileChartVersionsWithResponse request returning *GetWorkloadProfileChartVersionsResponse
-func (c *ClientWithResponses) GetWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*GetWorkloadProfileChartVersionsResponse, error) {
-	rsp, err := c.GetWorkloadProfileChartVersions(ctx, orgId, reqEditors...)
+// ListWorkloadProfileChartVersionsWithResponse request returning *ListWorkloadProfileChartVersionsResponse
+func (c *ClientWithResponses) ListWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileChartVersionsResponse, error) {
+	rsp, err := c.ListWorkloadProfileChartVersions(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetWorkloadProfileChartVersionsResponse(rsp)
+	return ParseListWorkloadProfileChartVersionsResponse(rsp)
 }
 
-// PostWorkloadProfileChartVersionWithBodyWithResponse request with arbitrary body returning *PostWorkloadProfileChartVersionResponse
-func (c *ClientWithResponses) PostWorkloadProfileChartVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostWorkloadProfileChartVersionResponse, error) {
-	rsp, err := c.PostWorkloadProfileChartVersionWithBody(ctx, orgId, contentType, body, reqEditors...)
+// CreateWorkloadProfileChartVersionWithBodyWithResponse request with arbitrary body returning *CreateWorkloadProfileChartVersionResponse
+func (c *ClientWithResponses) CreateWorkloadProfileChartVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileChartVersionResponse, error) {
+	rsp, err := c.CreateWorkloadProfileChartVersionWithBody(ctx, orgId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostWorkloadProfileChartVersionResponse(rsp)
+	return ParseCreateWorkloadProfileChartVersionResponse(rsp)
 }
 
 // GetOrgsOrgIdWorkloadProfilesWithResponse request returning *GetOrgsOrgIdWorkloadProfilesResponse
-func (c *ClientWithResponses) GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error) {
-	rsp, err := c.GetOrgsOrgIdWorkloadProfiles(ctx, orgId, reqEditors...)
+func (c *ClientWithResponses) GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error) {
+	rsp, err := c.GetOrgsOrgIdWorkloadProfiles(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -22815,26 +23530,34 @@ func (c *ClientWithResponses) GetOrgsOrgIdWorkloadProfilesProfileQidWithResponse
 	return ParseGetOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp)
 }
 
-// GetOrgsOrgIdWorkloadProfilesProfileQidVersionsWithResponse request returning *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse
-func (c *ClientWithResponses) GetOrgsOrgIdWorkloadProfilesProfileQidVersionsWithResponse(ctx context.Context, orgId string, profileQid string, params *GetOrgsOrgIdWorkloadProfilesProfileQidVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error) {
-	rsp, err := c.GetOrgsOrgIdWorkloadProfilesProfileQidVersions(ctx, orgId, profileQid, params, reqEditors...)
+// ListWorkloadProfileVersionsWithResponse request returning *ListWorkloadProfileVersionsResponse
+func (c *ClientWithResponses) ListWorkloadProfileVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileVersionsResponse, error) {
+	rsp, err := c.ListWorkloadProfileVersions(ctx, orgId, profileQid, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp)
+	return ParseListWorkloadProfileVersionsResponse(rsp)
 }
 
-// PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse
-func (c *ClientWithResponses) PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBodyWithResponse(ctx context.Context, orgId string, profileQid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error) {
-	rsp, err := c.PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithBody(ctx, orgId, profileQid, contentType, body, reqEditors...)
+// CreateWorkloadProfileVersionWithBodyWithResponse request with arbitrary body returning *CreateWorkloadProfileVersionResponse
+func (c *ClientWithResponses) CreateWorkloadProfileVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileVersionResponse, error) {
+	rsp, err := c.CreateWorkloadProfileVersionWithBody(ctx, orgId, profileQid, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp)
+	return ParseCreateWorkloadProfileVersionResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileVersionResponse, error) {
+	rsp, err := c.CreateWorkloadProfileVersion(ctx, orgId, profileQid, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateWorkloadProfileVersionResponse(rsp)
 }
 
 // GetLatestWorkloadProfileVersionWithResponse request returning *GetLatestWorkloadProfileVersionResponse
-func (c *ClientWithResponses) GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error) {
+func (c *ClientWithResponses) GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error) {
 	rsp, err := c.GetLatestWorkloadProfileVersion(ctx, orgId, profileQid, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -24521,7 +25244,7 @@ func ParseListPipelinesResponse(rsp *http.Response) (*ListPipelinesResponse, err
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []PipelineResponse
+		var dest []Pipeline
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -24561,7 +25284,7 @@ func ParseCreatePipelineResponse(rsp *http.Response) (*CreatePipelineResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest PipelineResponse
+		var dest Pipeline
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -24655,7 +25378,7 @@ func ParseGetPipelineResponse(rsp *http.Response) (*GetPipelineResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PipelineResponse
+		var dest Pipeline
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -24695,7 +25418,7 @@ func ParseUpdatePipelineResponse(rsp *http.Response) (*UpdatePipelineResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PipelineResponse
+		var dest Pipeline
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25235,15 +25958,15 @@ func ParseRestartRunResponse(rsp *http.Response) (*RestartRunResponse, error) {
 	return response, nil
 }
 
-// ParseGetPipelineSchemaResponse parses an HTTP response from a GetPipelineSchemaWithResponse call
-func ParseGetPipelineSchemaResponse(rsp *http.Response) (*GetPipelineSchemaResponse, error) {
+// ParseGetPipelineDefinitionResponse parses an HTTP response from a GetPipelineDefinitionWithResponse call
+func ParseGetPipelineDefinitionResponse(rsp *http.Response) (*GetPipelineDefinitionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetPipelineSchemaResponse{
+	response := &GetPipelineDefinitionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -25293,7 +26016,7 @@ func ParseListPipelineVersionsResponse(rsp *http.Response) (*ListPipelineVersion
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []PipelineVersionResponse
+		var dest []PipelineVersion
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -26738,6 +27461,32 @@ func ParseGetOrgsOrgIdEventsResponse(rsp *http.Response) (*GetOrgsOrgIdEventsRes
 	return response, nil
 }
 
+// ParseGetHumanitecPublicKeysResponse parses an HTTP response from a GetHumanitecPublicKeysWithResponse call
+func ParseGetHumanitecPublicKeysResponse(rsp *http.Response) (*GetHumanitecPublicKeysResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHumanitecPublicKeysResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []HumanitecPublicKey
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetOrgsOrgIdImagesResponse parses an HTTP response from a GetOrgsOrgIdImagesWithResponse call
 func ParseGetOrgsOrgIdImagesResponse(rsp *http.Response) (*GetOrgsOrgIdImagesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -26929,6 +27678,152 @@ func ParsePostOrgsOrgIdInvitationsResponse(rsp *http.Response) (*PostOrgsOrgIdIn
 	return response, nil
 }
 
+// ParseGetPublicKeysResponse parses an HTTP response from a GetPublicKeysWithResponse call
+func ParseGetPublicKeysResponse(rsp *http.Response) (*GetPublicKeysResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPublicKeysResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []PublicKey
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreatePublicKeyResponse parses an HTTP response from a CreatePublicKeyWithResponse call
+func ParseCreatePublicKeyResponse(rsp *http.Response) (*CreatePublicKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePublicKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PublicKey
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeletePublicKeyResponse parses an HTTP response from a DeletePublicKeyWithResponse call
+func ParseDeletePublicKeyResponse(rsp *http.Response) (*DeletePublicKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeletePublicKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPublicKeyResponse parses an HTTP response from a GetPublicKeyWithResponse call
+func ParseGetPublicKeyResponse(rsp *http.Response) (*GetPublicKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPublicKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PublicKey
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListPipelineRunsByOrgResponse parses an HTTP response from a ListPipelineRunsByOrgWithResponse call
 func ParseListPipelineRunsByOrgResponse(rsp *http.Response) (*ListPipelineRunsByOrgResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -26969,15 +27864,15 @@ func ParseListPipelineRunsByOrgResponse(rsp *http.Response) (*ListPipelineRunsBy
 	return response, nil
 }
 
-// ParseGetLatestPipelineSchemaResponse parses an HTTP response from a GetLatestPipelineSchemaWithResponse call
-func ParseGetLatestPipelineSchemaResponse(rsp *http.Response) (*GetLatestPipelineSchemaResponse, error) {
+// ParseGetLatestPipelineDefinitionSchemaResponse parses an HTTP response from a GetLatestPipelineDefinitionSchemaWithResponse call
+func ParseGetLatestPipelineDefinitionSchemaResponse(rsp *http.Response) (*GetLatestPipelineDefinitionSchemaResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLatestPipelineSchemaResponse{
+	response := &GetLatestPipelineDefinitionSchemaResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27002,22 +27897,22 @@ func ParseGetLatestPipelineSchemaResponse(rsp *http.Response) (*GetLatestPipelin
 	return response, nil
 }
 
-// ParseListPipelinesByOrgResponse parses an HTTP response from a ListPipelinesByOrgWithResponse call
-func ParseListPipelinesByOrgResponse(rsp *http.Response) (*ListPipelinesByOrgResponse, error) {
+// ParseListPipelinesInOrgResponse parses an HTTP response from a ListPipelinesInOrgWithResponse call
+func ParseListPipelinesInOrgResponse(rsp *http.Response) (*ListPipelinesInOrgResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListPipelinesByOrgResponse{
+	response := &ListPipelinesInOrgResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []PipelineResponse
+		var dest []Pipeline
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -28487,15 +29382,15 @@ func ParsePatchOrgsOrgIdUsersUserIdResponse(rsp *http.Response) (*PatchOrgsOrgId
 	return response, nil
 }
 
-// ParseGetWorkloadProfileChartVersionsResponse parses an HTTP response from a GetWorkloadProfileChartVersionsWithResponse call
-func ParseGetWorkloadProfileChartVersionsResponse(rsp *http.Response) (*GetWorkloadProfileChartVersionsResponse, error) {
+// ParseListWorkloadProfileChartVersionsResponse parses an HTTP response from a ListWorkloadProfileChartVersionsWithResponse call
+func ParseListWorkloadProfileChartVersionsResponse(rsp *http.Response) (*ListWorkloadProfileChartVersionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetWorkloadProfileChartVersionsResponse{
+	response := &ListWorkloadProfileChartVersionsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -28513,15 +29408,15 @@ func ParseGetWorkloadProfileChartVersionsResponse(rsp *http.Response) (*GetWorkl
 	return response, nil
 }
 
-// ParsePostWorkloadProfileChartVersionResponse parses an HTTP response from a PostWorkloadProfileChartVersionWithResponse call
-func ParsePostWorkloadProfileChartVersionResponse(rsp *http.Response) (*PostWorkloadProfileChartVersionResponse, error) {
+// ParseCreateWorkloadProfileChartVersionResponse parses an HTTP response from a CreateWorkloadProfileChartVersionWithResponse call
+func ParseCreateWorkloadProfileChartVersionResponse(rsp *http.Response) (*CreateWorkloadProfileChartVersionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostWorkloadProfileChartVersionResponse{
+	response := &CreateWorkloadProfileChartVersionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -28593,12 +29488,12 @@ func ParsePostOrgsOrgIdWorkloadProfilesResponse(rsp *http.Response) (*PostOrgsOr
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest WorkloadProfileResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
@@ -28704,15 +29599,15 @@ func ParseGetOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp *http.Response) (*G
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse parses an HTTP response from a GetOrgsOrgIdWorkloadProfilesProfileQidVersionsWithResponse call
-func ParseGetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp *http.Response) (*GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error) {
+// ParseListWorkloadProfileVersionsResponse parses an HTTP response from a ListWorkloadProfileVersionsWithResponse call
+func ParseListWorkloadProfileVersionsResponse(rsp *http.Response) (*ListWorkloadProfileVersionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse{
+	response := &ListWorkloadProfileVersionsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -28737,26 +29632,26 @@ func ParseGetOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp *http.Respo
 	return response, nil
 }
 
-// ParsePostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse parses an HTTP response from a PostOrgsOrgIdWorkloadProfilesProfileQidVersionsWithResponse call
-func ParsePostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse(rsp *http.Response) (*PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse, error) {
+// ParseCreateWorkloadProfileVersionResponse parses an HTTP response from a CreateWorkloadProfileVersionWithResponse call
+func ParseCreateWorkloadProfileVersionResponse(rsp *http.Response) (*CreateWorkloadProfileVersionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOrgsOrgIdWorkloadProfilesProfileQidVersionsResponse{
+	response := &CreateWorkloadProfileVersionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest WorkloadProfileVersionResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
