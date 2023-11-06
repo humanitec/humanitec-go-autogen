@@ -18,12 +18,12 @@ import (
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 )
 
-// Defines values for ApprovalRequestStatus.
+// Defines values for PipelineApprovalRequestStatus.
 const (
-	Approved  ApprovalRequestStatus = "approved"
-	Cancelled ApprovalRequestStatus = "cancelled"
-	Denied    ApprovalRequestStatus = "denied"
-	Waiting   ApprovalRequestStatus = "waiting"
+	Approved  PipelineApprovalRequestStatus = "approved"
+	Cancelled PipelineApprovalRequestStatus = "cancelled"
+	Denied    PipelineApprovalRequestStatus = "denied"
+	Waiting   PipelineApprovalRequestStatus = "waiting"
 )
 
 // Defines values for ValueSetVersionResultOf.
@@ -206,48 +206,6 @@ type ApplicationResponse struct {
 	// OrgId The Organization id of this Application
 	OrgId string `json:"org_id"`
 }
-
-// ApprovalRequest An approval object
-type ApprovalRequest struct {
-	// AppId The id of the Application.
-	AppId *string `json:"app_id,omitempty"`
-
-	// ApprovedAt The date and time when the request was approved or denied.
-	ApprovedAt *time.Time `json:"approved_at,omitempty"`
-
-	// ApprovedBy The user who approved or denied the request.
-	ApprovedBy *string `json:"approved_by,omitempty"`
-
-	// CreatedAt The date and time when the approval request was created.
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-
-	// EnvId The environment for which the approver needs to have deploy permission to approve the job.
-	EnvId *string `json:"env_id,omitempty"`
-
-	// Id The id of the approval object.
-	Id *string `json:"id,omitempty"`
-
-	// JobId The id of the Run's Job.
-	JobId *string `json:"job_id,omitempty"`
-
-	// Message A human-readable message indicating the reason for approval.
-	Message *string `json:"message,omitempty"`
-
-	// OrgId The id of the Organization.
-	OrgId *string `json:"org_id,omitempty"`
-
-	// PipelineId The id of the Pipeline.
-	PipelineId *string `json:"pipeline_id,omitempty"`
-
-	// RunId The id of the Pipeline's Run.
-	RunId *string `json:"run_id,omitempty"`
-
-	// Status The current status of the approval request.
-	Status *ApprovalRequestStatus `json:"status,omitempty"`
-}
-
-// ApprovalRequestStatus The current status of the approval request.
-type ApprovalRequestStatus string
 
 // ArtefactResponse Artefacts can be registered with Humanitec. Continuous Integration (CI) pipelines notify Humanitec when a new version of an Artefact becomes available. Humanitec tracks the Artefact along with metadata about how it was built.
 type ArtefactResponse struct {
@@ -1241,6 +1199,240 @@ type Pipeline struct {
 	Version string `json:"version"`
 }
 
+// PipelineApprovalRequest An approval object
+type PipelineApprovalRequest struct {
+	// AppId The id of the Application.
+	AppId string `json:"app_id"`
+
+	// ApprovedAt The date and time when the request was approved or denied.
+	ApprovedAt *time.Time `json:"approved_at,omitempty"`
+
+	// ApprovedBy The user who approved or denied the request.
+	ApprovedBy *string `json:"approved_by,omitempty"`
+
+	// CreatedAt The date and time when the approval request was created.
+	CreatedAt time.Time `json:"created_at"`
+
+	// EnvId The environment for which the approver needs to have deploy permission to approve the job.
+	EnvId string `json:"env_id"`
+
+	// Id The id of the approval object.
+	Id string `json:"id"`
+
+	// JobId The id of the Run's Job.
+	JobId string `json:"job_id"`
+
+	// Message A human-readable message indicating the reason for approval.
+	Message string `json:"message"`
+
+	// OrgId The id of the Organization.
+	OrgId string `json:"org_id"`
+
+	// PipelineId The id of the Pipeline.
+	PipelineId string `json:"pipeline_id"`
+
+	// RunId The id of the Pipeline's Run.
+	RunId string `json:"run_id"`
+
+	// Status The current status of the approval request.
+	Status PipelineApprovalRequestStatus `json:"status"`
+}
+
+// PipelineApprovalRequestStatus The current status of the approval request.
+type PipelineApprovalRequestStatus string
+
+// PipelineJob defines model for PipelineJob.
+type PipelineJob struct {
+	// AppId The id of the Application containing this Job.
+	AppId string `json:"app_id"`
+
+	// CancellationRequestedAt The date and time when cancellation of this Job was requested.
+	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
+
+	// CompletedAt The date and time when this Job entered a successful, failed, or cancelled status.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+
+	// CreatedAt The date and time when this Job was first created within the Run.
+	CreatedAt time.Time `json:"created_at"`
+
+	// Etag The current entity tag value for this Job.
+	Etag string `json:"etag"`
+
+	// Id The id of the Job within the Run.
+	Id string `json:"id"`
+
+	// OrgId The id of the Organization containing this Job.
+	OrgId string `json:"org_id"`
+
+	// PipelineId The id of the Pipeline.
+	PipelineId string `json:"pipeline_id"`
+
+	// PipelineVersion The id of the Pipeline Version associated with the Run.
+	PipelineVersion string `json:"pipeline_version"`
+
+	// RunId The id of the Run containing this Job.
+	RunId string `json:"run_id"`
+
+	// Status The current status of this Job.
+	Status string `json:"status"`
+
+	// StatusMessage A human-readable message indicating the reason for the status.
+	StatusMessage string `json:"status_message"`
+
+	// Steps The collection of Steps that completed along with the current Step being executed.
+	Steps []PipelineStep `json:"steps"`
+
+	// TimeoutSeconds The timeout for this Job.
+	TimeoutSeconds int `json:"timeout_seconds"`
+
+	// WaitingFor An event on which job is waiting
+	WaitingFor *string `json:"waiting_for,omitempty"`
+}
+
+// PipelineJobPartial Partial details of a Job within the Run. The full details, including steps, can be retrieved using the GetPipelineJob operation.
+type PipelineJobPartial struct {
+	// AppId The id of the Application containing this Job.
+	AppId string `json:"app_id"`
+
+	// CancellationRequestedAt The date and time when cancellation of this Job was requested.
+	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
+
+	// CompletedAt The date and time when this Job entered a successful, failed, or cancelled status.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+
+	// CreatedAt The date and time when this Job was first created within the Run.
+	CreatedAt time.Time `json:"created_at"`
+
+	// Etag The current entity tag value for this Job.
+	Etag string `json:"etag"`
+
+	// Id The id of the Job within the Run.
+	Id string `json:"id"`
+
+	// OrgId The id of the Organization containing this Job.
+	OrgId string `json:"org_id"`
+
+	// PipelineId The id of the Pipeline.
+	PipelineId string `json:"pipeline_id"`
+
+	// PipelineVersion The id of the Pipeline Version associated with the Run.
+	PipelineVersion string `json:"pipeline_version"`
+
+	// RunId The id of the Run containing this Job.
+	RunId string `json:"run_id"`
+
+	// Status The current status of this Job.
+	Status string `json:"status"`
+
+	// StatusMessage A human-readable message indicating the reason for the status.
+	StatusMessage string `json:"status_message"`
+
+	// TimeoutSeconds The timeout for this Job.
+	TimeoutSeconds int `json:"timeout_seconds"`
+
+	// WaitingFor An event on which job is waiting
+	WaitingFor *string `json:"waiting_for,omitempty"`
+}
+
+// PipelineRun Details of a Run within the Pipeline.
+type PipelineRun struct {
+	// AppId The id of the Application containing this Run.
+	AppId string `json:"app_id"`
+
+	// CancellationRequestedAt The date and time when cancellation of this Run was requested.
+	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
+
+	// CompletedAt The date and time when this Run entered a successful, failed, or cancelled status.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+
+	// ConcurrencyGroup The optional concurrency group for this run within the application
+	ConcurrencyGroup *string `json:"concurrency_group,omitempty"`
+
+	// CreatedAt The date and time when this Run was first created.
+	CreatedAt time.Time `json:"created_at"`
+
+	// Etag The current entity tag value for this Run.
+	Etag string `json:"etag"`
+
+	// ExecutingAt The date and time when this Run entered executing status.
+	ExecutingAt *time.Time `json:"executing_at,omitempty"`
+
+	// Id The unique id of the Run.
+	Id string `json:"id"`
+
+	// Inputs The inputs that were provided for this Run.
+	Inputs map[string]interface{} `json:"inputs"`
+
+	// OrgId The id of the Organization containing this Run.
+	OrgId string `json:"org_id"`
+
+	// PipelineId The id of the Pipeline associated with the Run.
+	PipelineId string `json:"pipeline_id"`
+
+	// PipelineVersion The id of the Pipeline Version associated with the Run.
+	PipelineVersion string `json:"pipeline_version"`
+
+	// RunAs The user id that the pipeline run is executing as when it calls Humanitec APIs.
+	RunAs string `json:"run_as"`
+
+	// Status The current status of this Run.
+	Status string `json:"status"`
+
+	// StatusMessage A human-readable message indicating the reason for the status.
+	StatusMessage string `json:"status_message"`
+
+	// TimeoutSeconds The timeout for this Run.
+	TimeoutSeconds int `json:"timeout_seconds"`
+
+	// WaitingFor Aggregated events on which run's jobs are waiting for
+	WaitingFor map[string]string `json:"waiting_for"`
+}
+
+// PipelineRunCreateBody The parameters for creating a new Run for the Pipeline.
+type PipelineRunCreateBody struct {
+	// Inputs The inputs provided for this Run.
+	Inputs map[string]interface{} `json:"inputs"`
+}
+
+// PipelineStep A Step within a Job.
+type PipelineStep struct {
+	// CompletedAt The date and time when this Step entered a successful, failed, or cancelled status.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+
+	// CreatedAt The date and time when this Step was first created within the Job.
+	CreatedAt time.Time `json:"created_at"`
+
+	// Index The index of the Step within the Pipeline Schema.
+	Index int `json:"index"`
+
+	// Name The name of the step or a generated default.
+	Name string `json:"name"`
+
+	// Status The current status of this Step within the Job.
+	Status string `json:"status"`
+
+	// StatusMessage A human-readable message indicating the reason for the status.
+	StatusMessage string `json:"status_message"`
+
+	// TimeoutSeconds The timeout for this Job.
+	TimeoutSeconds int `json:"timeout_seconds"`
+
+	// Uses The action used by this step.
+	Uses string `json:"uses"`
+}
+
+// PipelineStepLog An item from the logs of a Step.
+type PipelineStepLog struct {
+	// At The date and time when this message was emitted or captured.
+	At time.Time `json:"at"`
+
+	// Level The log level of the message.
+	Level string `json:"level"`
+
+	// Message The content of the message.
+	Message string `json:"message"`
+}
+
 // PipelineVersion An object containing the details of a Pipeline.
 type PipelineVersion struct {
 	// AppId The id of the Application containing this Run.
@@ -1554,192 +1746,6 @@ type ResourceTypeResponse struct {
 // RoleRequest Role defines the role that will be used in request
 type RoleRequest struct {
 	Role *string `json:"role,omitempty"`
-}
-
-// RunCreateRequest The parameters for creating a new Run for the Pipeline.
-type RunCreateRequest struct {
-	// Inputs The inputs provided for this Run.
-	Inputs *map[string]interface{} `json:"inputs,omitempty"`
-}
-
-// RunJobListResponse Details of a Job within the Run.
-type RunJobListResponse struct {
-	// AppId The id of the Application containing this Job.
-	AppId *string `json:"app_id,omitempty"`
-
-	// CancellationRequestedAt The date and time when cancellation of this Job was requested.
-	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
-
-	// CompletedAt The date and time when this Job entered a successful, failed, or cancelled status.
-	CompletedAt *time.Time `json:"completed_at,omitempty"`
-
-	// CreatedAt The date and time when this Job was first created within the Run.
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-
-	// Etag The current entity tag value for this Job.
-	Etag *string `json:"etag,omitempty"`
-
-	// Id The id of the Job within the Run.
-	Id *string `json:"id,omitempty"`
-
-	// OrgId The id of the Organization containing this Job.
-	OrgId *string `json:"org_id,omitempty"`
-
-	// PipelineId The id of the Pipeline.
-	PipelineId *string `json:"pipeline_id,omitempty"`
-
-	// PipelineVersion The id of the Pipeline Version associated with the Run.
-	PipelineVersion *string `json:"pipeline_version,omitempty"`
-
-	// RunId The id of the Run containing this Job.
-	RunId *string `json:"run_id,omitempty"`
-
-	// Status The current status of this Job.
-	Status *string `json:"status,omitempty"`
-
-	// StatusMessage A human-readable message indicating the reason for the status.
-	StatusMessage *string `json:"status_message,omitempty"`
-
-	// TimeoutSeconds The timeout for this Job.
-	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
-
-	// WaitingFor An event on which job is waiting
-	WaitingFor *string `json:"waiting_for,omitempty"`
-}
-
-// RunJobResponse defines model for RunJobResponse.
-type RunJobResponse struct {
-	// AppId The id of the Application containing this Job.
-	AppId *string `json:"app_id,omitempty"`
-
-	// CancellationRequestedAt The date and time when cancellation of this Job was requested.
-	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
-
-	// CompletedAt The date and time when this Job entered a successful, failed, or cancelled status.
-	CompletedAt *time.Time `json:"completed_at,omitempty"`
-
-	// CreatedAt The date and time when this Job was first created within the Run.
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-
-	// Etag The current entity tag value for this Job.
-	Etag *string `json:"etag,omitempty"`
-
-	// Id The id of the Job within the Run.
-	Id *string `json:"id,omitempty"`
-
-	// OrgId The id of the Organization containing this Job.
-	OrgId *string `json:"org_id,omitempty"`
-
-	// PipelineId The id of the Pipeline.
-	PipelineId *string `json:"pipeline_id,omitempty"`
-
-	// PipelineVersion The id of the Pipeline Version associated with the Run.
-	PipelineVersion *string `json:"pipeline_version,omitempty"`
-
-	// RunId The id of the Run containing this Job.
-	RunId *string `json:"run_id,omitempty"`
-
-	// Status The current status of this Job.
-	Status *string `json:"status,omitempty"`
-
-	// StatusMessage A human-readable message indicating the reason for the status.
-	StatusMessage *string `json:"status_message,omitempty"`
-
-	// Steps The collection of Steps that completed along with the current Step being executed.
-	Steps *[]RunJobStep `json:"steps,omitempty"`
-
-	// TimeoutSeconds The timeout for this Job.
-	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
-
-	// WaitingFor An event on which job is waiting
-	WaitingFor *string `json:"waiting_for,omitempty"`
-}
-
-// RunJobStep A Step within a Job.
-type RunJobStep struct {
-	// CompletedAt The date and time when this Step entered a successful, failed, or cancelled status.
-	CompletedAt *time.Time `json:"completed_at,omitempty"`
-
-	// CreatedAt The date and time when this Step was first created within the Job.
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-
-	// Index The index of the Step within the Pipeline Schema.
-	Index *int `json:"index,omitempty"`
-
-	// Status The current status of this Step within the Job.
-	Status *string `json:"status,omitempty"`
-
-	// StatusMessage A human-readable message indicating the reason for the status.
-	StatusMessage *string `json:"status_message,omitempty"`
-
-	// TimeoutSeconds The timeout for this Job.
-	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
-}
-
-// RunJobStepLog An item from the logs of a Step.
-type RunJobStepLog struct {
-	// At The date and time when this message was emitted or captured.
-	At time.Time `json:"at"`
-
-	// Level The log level of the message.
-	Level string `json:"level"`
-
-	// Message The content of the message.
-	Message string `json:"message"`
-}
-
-// RunResponse Details of a Run within the Pipeline.
-type RunResponse struct {
-	// AppId The id of the Application containing this Run.
-	AppId *string `json:"app_id,omitempty"`
-
-	// CancellationRequestedAt The date and time when cancellation of this Run was requested.
-	CancellationRequestedAt *time.Time `json:"cancellation_requested_at,omitempty"`
-
-	// CompletedAt The date and time when this Run entered a successful, failed, or cancelled status.
-	CompletedAt *time.Time `json:"completed_at,omitempty"`
-
-	// ConcurrencyGroup The optional concurrency group for this run within the application
-	ConcurrencyGroup *string `json:"concurrency_group,omitempty"`
-
-	// CreatedAt The date and time when this Run was first created.
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-
-	// Etag The current entity tag value for this Run.
-	Etag *string `json:"etag,omitempty"`
-
-	// ExecutingAt The date and time when this Run entered executing status.
-	ExecutingAt *time.Time `json:"executing_at,omitempty"`
-
-	// Id The unique id of the Run.
-	Id *string `json:"id,omitempty"`
-
-	// Inputs The inputs that were provided for this Run.
-	Inputs *map[string]interface{} `json:"inputs,omitempty"`
-
-	// OrgId The id of the Organization containing this Run.
-	OrgId *string `json:"org_id,omitempty"`
-
-	// PipelineId The id of the Pipeline associated with the Run.
-	PipelineId *string `json:"pipeline_id,omitempty"`
-
-	// PipelineVersion The id of the Pipeline Version associated with the Run.
-	PipelineVersion *string `json:"pipeline_version,omitempty"`
-
-	// RunAs The user id that the pipeline run is executing as when it calls Humanitec APIs.
-	RunAs *string `json:"run_as,omitempty"`
-
-	// Status The current status of this Run.
-	Status *string `json:"status,omitempty"`
-
-	// StatusMessage A human-readable message indicating the reason for the status.
-	StatusMessage *string `json:"status_message,omitempty"`
-
-	// TimeoutSeconds The timeout for this Run.
-	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
-
-	// WaitingFor Aggregated events on which run's jobs are waiting for
-	WaitingFor map[string]string `json:"waiting_for"`
 }
 
 // RuntimeInfoResponse RuntimeInfo object returned by the runtime endpoint. Represents a list post statuses grouped by modules and controllers (deployments and stateful sets).
@@ -2332,10 +2338,25 @@ type WorkloadProfileChartVersionResponse struct {
 	Version string `json:"version"`
 }
 
+// WorkloadProfilePatchRequest The proposed properties to update a workload profile.
+type WorkloadProfilePatchRequest struct {
+	// DeprecationMessage A not-empty string indicates that the workload profile is deprecated.
+	DeprecationMessage *string `json:"deprecation_message,omitempty"`
+
+	// Description Describes the workload profile
+	Description *string `json:"description,omitempty"`
+}
+
 // WorkloadProfileRequest Workload Profiles provide the baseline configuration for Workloads in Applications in Humanitec. Developers can configure various features of a workload profile to suit their needs. Examples of features might be `schedules` used in Kubernetes CronJobs or `ingress` which might be used to expose Pods controlled by a Kubernetes Deployment.
 //
 // Workloads in Humanitec are implemented as Helm Charts which must implement a specific schema.
 type WorkloadProfileRequest struct {
+	// DeprecationMessage A not-empty string indicates that the workload profile is deprecated.
+	DeprecationMessage *string `json:"deprecation_message,omitempty"`
+
+	// Description Describes the workload profile
+	Description *string `json:"description,omitempty"`
+
 	// Id Workload Profile ID
 	Id string `json:"id"`
 }
@@ -2350,14 +2371,26 @@ type WorkloadProfileResponse struct {
 	// CreatedBy User created the profile
 	CreatedBy string `json:"created_by"`
 
+	// DeprecationMessage A not-empty string indicates that the workload profile is deprecated.
+	DeprecationMessage *string `json:"deprecation_message,omitempty"`
+
+	// Description Describes the workload profile
+	Description string `json:"description"`
+
 	// Id Workload Profile ID
 	Id string `json:"id"`
 
 	// Latest The latest version of the profile
-	Latest string `json:"latest"`
+	Latest *string `json:"latest,omitempty"`
 
 	// OrgId Organization ID
 	OrgId string `json:"org_id"`
+
+	// UpdatedAt Timestamp when the entity was last updated.
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// UpdatedBy User who last updated the entity.
+	UpdatedBy string `json:"updated_by"`
 }
 
 // WorkloadProfileVersionRequest Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
@@ -2499,6 +2532,9 @@ type ByTriggerTypeQueryParam = string
 // ByVersionQueryParam defines model for byVersionQueryParam.
 type ByVersionQueryParam = string
 
+// DeprecatedQueryParam defines model for deprecatedQueryParam.
+type DeprecatedQueryParam = bool
+
 // IdempotencyKey defines model for idempotencyKey.
 type IdempotencyKey = string
 
@@ -2529,6 +2565,9 @@ type RunIdPathParam = string
 // StepIndexPathParam defines model for stepIndexPathParam.
 type StepIndexPathParam = int
 
+// VersionPathParam defines model for versionPathParam.
+type VersionPathParam = string
+
 // N400BadRequest HumanitecError represents a standard Humanitec Error
 type N400BadRequest = HumanitecErrorResponse
 
@@ -2547,8 +2586,8 @@ type N412PreconditionFailed = ErrorResponse
 // N422UnprocessableContent A standard error response
 type N422UnprocessableContent = ErrorResponse
 
-// ListApprovalRequestsParams defines parameters for ListApprovalRequests.
-type ListApprovalRequestsParams struct {
+// ListPipelineApprovalRequestsParams defines parameters for ListPipelineApprovalRequests.
+type ListPipelineApprovalRequestsParams struct {
 	// PerPage The maximum number of items to return in a page of results
 	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
 
@@ -2667,20 +2706,20 @@ type CreatePipelineRunParams struct {
 	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
 
-// DeleteRunParams defines parameters for DeleteRun.
-type DeleteRunParams struct {
+// DeletePipelineRunParams defines parameters for DeletePipelineRun.
+type DeletePipelineRunParams struct {
 	// IfMatch Indicate that the request should only succeed if there is an etag match
 	IfMatch *IfMatchHeaderParam `json:"If-Match,omitempty"`
 }
 
-// CancelRunParams defines parameters for CancelRun.
-type CancelRunParams struct {
+// CancelPipelineRunParams defines parameters for CancelPipelineRun.
+type CancelPipelineRunParams struct {
 	// IfMatch Indicate that the request should only succeed if there is an etag match
 	IfMatch *IfMatchHeaderParam `json:"If-Match,omitempty"`
 }
 
-// ListRunJobsParams defines parameters for ListRunJobs.
-type ListRunJobsParams struct {
+// ListPipelineJobsParams defines parameters for ListPipelineJobs.
+type ListPipelineJobsParams struct {
 	// Status Optional filter by status.
 	Status *ByStatusQueryParam `form:"status,omitempty" json:"status,omitempty"`
 
@@ -2691,14 +2730,14 @@ type ListRunJobsParams struct {
 	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 }
 
-// ListRunJobStepLogsParams defines parameters for ListRunJobStepLogs.
-type ListRunJobStepLogsParams struct {
+// ListPipelineStepLogsParams defines parameters for ListPipelineStepLogs.
+type ListPipelineStepLogsParams struct {
 	// Page The page token to request from
 	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 }
 
-// RestartRunParams defines parameters for RestartRun.
-type RestartRunParams struct {
+// RestartPipelineRunParams defines parameters for RestartPipelineRun.
+type RestartPipelineRunParams struct {
 	// IdempotencyKey The HTTP Idempotency-Key
 	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
@@ -2739,8 +2778,8 @@ type GetOrgsOrgIdAppsAppIdValueSetVersionsParams struct {
 	KeyChanged *string `form:"key_changed,omitempty" json:"key_changed,omitempty"`
 }
 
-// GetOrgsOrgIdArtefactVersionsParams defines parameters for GetOrgsOrgIdArtefactVersions.
-type GetOrgsOrgIdArtefactVersionsParams struct {
+// ListArtefactVersionsInOrgParams defines parameters for ListArtefactVersionsInOrg.
+type ListArtefactVersionsInOrgParams struct {
 	// Name (Optional) Filter Artefact Versions by name.
 	//
 	Name *string `form:"name,omitempty" json:"name,omitempty"`
@@ -2751,18 +2790,18 @@ type GetOrgsOrgIdArtefactVersionsParams struct {
 
 	// Archived (Optional) Filter for non-archived Artefact Versions. If no filter is defined only non-archived Artefact Versions are returned, if the filter is true both archived and non-archived Versions are returned.
 	//
-	Archived *string `form:"archived,omitempty" json:"archived,omitempty"`
+	Archived *bool `form:"archived,omitempty" json:"archived,omitempty"`
 }
 
-// PostOrgsOrgIdArtefactVersionsParams defines parameters for PostOrgsOrgIdArtefactVersions.
-type PostOrgsOrgIdArtefactVersionsParams struct {
+// CreateArtefactVersionParams defines parameters for CreateArtefactVersion.
+type CreateArtefactVersionParams struct {
 	// Vcs (Optional) Which version control system the version comes from. Default value is "git". If this parameter is not supplied or its value is "git", the provided ref, if not empty, is checked to ensure that it has the prefix "refs/".
 	//
 	Vcs *string `form:"vcs,omitempty" json:"vcs,omitempty"`
 }
 
-// GetOrgsOrgIdArtefactsParams defines parameters for GetOrgsOrgIdArtefacts.
-type GetOrgsOrgIdArtefactsParams struct {
+// ListArtefactsParams defines parameters for ListArtefacts.
+type ListArtefactsParams struct {
 	// Type (Optional) Filter Artefacts by type.
 	//
 	Type *string `form:"type,omitempty" json:"type,omitempty"`
@@ -2772,11 +2811,11 @@ type GetOrgsOrgIdArtefactsParams struct {
 	Name *string `form:"name,omitempty" json:"name,omitempty"`
 }
 
-// GetOrgsOrgIdArtefactsArtefactIdVersionsParams defines parameters for GetOrgsOrgIdArtefactsArtefactIdVersions.
-type GetOrgsOrgIdArtefactsArtefactIdVersionsParams struct {
+// ListArtefactVersionsParams defines parameters for ListArtefactVersions.
+type ListArtefactVersionsParams struct {
 	// Archived (Optional) Filter for non-archived Artefact Versions. If no filter is defined only non-archived Artefact Versions are returned, if the filter is true both archived and non-archived Versions are returned.
 	//
-	Archived *string `form:"archived,omitempty" json:"archived,omitempty"`
+	Archived *bool `form:"archived,omitempty" json:"archived,omitempty"`
 
 	// Reference (Optional) Filter Artefact Versions by by name including a version or digest.
 	//
@@ -2784,17 +2823,17 @@ type GetOrgsOrgIdArtefactsArtefactIdVersionsParams struct {
 
 	// Limit (Optional) Limit the number of versions returned by the endpoint.
 	//
-	Limit *string `form:"limit,omitempty" json:"limit,omitempty"`
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
-// GetHumanitecPublicKeysParams defines parameters for GetHumanitecPublicKeys.
-type GetHumanitecPublicKeysParams struct {
+// ListHumanitecPublicKeysParams defines parameters for ListHumanitecPublicKeys.
+type ListHumanitecPublicKeysParams struct {
 	// Active If set to true, the response includes only the active key, if set to false only non-active keys, otherwise both active and non-active keys.
 	Active *bool `form:"active,omitempty" json:"active,omitempty"`
 }
 
-// GetPublicKeysParams defines parameters for GetPublicKeys.
-type GetPublicKeysParams struct {
+// ListPublicKeysParams defines parameters for ListPublicKeys.
+type ListPublicKeysParams struct {
 	// Fingerprint The fingerprint of the requested key. If a value is provided, the result will contain a single key, if any.
 	Fingerprint *string `form:"fingerprint,omitempty" json:"fingerprint,omitempty"`
 }
@@ -2902,8 +2941,11 @@ type CreateWorkloadProfileChartVersionMultipartBody struct {
 	File *openapi_types.File `json:"file,omitempty"`
 }
 
-// GetOrgsOrgIdWorkloadProfilesParams defines parameters for GetOrgsOrgIdWorkloadProfiles.
-type GetOrgsOrgIdWorkloadProfilesParams struct {
+// ListWorkloadProfilesParams defines parameters for ListWorkloadProfiles.
+type ListWorkloadProfilesParams struct {
+	// Deprecated Whether to include deprecated profiles
+	Deprecated *DeprecatedQueryParam `form:"deprecated,omitempty" json:"deprecated,omitempty"`
+
 	// PerPage The maximum number of items to return in a page of results
 	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
 
@@ -2987,7 +3029,7 @@ type PatchOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyJSONRequestBody = ValuePatchPayloa
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyJSONRequestBody = ValueEditPayloadRequest
 
 // CreatePipelineRunJSONRequestBody defines body for CreatePipelineRun for application/json ContentType.
-type CreatePipelineRunJSONRequestBody = RunCreateRequest
+type CreatePipelineRunJSONRequestBody = PipelineRunCreateBody
 
 // PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdSetsSetId for application/json ContentType.
 type PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody = DeltaRequest
@@ -3022,11 +3064,11 @@ type PostOrgsOrgIdAppsAppIdWebhooksJSONRequestBody = WebhookRequest
 // PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody defines body for PatchOrgsOrgIdAppsAppIdWebhooksJobId for application/json ContentType.
 type PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody = WebhookRequest
 
-// PostOrgsOrgIdArtefactVersionsJSONRequestBody defines body for PostOrgsOrgIdArtefactVersions for application/json ContentType.
-type PostOrgsOrgIdArtefactVersionsJSONRequestBody = AddArtefactVersionPayloadRequest
+// CreateArtefactVersionJSONRequestBody defines body for CreateArtefactVersion for application/json ContentType.
+type CreateArtefactVersionJSONRequestBody = AddArtefactVersionPayloadRequest
 
-// PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody defines body for PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId for application/json ContentType.
-type PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody = UpdateArtefactVersionPayloadRequest
+// PatchArtefactVersionJSONRequestBody defines body for PatchArtefactVersion for application/json ContentType.
+type PatchArtefactVersionJSONRequestBody = UpdateArtefactVersionPayloadRequest
 
 // PostOrgsOrgIdEnvTypesJSONRequestBody defines body for PostOrgsOrgIdEnvTypes for application/json ContentType.
 type PostOrgsOrgIdEnvTypesJSONRequestBody = EnvironmentTypeRequest
@@ -3037,8 +3079,8 @@ type PostOrgsOrgIdEnvTypesEnvTypeUsersJSONRequestBody = UserRoleRequest
 // PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody defines body for PatchOrgsOrgIdEnvTypesEnvTypeUsersUserId for application/json ContentType.
 type PatchOrgsOrgIdEnvTypesEnvTypeUsersUserIdJSONRequestBody = RoleRequest
 
-// PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody defines body for PostOrgsOrgIdImagesImageIdBuilds for application/json ContentType.
-type PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody = ImageBuildRequest
+// CreateDeprecatedImageBuildJSONRequestBody defines body for CreateDeprecatedImageBuild for application/json ContentType.
+type CreateDeprecatedImageBuildJSONRequestBody = ImageBuildRequest
 
 // PostOrgsOrgIdInvitationsJSONRequestBody defines body for PostOrgsOrgIdInvitations for application/json ContentType.
 type PostOrgsOrgIdInvitationsJSONRequestBody = UserInviteRequestRequest
@@ -3091,8 +3133,11 @@ type PatchOrgsOrgIdUsersUserIdJSONRequestBody = RoleRequest
 // CreateWorkloadProfileChartVersionMultipartRequestBody defines body for CreateWorkloadProfileChartVersion for multipart/form-data ContentType.
 type CreateWorkloadProfileChartVersionMultipartRequestBody CreateWorkloadProfileChartVersionMultipartBody
 
-// PostOrgsOrgIdWorkloadProfilesJSONRequestBody defines body for PostOrgsOrgIdWorkloadProfiles for application/json ContentType.
-type PostOrgsOrgIdWorkloadProfilesJSONRequestBody = WorkloadProfileRequest
+// CreateWorkloadProfileJSONRequestBody defines body for CreateWorkloadProfile for application/json ContentType.
+type CreateWorkloadProfileJSONRequestBody = WorkloadProfileRequest
+
+// PatchWorkloadProfileJSONRequestBody defines body for PatchWorkloadProfile for application/json ContentType.
+type PatchWorkloadProfileJSONRequestBody = WorkloadProfilePatchRequest
 
 // CreateWorkloadProfileVersionJSONRequestBody defines body for CreateWorkloadProfileVersion for application/json ContentType.
 type CreateWorkloadProfileVersionJSONRequestBody = WorkloadProfileVersionRequest
@@ -3421,8 +3466,8 @@ type ClientInterface interface {
 	// GetOrgsOrgIdAppsAppId request
 	GetOrgsOrgIdAppsAppId(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListApprovalRequests request
-	ListApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListPipelineApprovalRequests request
+	ListPipelineApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdDeltas request
 	GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3474,19 +3519,19 @@ type ClientInterface interface {
 	// GetOrgsOrgIdAppsAppIdEnvsEnvId request
 	GetOrgsOrgIdAppsAppIdEnvsEnvId(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploys request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploys(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListDeployments request
+	ListDeployments(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploys request with any body
 	PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploys(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployId request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployId(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetDeployment request
+	GetDeployment(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrors request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrors(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListDeploymentErrors request
+	ListDeploymentErrors(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployId request with any body
 	PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3607,35 +3652,35 @@ type ClientInterface interface {
 
 	CreatePipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, body CreatePipelineRunJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteRun request
-	DeleteRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeletePipelineRun request
+	DeletePipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeletePipelineRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetRun request
-	GetRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetPipelineRun request
+	GetPipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CancelRun request
-	CancelRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CancelPipelineRun request
+	CancelPipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelPipelineRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListRunJobs request
-	ListRunJobs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListPipelineJobs request
+	ListPipelineJobs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListPipelineJobsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetRunJob request
-	GetRunJob(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetPipelineJob request
+	GetPipelineJob(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetApprovalRequest request
-	GetApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetPipelineApprovalRequest request
+	GetPipelineApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ApproveApprovalRequest request
-	ApproveApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ApprovePipelineApprovalRequest request
+	ApprovePipelineApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DenyApprovalRequest request
-	DenyApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DenyPipelineApprovalRequest request
+	DenyPipelineApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListRunJobStepLogs request
-	ListRunJobStepLogs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListPipelineStepLogs request
+	ListPipelineStepLogs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListPipelineStepLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// RestartRun request
-	RestartRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// RestartPipelineRun request
+	RestartPipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartPipelineRunParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetPipelineDefinition request
 	GetPipelineDefinition(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineDefinitionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3743,30 +3788,30 @@ type ClientInterface interface {
 
 	PatchOrgsOrgIdAppsAppIdWebhooksJobId(ctx context.Context, orgId string, appId string, jobId string, body PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdArtefactVersions request
-	GetOrgsOrgIdArtefactVersions(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListArtefactVersionsInOrg request
+	ListArtefactVersionsInOrg(ctx context.Context, orgId string, params *ListArtefactVersionsInOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOrgsOrgIdArtefactVersions request with any body
-	PostOrgsOrgIdArtefactVersionsWithBody(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateArtefactVersion request with any body
+	CreateArtefactVersionWithBody(ctx context.Context, orgId string, params *CreateArtefactVersionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdArtefactVersions(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, body PostOrgsOrgIdArtefactVersionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateArtefactVersion(ctx context.Context, orgId string, params *CreateArtefactVersionParams, body CreateArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdArtefactVersionsArtefactVersionId request
-	GetOrgsOrgIdArtefactVersionsArtefactVersionId(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetArtefactVersion request
+	GetArtefactVersion(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdArtefacts request
-	GetOrgsOrgIdArtefacts(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListArtefacts request
+	ListArtefacts(ctx context.Context, orgId string, params *ListArtefactsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteOrgsOrgIdArtefactsArtefactId request
-	DeleteOrgsOrgIdArtefactsArtefactId(ctx context.Context, orgId string, artefactId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteArtefact request
+	DeleteArtefact(ctx context.Context, orgId string, artefactId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdArtefactsArtefactIdVersions request
-	GetOrgsOrgIdArtefactsArtefactIdVersions(ctx context.Context, orgId string, artefactId string, params *GetOrgsOrgIdArtefactsArtefactIdVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListArtefactVersions request
+	ListArtefactVersions(ctx context.Context, orgId string, artefactId string, params *ListArtefactVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId request with any body
-	PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithBody(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PatchArtefactVersion request with any body
+	PatchArtefactVersionWithBody(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId(ctx context.Context, orgId string, artefactId string, versionId string, body PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchArtefactVersion(ctx context.Context, orgId string, artefactId string, versionId string, body PatchArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdEnvTypes request
 	GetOrgsOrgIdEnvTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3801,22 +3846,22 @@ type ClientInterface interface {
 	// GetOrgsOrgIdEvents request
 	GetOrgsOrgIdEvents(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetHumanitecPublicKeys request
-	GetHumanitecPublicKeys(ctx context.Context, orgId string, params *GetHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListHumanitecPublicKeys request
+	ListHumanitecPublicKeys(ctx context.Context, orgId string, params *ListHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdImages request
-	GetOrgsOrgIdImages(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListDeprecatedImages request
+	ListDeprecatedImages(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdImagesImageId request
-	GetOrgsOrgIdImagesImageId(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetDeprecatedImage request
+	GetDeprecatedImage(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdImagesImageIdBuilds request
-	GetOrgsOrgIdImagesImageIdBuilds(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListDeprecatedImageBuilds request
+	ListDeprecatedImageBuilds(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOrgsOrgIdImagesImageIdBuilds request with any body
-	PostOrgsOrgIdImagesImageIdBuildsWithBody(ctx context.Context, orgId string, imageId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateDeprecatedImageBuild request with any body
+	CreateDeprecatedImageBuildWithBody(ctx context.Context, orgId string, imageId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdImagesImageIdBuilds(ctx context.Context, orgId string, imageId string, body PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateDeprecatedImageBuild(ctx context.Context, orgId string, imageId string, body CreateDeprecatedImageBuildJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdInvitations request
 	GetOrgsOrgIdInvitations(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3826,8 +3871,8 @@ type ClientInterface interface {
 
 	PostOrgsOrgIdInvitations(ctx context.Context, orgId string, body PostOrgsOrgIdInvitationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetPublicKeys request
-	GetPublicKeys(ctx context.Context, orgId string, params *GetPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListPublicKeys request
+	ListPublicKeys(ctx context.Context, orgId string, params *ListPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreatePublicKey request with any body
 	CreatePublicKeyWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3994,22 +4039,24 @@ type ClientInterface interface {
 	// CreateWorkloadProfileChartVersion request with any body
 	CreateWorkloadProfileChartVersionWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdWorkloadProfiles request
-	GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListWorkloadProfiles request
+	ListWorkloadProfiles(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOrgsOrgIdWorkloadProfiles request with any body
-	PostOrgsOrgIdWorkloadProfilesWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateWorkloadProfile request with any body
+	CreateWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string, body PostOrgsOrgIdWorkloadProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, body CreateWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion request
-	DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion(ctx context.Context, orgId string, profileId string, version string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteWorkloadProfile request
+	DeleteWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteOrgsOrgIdWorkloadProfilesProfileQid request
-	DeleteOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetWorkloadProfile request
+	GetWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdWorkloadProfilesProfileQid request
-	GetOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PatchWorkloadProfile request with any body
+	PatchWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListWorkloadProfileVersions request
 	ListWorkloadProfileVersions(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4021,6 +4068,9 @@ type ClientInterface interface {
 
 	// GetLatestWorkloadProfileVersion request
 	GetLatestWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteWorkloadProfileVersion request
+	DeleteWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetTokens request
 	GetTokens(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4166,8 +4216,8 @@ func (c *Client) GetOrgsOrgIdAppsAppId(ctx context.Context, orgId string, appId 
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListApprovalRequestsRequest(c.Server, orgId, appId, params)
+func (c *Client) ListPipelineApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelineApprovalRequestsRequest(c.Server, orgId, appId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4406,8 +4456,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvId(ctx context.Context, orgId strin
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploys(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysRequest(c.Server, orgId, appId, envId)
+func (c *Client) ListDeployments(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDeploymentsRequest(c.Server, orgId, appId, envId)
 	if err != nil {
 		return nil, err
 	}
@@ -4442,8 +4492,8 @@ func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploys(ctx context.Context, org
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployId(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdRequest(c.Server, orgId, appId, envId, deployId)
+func (c *Client) GetDeployment(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDeploymentRequest(c.Server, orgId, appId, envId, deployId)
 	if err != nil {
 		return nil, err
 	}
@@ -4454,8 +4504,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployId(ctx context.Conte
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrors(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsRequest(c.Server, orgId, appId, envId, deployId)
+func (c *Client) ListDeploymentErrors(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDeploymentErrorsRequest(c.Server, orgId, appId, envId, deployId)
 	if err != nil {
 		return nil, err
 	}
@@ -4994,8 +5044,8 @@ func (c *Client) CreatePipelineRun(ctx context.Context, orgId OrgIdPathParam, ap
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
+func (c *Client) DeletePipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeletePipelineRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeletePipelineRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5006,8 +5056,8 @@ func (c *Client) DeleteRun(ctx context.Context, orgId OrgIdPathParam, appId AppI
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetRunRequest(c.Server, orgId, appId, pipelineId, runId)
+func (c *Client) GetPipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPipelineRunRequest(c.Server, orgId, appId, pipelineId, runId)
 	if err != nil {
 		return nil, err
 	}
@@ -5018,8 +5068,8 @@ func (c *Client) GetRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPa
 	return c.Client.Do(req)
 }
 
-func (c *Client) CancelRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCancelRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
+func (c *Client) CancelPipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelPipelineRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCancelPipelineRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5030,8 +5080,8 @@ func (c *Client) CancelRun(ctx context.Context, orgId OrgIdPathParam, appId AppI
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListRunJobs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListRunJobsRequest(c.Server, orgId, appId, pipelineId, runId, params)
+func (c *Client) ListPipelineJobs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListPipelineJobsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelineJobsRequest(c.Server, orgId, appId, pipelineId, runId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5042,8 +5092,8 @@ func (c *Client) ListRunJobs(ctx context.Context, orgId OrgIdPathParam, appId Ap
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetRunJob(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetRunJobRequest(c.Server, orgId, appId, pipelineId, runId, jobId)
+func (c *Client) GetPipelineJob(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPipelineJobRequest(c.Server, orgId, appId, pipelineId, runId, jobId)
 	if err != nil {
 		return nil, err
 	}
@@ -5054,8 +5104,8 @@ func (c *Client) GetRunJob(ctx context.Context, orgId OrgIdPathParam, appId AppI
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
+func (c *Client) GetPipelineApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPipelineApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
 	if err != nil {
 		return nil, err
 	}
@@ -5066,8 +5116,8 @@ func (c *Client) GetApprovalRequest(ctx context.Context, orgId OrgIdPathParam, a
 	return c.Client.Do(req)
 }
 
-func (c *Client) ApproveApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewApproveApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
+func (c *Client) ApprovePipelineApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApprovePipelineApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
 	if err != nil {
 		return nil, err
 	}
@@ -5078,8 +5128,8 @@ func (c *Client) ApproveApprovalRequest(ctx context.Context, orgId OrgIdPathPara
 	return c.Client.Do(req)
 }
 
-func (c *Client) DenyApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDenyApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
+func (c *Client) DenyPipelineApprovalRequest(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDenyPipelineApprovalRequestRequest(c.Server, orgId, appId, pipelineId, runId, jobId, approvalId)
 	if err != nil {
 		return nil, err
 	}
@@ -5090,8 +5140,8 @@ func (c *Client) DenyApprovalRequest(ctx context.Context, orgId OrgIdPathParam, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListRunJobStepLogs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListRunJobStepLogsRequest(c.Server, orgId, appId, pipelineId, runId, jobId, stepIndex, params)
+func (c *Client) ListPipelineStepLogs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListPipelineStepLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelineStepLogsRequest(c.Server, orgId, appId, pipelineId, runId, jobId, stepIndex, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5102,8 +5152,8 @@ func (c *Client) ListRunJobStepLogs(ctx context.Context, orgId OrgIdPathParam, a
 	return c.Client.Do(req)
 }
 
-func (c *Client) RestartRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewRestartRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
+func (c *Client) RestartPipelineRun(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartPipelineRunParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRestartPipelineRunRequest(c.Server, orgId, appId, pipelineId, runId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5582,8 +5632,8 @@ func (c *Client) PatchOrgsOrgIdAppsAppIdWebhooksJobId(ctx context.Context, orgId
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdArtefactVersions(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdArtefactVersionsRequest(c.Server, orgId, params)
+func (c *Client) ListArtefactVersionsInOrg(ctx context.Context, orgId string, params *ListArtefactVersionsInOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListArtefactVersionsInOrgRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5594,8 +5644,8 @@ func (c *Client) GetOrgsOrgIdArtefactVersions(ctx context.Context, orgId string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdArtefactVersionsWithBody(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdArtefactVersionsRequestWithBody(c.Server, orgId, params, contentType, body)
+func (c *Client) CreateArtefactVersionWithBody(ctx context.Context, orgId string, params *CreateArtefactVersionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateArtefactVersionRequestWithBody(c.Server, orgId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5606,8 +5656,8 @@ func (c *Client) PostOrgsOrgIdArtefactVersionsWithBody(ctx context.Context, orgI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdArtefactVersions(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, body PostOrgsOrgIdArtefactVersionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdArtefactVersionsRequest(c.Server, orgId, params, body)
+func (c *Client) CreateArtefactVersion(ctx context.Context, orgId string, params *CreateArtefactVersionParams, body CreateArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateArtefactVersionRequest(c.Server, orgId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5618,8 +5668,8 @@ func (c *Client) PostOrgsOrgIdArtefactVersions(ctx context.Context, orgId string
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdArtefactVersionsArtefactVersionId(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdArtefactVersionsArtefactVersionIdRequest(c.Server, orgId, artefactVersionId)
+func (c *Client) GetArtefactVersion(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetArtefactVersionRequest(c.Server, orgId, artefactVersionId)
 	if err != nil {
 		return nil, err
 	}
@@ -5630,8 +5680,8 @@ func (c *Client) GetOrgsOrgIdArtefactVersionsArtefactVersionId(ctx context.Conte
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdArtefacts(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdArtefactsRequest(c.Server, orgId, params)
+func (c *Client) ListArtefacts(ctx context.Context, orgId string, params *ListArtefactsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListArtefactsRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5642,8 +5692,8 @@ func (c *Client) GetOrgsOrgIdArtefacts(ctx context.Context, orgId string, params
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteOrgsOrgIdArtefactsArtefactId(ctx context.Context, orgId string, artefactId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteOrgsOrgIdArtefactsArtefactIdRequest(c.Server, orgId, artefactId)
+func (c *Client) DeleteArtefact(ctx context.Context, orgId string, artefactId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteArtefactRequest(c.Server, orgId, artefactId)
 	if err != nil {
 		return nil, err
 	}
@@ -5654,8 +5704,8 @@ func (c *Client) DeleteOrgsOrgIdArtefactsArtefactId(ctx context.Context, orgId s
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdArtefactsArtefactIdVersions(ctx context.Context, orgId string, artefactId string, params *GetOrgsOrgIdArtefactsArtefactIdVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdArtefactsArtefactIdVersionsRequest(c.Server, orgId, artefactId, params)
+func (c *Client) ListArtefactVersions(ctx context.Context, orgId string, artefactId string, params *ListArtefactVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListArtefactVersionsRequest(c.Server, orgId, artefactId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5666,8 +5716,8 @@ func (c *Client) GetOrgsOrgIdArtefactsArtefactIdVersions(ctx context.Context, or
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithBody(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdRequestWithBody(c.Server, orgId, artefactId, versionId, contentType, body)
+func (c *Client) PatchArtefactVersionWithBody(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchArtefactVersionRequestWithBody(c.Server, orgId, artefactId, versionId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5678,8 +5728,8 @@ func (c *Client) PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithBody(ctx 
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId(ctx context.Context, orgId string, artefactId string, versionId string, body PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdRequest(c.Server, orgId, artefactId, versionId, body)
+func (c *Client) PatchArtefactVersion(ctx context.Context, orgId string, artefactId string, versionId string, body PatchArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchArtefactVersionRequest(c.Server, orgId, artefactId, versionId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5834,8 +5884,8 @@ func (c *Client) GetOrgsOrgIdEvents(ctx context.Context, orgId string, reqEditor
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetHumanitecPublicKeys(ctx context.Context, orgId string, params *GetHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetHumanitecPublicKeysRequest(c.Server, orgId, params)
+func (c *Client) ListHumanitecPublicKeys(ctx context.Context, orgId string, params *ListHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListHumanitecPublicKeysRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5846,8 +5896,8 @@ func (c *Client) GetHumanitecPublicKeys(ctx context.Context, orgId string, param
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdImages(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdImagesRequest(c.Server, orgId)
+func (c *Client) ListDeprecatedImages(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDeprecatedImagesRequest(c.Server, orgId)
 	if err != nil {
 		return nil, err
 	}
@@ -5858,8 +5908,8 @@ func (c *Client) GetOrgsOrgIdImages(ctx context.Context, orgId string, reqEditor
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdImagesImageId(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdImagesImageIdRequest(c.Server, orgId, imageId)
+func (c *Client) GetDeprecatedImage(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDeprecatedImageRequest(c.Server, orgId, imageId)
 	if err != nil {
 		return nil, err
 	}
@@ -5870,8 +5920,8 @@ func (c *Client) GetOrgsOrgIdImagesImageId(ctx context.Context, orgId string, im
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdImagesImageIdBuilds(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdImagesImageIdBuildsRequest(c.Server, orgId, imageId)
+func (c *Client) ListDeprecatedImageBuilds(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDeprecatedImageBuildsRequest(c.Server, orgId, imageId)
 	if err != nil {
 		return nil, err
 	}
@@ -5882,8 +5932,8 @@ func (c *Client) GetOrgsOrgIdImagesImageIdBuilds(ctx context.Context, orgId stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdImagesImageIdBuildsWithBody(ctx context.Context, orgId string, imageId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdImagesImageIdBuildsRequestWithBody(c.Server, orgId, imageId, contentType, body)
+func (c *Client) CreateDeprecatedImageBuildWithBody(ctx context.Context, orgId string, imageId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDeprecatedImageBuildRequestWithBody(c.Server, orgId, imageId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5894,8 +5944,8 @@ func (c *Client) PostOrgsOrgIdImagesImageIdBuildsWithBody(ctx context.Context, o
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdImagesImageIdBuilds(ctx context.Context, orgId string, imageId string, body PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdImagesImageIdBuildsRequest(c.Server, orgId, imageId, body)
+func (c *Client) CreateDeprecatedImageBuild(ctx context.Context, orgId string, imageId string, body CreateDeprecatedImageBuildJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDeprecatedImageBuildRequest(c.Server, orgId, imageId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5942,8 +5992,8 @@ func (c *Client) PostOrgsOrgIdInvitations(ctx context.Context, orgId string, bod
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetPublicKeys(ctx context.Context, orgId string, params *GetPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetPublicKeysRequest(c.Server, orgId, params)
+func (c *Client) ListPublicKeys(ctx context.Context, orgId string, params *ListPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPublicKeysRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6674,8 +6724,8 @@ func (c *Client) CreateWorkloadProfileChartVersionWithBody(ctx context.Context, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdWorkloadProfilesRequest(c.Server, orgId, params)
+func (c *Client) ListWorkloadProfiles(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWorkloadProfilesRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6686,8 +6736,8 @@ func (c *Client) GetOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId OrgIdPa
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdWorkloadProfilesWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdWorkloadProfilesRequestWithBody(c.Server, orgId, contentType, body)
+func (c *Client) CreateWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWorkloadProfileRequestWithBody(c.Server, orgId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6698,8 +6748,8 @@ func (c *Client) PostOrgsOrgIdWorkloadProfilesWithBody(ctx context.Context, orgI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string, body PostOrgsOrgIdWorkloadProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdWorkloadProfilesRequest(c.Server, orgId, body)
+func (c *Client) CreateWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, body CreateWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWorkloadProfileRequest(c.Server, orgId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6710,8 +6760,8 @@ func (c *Client) PostOrgsOrgIdWorkloadProfiles(ctx context.Context, orgId string
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion(ctx context.Context, orgId string, profileId string, version string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionRequest(c.Server, orgId, profileId, version)
+func (c *Client) DeleteWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteWorkloadProfileRequest(c.Server, orgId, profileQid)
 	if err != nil {
 		return nil, err
 	}
@@ -6722,8 +6772,8 @@ func (c *Client) DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion(ctx con
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteOrgsOrgIdWorkloadProfilesProfileQidRequest(c.Server, orgId, profileQid)
+func (c *Client) GetWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWorkloadProfileRequest(c.Server, orgId, profileQid)
 	if err != nil {
 		return nil, err
 	}
@@ -6734,8 +6784,20 @@ func (c *Client) DeleteOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdWorkloadProfilesProfileQid(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdWorkloadProfilesProfileQidRequest(c.Server, orgId, profileQid)
+func (c *Client) PatchWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchWorkloadProfileRequestWithBody(c.Server, orgId, profileQid, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchWorkloadProfileRequest(c.Server, orgId, profileQid, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6784,6 +6846,18 @@ func (c *Client) CreateWorkloadProfileVersion(ctx context.Context, orgId OrgIdPa
 
 func (c *Client) GetLatestWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLatestWorkloadProfileVersionRequest(c.Server, orgId, profileQid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteWorkloadProfileVersionRequest(c.Server, orgId, profileQid, version)
 	if err != nil {
 		return nil, err
 	}
@@ -7181,8 +7255,8 @@ func NewGetOrgsOrgIdAppsAppIdRequest(server string, orgId string, appId string) 
 	return req, nil
 }
 
-// NewListApprovalRequestsRequest generates requests for ListApprovalRequests
-func NewListApprovalRequestsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams) (*http.Request, error) {
+// NewListPipelineApprovalRequestsRequest generates requests for ListPipelineApprovalRequests
+func NewListPipelineApprovalRequestsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7985,8 +8059,8 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRequest(server string, orgId string, appId
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysRequest generates requests for GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploys
-func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysRequest(server string, orgId string, appId string, envId string) (*http.Request, error) {
+// NewListDeploymentsRequest generates requests for ListDeployments
+func NewListDeploymentsRequest(server string, orgId string, appId string, envId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8094,8 +8168,8 @@ func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysRequestWithBody(server string, org
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdRequest generates requests for GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployId
-func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdRequest(server string, orgId string, appId string, envId string, deployId string) (*http.Request, error) {
+// NewGetDeploymentRequest generates requests for GetDeployment
+func NewGetDeploymentRequest(server string, orgId string, appId string, envId string, deployId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8149,8 +8223,8 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdRequest(server string, orgI
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsRequest generates requests for GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrors
-func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsRequest(server string, orgId string, appId string, envId string, deployId string) (*http.Request, error) {
+// NewListDeploymentErrorsRequest generates requests for ListDeploymentErrors
+func NewListDeploymentErrorsRequest(server string, orgId string, appId string, envId string, deployId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10191,8 +10265,8 @@ func NewCreatePipelineRunRequestWithBody(server string, orgId OrgIdPathParam, ap
 	return req, nil
 }
 
-// NewDeleteRunRequest generates requests for DeleteRun
-func NewDeleteRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams) (*http.Request, error) {
+// NewDeletePipelineRunRequest generates requests for DeletePipelineRun
+func NewDeletePipelineRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeletePipelineRunParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10257,8 +10331,8 @@ func NewDeleteRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathPar
 	return req, nil
 }
 
-// NewGetRunRequest generates requests for GetRun
-func NewGetRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam) (*http.Request, error) {
+// NewGetPipelineRunRequest generates requests for GetPipelineRun
+func NewGetPipelineRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10312,8 +10386,8 @@ func NewGetRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam,
 	return req, nil
 }
 
-// NewCancelRunRequest generates requests for CancelRun
-func NewCancelRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams) (*http.Request, error) {
+// NewCancelPipelineRunRequest generates requests for CancelPipelineRun
+func NewCancelPipelineRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelPipelineRunParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10378,8 +10452,8 @@ func NewCancelRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathPar
 	return req, nil
 }
 
-// NewListRunJobsRequest generates requests for ListRunJobs
-func NewListRunJobsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams) (*http.Request, error) {
+// NewListPipelineJobsRequest generates requests for ListPipelineJobs
+func NewListPipelineJobsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListPipelineJobsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10487,8 +10561,8 @@ func NewListRunJobsRequest(server string, orgId OrgIdPathParam, appId AppIdPathP
 	return req, nil
 }
 
-// NewGetRunJobRequest generates requests for GetRunJob
-func NewGetRunJobRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam) (*http.Request, error) {
+// NewGetPipelineJobRequest generates requests for GetPipelineJob
+func NewGetPipelineJobRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10549,8 +10623,8 @@ func NewGetRunJobRequest(server string, orgId OrgIdPathParam, appId AppIdPathPar
 	return req, nil
 }
 
-// NewGetApprovalRequestRequest generates requests for GetApprovalRequest
-func NewGetApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
+// NewGetPipelineApprovalRequestRequest generates requests for GetPipelineApprovalRequest
+func NewGetPipelineApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10618,8 +10692,8 @@ func NewGetApprovalRequestRequest(server string, orgId OrgIdPathParam, appId App
 	return req, nil
 }
 
-// NewApproveApprovalRequestRequest generates requests for ApproveApprovalRequest
-func NewApproveApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
+// NewApprovePipelineApprovalRequestRequest generates requests for ApprovePipelineApprovalRequest
+func NewApprovePipelineApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10687,8 +10761,8 @@ func NewApproveApprovalRequestRequest(server string, orgId OrgIdPathParam, appId
 	return req, nil
 }
 
-// NewDenyApprovalRequestRequest generates requests for DenyApprovalRequest
-func NewDenyApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
+// NewDenyPipelineApprovalRequestRequest generates requests for DenyPipelineApprovalRequest
+func NewDenyPipelineApprovalRequestRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10756,8 +10830,8 @@ func NewDenyApprovalRequestRequest(server string, orgId OrgIdPathParam, appId Ap
 	return req, nil
 }
 
-// NewListRunJobStepLogsRequest generates requests for ListRunJobStepLogs
-func NewListRunJobStepLogsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams) (*http.Request, error) {
+// NewListPipelineStepLogsRequest generates requests for ListPipelineStepLogs
+func NewListPipelineStepLogsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListPipelineStepLogsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10847,8 +10921,8 @@ func NewListRunJobStepLogsRequest(server string, orgId OrgIdPathParam, appId App
 	return req, nil
 }
 
-// NewRestartRunRequest generates requests for RestartRun
-func NewRestartRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams) (*http.Request, error) {
+// NewRestartPipelineRunRequest generates requests for RestartPipelineRun
+func NewRestartPipelineRunRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartPipelineRunParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12488,8 +12562,8 @@ func NewPatchOrgsOrgIdAppsAppIdWebhooksJobIdRequestWithBody(server string, orgId
 	return req, nil
 }
 
-// NewGetOrgsOrgIdArtefactVersionsRequest generates requests for GetOrgsOrgIdArtefactVersions
-func NewGetOrgsOrgIdArtefactVersionsRequest(server string, orgId string, params *GetOrgsOrgIdArtefactVersionsParams) (*http.Request, error) {
+// NewListArtefactVersionsInOrgRequest generates requests for ListArtefactVersionsInOrg
+func NewListArtefactVersionsInOrgRequest(server string, orgId string, params *ListArtefactVersionsInOrgParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12576,19 +12650,19 @@ func NewGetOrgsOrgIdArtefactVersionsRequest(server string, orgId string, params 
 	return req, nil
 }
 
-// NewPostOrgsOrgIdArtefactVersionsRequest calls the generic PostOrgsOrgIdArtefactVersions builder with application/json body
-func NewPostOrgsOrgIdArtefactVersionsRequest(server string, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, body PostOrgsOrgIdArtefactVersionsJSONRequestBody) (*http.Request, error) {
+// NewCreateArtefactVersionRequest calls the generic CreateArtefactVersion builder with application/json body
+func NewCreateArtefactVersionRequest(server string, orgId string, params *CreateArtefactVersionParams, body CreateArtefactVersionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostOrgsOrgIdArtefactVersionsRequestWithBody(server, orgId, params, "application/json", bodyReader)
+	return NewCreateArtefactVersionRequestWithBody(server, orgId, params, "application/json", bodyReader)
 }
 
-// NewPostOrgsOrgIdArtefactVersionsRequestWithBody generates requests for PostOrgsOrgIdArtefactVersions with any type of body
-func NewPostOrgsOrgIdArtefactVersionsRequestWithBody(server string, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateArtefactVersionRequestWithBody generates requests for CreateArtefactVersion with any type of body
+func NewCreateArtefactVersionRequestWithBody(server string, orgId string, params *CreateArtefactVersionParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12645,8 +12719,8 @@ func NewPostOrgsOrgIdArtefactVersionsRequestWithBody(server string, orgId string
 	return req, nil
 }
 
-// NewGetOrgsOrgIdArtefactVersionsArtefactVersionIdRequest generates requests for GetOrgsOrgIdArtefactVersionsArtefactVersionId
-func NewGetOrgsOrgIdArtefactVersionsArtefactVersionIdRequest(server string, orgId string, artefactVersionId string) (*http.Request, error) {
+// NewGetArtefactVersionRequest generates requests for GetArtefactVersion
+func NewGetArtefactVersionRequest(server string, orgId string, artefactVersionId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12686,8 +12760,8 @@ func NewGetOrgsOrgIdArtefactVersionsArtefactVersionIdRequest(server string, orgI
 	return req, nil
 }
 
-// NewGetOrgsOrgIdArtefactsRequest generates requests for GetOrgsOrgIdArtefacts
-func NewGetOrgsOrgIdArtefactsRequest(server string, orgId string, params *GetOrgsOrgIdArtefactsParams) (*http.Request, error) {
+// NewListArtefactsRequest generates requests for ListArtefacts
+func NewListArtefactsRequest(server string, orgId string, params *ListArtefactsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12758,8 +12832,8 @@ func NewGetOrgsOrgIdArtefactsRequest(server string, orgId string, params *GetOrg
 	return req, nil
 }
 
-// NewDeleteOrgsOrgIdArtefactsArtefactIdRequest generates requests for DeleteOrgsOrgIdArtefactsArtefactId
-func NewDeleteOrgsOrgIdArtefactsArtefactIdRequest(server string, orgId string, artefactId string) (*http.Request, error) {
+// NewDeleteArtefactRequest generates requests for DeleteArtefact
+func NewDeleteArtefactRequest(server string, orgId string, artefactId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12799,8 +12873,8 @@ func NewDeleteOrgsOrgIdArtefactsArtefactIdRequest(server string, orgId string, a
 	return req, nil
 }
 
-// NewGetOrgsOrgIdArtefactsArtefactIdVersionsRequest generates requests for GetOrgsOrgIdArtefactsArtefactIdVersions
-func NewGetOrgsOrgIdArtefactsArtefactIdVersionsRequest(server string, orgId string, artefactId string, params *GetOrgsOrgIdArtefactsArtefactIdVersionsParams) (*http.Request, error) {
+// NewListArtefactVersionsRequest generates requests for ListArtefactVersions
+func NewListArtefactVersionsRequest(server string, orgId string, artefactId string, params *ListArtefactVersionsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12894,19 +12968,19 @@ func NewGetOrgsOrgIdArtefactsArtefactIdVersionsRequest(server string, orgId stri
 	return req, nil
 }
 
-// NewPatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdRequest calls the generic PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId builder with application/json body
-func NewPatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdRequest(server string, orgId string, artefactId string, versionId string, body PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody) (*http.Request, error) {
+// NewPatchArtefactVersionRequest calls the generic PatchArtefactVersion builder with application/json body
+func NewPatchArtefactVersionRequest(server string, orgId string, artefactId string, versionId string, body PatchArtefactVersionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdRequestWithBody(server, orgId, artefactId, versionId, "application/json", bodyReader)
+	return NewPatchArtefactVersionRequestWithBody(server, orgId, artefactId, versionId, "application/json", bodyReader)
 }
 
-// NewPatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdRequestWithBody generates requests for PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId with any type of body
-func NewPatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdRequestWithBody(server string, orgId string, artefactId string, versionId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPatchArtefactVersionRequestWithBody generates requests for PatchArtefactVersion with any type of body
+func NewPatchArtefactVersionRequestWithBody(server string, orgId string, artefactId string, versionId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13363,8 +13437,8 @@ func NewGetOrgsOrgIdEventsRequest(server string, orgId string) (*http.Request, e
 	return req, nil
 }
 
-// NewGetHumanitecPublicKeysRequest generates requests for GetHumanitecPublicKeys
-func NewGetHumanitecPublicKeysRequest(server string, orgId string, params *GetHumanitecPublicKeysParams) (*http.Request, error) {
+// NewListHumanitecPublicKeysRequest generates requests for ListHumanitecPublicKeys
+func NewListHumanitecPublicKeysRequest(server string, orgId string, params *ListHumanitecPublicKeysParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13419,8 +13493,8 @@ func NewGetHumanitecPublicKeysRequest(server string, orgId string, params *GetHu
 	return req, nil
 }
 
-// NewGetOrgsOrgIdImagesRequest generates requests for GetOrgsOrgIdImages
-func NewGetOrgsOrgIdImagesRequest(server string, orgId string) (*http.Request, error) {
+// NewListDeprecatedImagesRequest generates requests for ListDeprecatedImages
+func NewListDeprecatedImagesRequest(server string, orgId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13453,8 +13527,8 @@ func NewGetOrgsOrgIdImagesRequest(server string, orgId string) (*http.Request, e
 	return req, nil
 }
 
-// NewGetOrgsOrgIdImagesImageIdRequest generates requests for GetOrgsOrgIdImagesImageId
-func NewGetOrgsOrgIdImagesImageIdRequest(server string, orgId string, imageId string) (*http.Request, error) {
+// NewGetDeprecatedImageRequest generates requests for GetDeprecatedImage
+func NewGetDeprecatedImageRequest(server string, orgId string, imageId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13494,8 +13568,8 @@ func NewGetOrgsOrgIdImagesImageIdRequest(server string, orgId string, imageId st
 	return req, nil
 }
 
-// NewGetOrgsOrgIdImagesImageIdBuildsRequest generates requests for GetOrgsOrgIdImagesImageIdBuilds
-func NewGetOrgsOrgIdImagesImageIdBuildsRequest(server string, orgId string, imageId string) (*http.Request, error) {
+// NewListDeprecatedImageBuildsRequest generates requests for ListDeprecatedImageBuilds
+func NewListDeprecatedImageBuildsRequest(server string, orgId string, imageId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13535,19 +13609,19 @@ func NewGetOrgsOrgIdImagesImageIdBuildsRequest(server string, orgId string, imag
 	return req, nil
 }
 
-// NewPostOrgsOrgIdImagesImageIdBuildsRequest calls the generic PostOrgsOrgIdImagesImageIdBuilds builder with application/json body
-func NewPostOrgsOrgIdImagesImageIdBuildsRequest(server string, orgId string, imageId string, body PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody) (*http.Request, error) {
+// NewCreateDeprecatedImageBuildRequest calls the generic CreateDeprecatedImageBuild builder with application/json body
+func NewCreateDeprecatedImageBuildRequest(server string, orgId string, imageId string, body CreateDeprecatedImageBuildJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostOrgsOrgIdImagesImageIdBuildsRequestWithBody(server, orgId, imageId, "application/json", bodyReader)
+	return NewCreateDeprecatedImageBuildRequestWithBody(server, orgId, imageId, "application/json", bodyReader)
 }
 
-// NewPostOrgsOrgIdImagesImageIdBuildsRequestWithBody generates requests for PostOrgsOrgIdImagesImageIdBuilds with any type of body
-func NewPostOrgsOrgIdImagesImageIdBuildsRequestWithBody(server string, orgId string, imageId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateDeprecatedImageBuildRequestWithBody generates requests for CreateDeprecatedImageBuild with any type of body
+func NewCreateDeprecatedImageBuildRequestWithBody(server string, orgId string, imageId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13670,8 +13744,8 @@ func NewPostOrgsOrgIdInvitationsRequestWithBody(server string, orgId string, con
 	return req, nil
 }
 
-// NewGetPublicKeysRequest generates requests for GetPublicKeys
-func NewGetPublicKeysRequest(server string, orgId string, params *GetPublicKeysParams) (*http.Request, error) {
+// NewListPublicKeysRequest generates requests for ListPublicKeys
+func NewListPublicKeysRequest(server string, orgId string, params *ListPublicKeysParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16039,8 +16113,8 @@ func NewCreateWorkloadProfileChartVersionRequestWithBody(server string, orgId Or
 	return req, nil
 }
 
-// NewGetOrgsOrgIdWorkloadProfilesRequest generates requests for GetOrgsOrgIdWorkloadProfiles
-func NewGetOrgsOrgIdWorkloadProfilesRequest(server string, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams) (*http.Request, error) {
+// NewListWorkloadProfilesRequest generates requests for ListWorkloadProfiles
+func NewListWorkloadProfilesRequest(server string, orgId OrgIdPathParam, params *ListWorkloadProfilesParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16067,6 +16141,22 @@ func NewGetOrgsOrgIdWorkloadProfilesRequest(server string, orgId OrgIdPathParam,
 
 	if params != nil {
 		queryValues := queryURL.Query()
+
+		if params.Deprecated != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "deprecated", runtime.ParamLocationQuery, *params.Deprecated); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
 
 		if params.PerPage != nil {
 
@@ -16111,19 +16201,19 @@ func NewGetOrgsOrgIdWorkloadProfilesRequest(server string, orgId OrgIdPathParam,
 	return req, nil
 }
 
-// NewPostOrgsOrgIdWorkloadProfilesRequest calls the generic PostOrgsOrgIdWorkloadProfiles builder with application/json body
-func NewPostOrgsOrgIdWorkloadProfilesRequest(server string, orgId string, body PostOrgsOrgIdWorkloadProfilesJSONRequestBody) (*http.Request, error) {
+// NewCreateWorkloadProfileRequest calls the generic CreateWorkloadProfile builder with application/json body
+func NewCreateWorkloadProfileRequest(server string, orgId OrgIdPathParam, body CreateWorkloadProfileJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostOrgsOrgIdWorkloadProfilesRequestWithBody(server, orgId, "application/json", bodyReader)
+	return NewCreateWorkloadProfileRequestWithBody(server, orgId, "application/json", bodyReader)
 }
 
-// NewPostOrgsOrgIdWorkloadProfilesRequestWithBody generates requests for PostOrgsOrgIdWorkloadProfiles with any type of body
-func NewPostOrgsOrgIdWorkloadProfilesRequestWithBody(server string, orgId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateWorkloadProfileRequestWithBody generates requests for CreateWorkloadProfile with any type of body
+func NewCreateWorkloadProfileRequestWithBody(server string, orgId OrgIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16158,56 +16248,8 @@ func NewPostOrgsOrgIdWorkloadProfilesRequestWithBody(server string, orgId string
 	return req, nil
 }
 
-// NewDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionRequest generates requests for DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion
-func NewDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionRequest(server string, orgId string, profileId string, version string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileId", runtime.ParamLocationPath, profileId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam2 string
-
-	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "version", runtime.ParamLocationPath, version)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s/versions/%s", pathParam0, pathParam1, pathParam2)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewDeleteOrgsOrgIdWorkloadProfilesProfileQidRequest generates requests for DeleteOrgsOrgIdWorkloadProfilesProfileQid
-func NewDeleteOrgsOrgIdWorkloadProfilesProfileQidRequest(server string, orgId string, profileQid string) (*http.Request, error) {
+// NewDeleteWorkloadProfileRequest generates requests for DeleteWorkloadProfile
+func NewDeleteWorkloadProfileRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16247,8 +16289,8 @@ func NewDeleteOrgsOrgIdWorkloadProfilesProfileQidRequest(server string, orgId st
 	return req, nil
 }
 
-// NewGetOrgsOrgIdWorkloadProfilesProfileQidRequest generates requests for GetOrgsOrgIdWorkloadProfilesProfileQid
-func NewGetOrgsOrgIdWorkloadProfilesProfileQidRequest(server string, orgId string, profileQid string) (*http.Request, error) {
+// NewGetWorkloadProfileRequest generates requests for GetWorkloadProfile
+func NewGetWorkloadProfileRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16284,6 +16326,60 @@ func NewGetOrgsOrgIdWorkloadProfilesProfileQidRequest(server string, orgId strin
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPatchWorkloadProfileRequest calls the generic PatchWorkloadProfile builder with application/json body
+func NewPatchWorkloadProfileRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchWorkloadProfileRequestWithBody(server, orgId, profileQid, "application/json", bodyReader)
+}
+
+// NewPatchWorkloadProfileRequestWithBody generates requests for PatchWorkloadProfile with any type of body
+func NewPatchWorkloadProfileRequestWithBody(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileQid", runtime.ParamLocationPath, profileQid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -16455,6 +16551,54 @@ func NewGetLatestWorkloadProfileVersionRequest(server string, orgId OrgIdPathPar
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteWorkloadProfileVersionRequest generates requests for DeleteWorkloadProfileVersion
+func NewDeleteWorkloadProfileVersionRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileQid", runtime.ParamLocationPath, profileQid)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "version", runtime.ParamLocationPath, version)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s/versions/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -16784,8 +16928,8 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdAppsAppId request
 	GetOrgsOrgIdAppsAppIdWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdResponse, error)
 
-	// ListApprovalRequests request
-	ListApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListApprovalRequestsResponse, error)
+	// ListPipelineApprovalRequests request
+	ListPipelineApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListPipelineApprovalRequestsResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdDeltas request
 	GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error)
@@ -16837,19 +16981,19 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdAppsAppIdEnvsEnvId request
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploys request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse, error)
+	// ListDeployments request
+	ListDeploymentsWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*ListDeploymentsResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploys request with any body
 	PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse, error)
 
 	PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithResponse(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployId request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdWithResponse(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse, error)
+	// GetDeployment request
+	GetDeploymentWithResponse(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*GetDeploymentResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrors request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsWithResponse(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse, error)
+	// ListDeploymentErrors request
+	ListDeploymentErrorsWithResponse(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*ListDeploymentErrorsResponse, error)
 
 	// PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployId request with any body
 	PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdResponse, error)
@@ -16970,35 +17114,35 @@ type ClientWithResponsesInterface interface {
 
 	CreatePipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *CreatePipelineRunParams, body CreatePipelineRunJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePipelineRunResponse, error)
 
-	// DeleteRun request
-	DeleteRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams, reqEditors ...RequestEditorFn) (*DeleteRunResponse, error)
+	// DeletePipelineRun request
+	DeletePipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeletePipelineRunParams, reqEditors ...RequestEditorFn) (*DeletePipelineRunResponse, error)
 
-	// GetRun request
-	GetRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*GetRunResponse, error)
+	// GetPipelineRun request
+	GetPipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*GetPipelineRunResponse, error)
 
-	// CancelRun request
-	CancelRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams, reqEditors ...RequestEditorFn) (*CancelRunResponse, error)
+	// CancelPipelineRun request
+	CancelPipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelPipelineRunParams, reqEditors ...RequestEditorFn) (*CancelPipelineRunResponse, error)
 
-	// ListRunJobs request
-	ListRunJobsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams, reqEditors ...RequestEditorFn) (*ListRunJobsResponse, error)
+	// ListPipelineJobs request
+	ListPipelineJobsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListPipelineJobsParams, reqEditors ...RequestEditorFn) (*ListPipelineJobsResponse, error)
 
-	// GetRunJob request
-	GetRunJobWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*GetRunJobResponse, error)
+	// GetPipelineJob request
+	GetPipelineJobWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*GetPipelineJobResponse, error)
 
-	// GetApprovalRequest request
-	GetApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*GetApprovalRequestResponse, error)
+	// GetPipelineApprovalRequest request
+	GetPipelineApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*GetPipelineApprovalRequestResponse, error)
 
-	// ApproveApprovalRequest request
-	ApproveApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*ApproveApprovalRequestResponse, error)
+	// ApprovePipelineApprovalRequest request
+	ApprovePipelineApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*ApprovePipelineApprovalRequestResponse, error)
 
-	// DenyApprovalRequest request
-	DenyApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*DenyApprovalRequestResponse, error)
+	// DenyPipelineApprovalRequest request
+	DenyPipelineApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*DenyPipelineApprovalRequestResponse, error)
 
-	// ListRunJobStepLogs request
-	ListRunJobStepLogsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams, reqEditors ...RequestEditorFn) (*ListRunJobStepLogsResponse, error)
+	// ListPipelineStepLogs request
+	ListPipelineStepLogsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListPipelineStepLogsParams, reqEditors ...RequestEditorFn) (*ListPipelineStepLogsResponse, error)
 
-	// RestartRun request
-	RestartRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*RestartRunResponse, error)
+	// RestartPipelineRun request
+	RestartPipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartPipelineRunParams, reqEditors ...RequestEditorFn) (*RestartPipelineRunResponse, error)
 
 	// GetPipelineDefinition request
 	GetPipelineDefinitionWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *GetPipelineDefinitionParams, reqEditors ...RequestEditorFn) (*GetPipelineDefinitionResponse, error)
@@ -17106,30 +17250,30 @@ type ClientWithResponsesInterface interface {
 
 	PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse(ctx context.Context, orgId string, appId string, jobId string, body PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse, error)
 
-	// GetOrgsOrgIdArtefactVersions request
-	GetOrgsOrgIdArtefactVersionsWithResponse(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactVersionsResponse, error)
+	// ListArtefactVersionsInOrg request
+	ListArtefactVersionsInOrgWithResponse(ctx context.Context, orgId string, params *ListArtefactVersionsInOrgParams, reqEditors ...RequestEditorFn) (*ListArtefactVersionsInOrgResponse, error)
 
-	// PostOrgsOrgIdArtefactVersions request with any body
-	PostOrgsOrgIdArtefactVersionsWithBodyWithResponse(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdArtefactVersionsResponse, error)
+	// CreateArtefactVersion request with any body
+	CreateArtefactVersionWithBodyWithResponse(ctx context.Context, orgId string, params *CreateArtefactVersionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateArtefactVersionResponse, error)
 
-	PostOrgsOrgIdArtefactVersionsWithResponse(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, body PostOrgsOrgIdArtefactVersionsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdArtefactVersionsResponse, error)
+	CreateArtefactVersionWithResponse(ctx context.Context, orgId string, params *CreateArtefactVersionParams, body CreateArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateArtefactVersionResponse, error)
 
-	// GetOrgsOrgIdArtefactVersionsArtefactVersionId request
-	GetOrgsOrgIdArtefactVersionsArtefactVersionIdWithResponse(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse, error)
+	// GetArtefactVersion request
+	GetArtefactVersionWithResponse(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*GetArtefactVersionResponse, error)
 
-	// GetOrgsOrgIdArtefacts request
-	GetOrgsOrgIdArtefactsWithResponse(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactsResponse, error)
+	// ListArtefacts request
+	ListArtefactsWithResponse(ctx context.Context, orgId string, params *ListArtefactsParams, reqEditors ...RequestEditorFn) (*ListArtefactsResponse, error)
 
-	// DeleteOrgsOrgIdArtefactsArtefactId request
-	DeleteOrgsOrgIdArtefactsArtefactIdWithResponse(ctx context.Context, orgId string, artefactId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdArtefactsArtefactIdResponse, error)
+	// DeleteArtefact request
+	DeleteArtefactWithResponse(ctx context.Context, orgId string, artefactId string, reqEditors ...RequestEditorFn) (*DeleteArtefactResponse, error)
 
-	// GetOrgsOrgIdArtefactsArtefactIdVersions request
-	GetOrgsOrgIdArtefactsArtefactIdVersionsWithResponse(ctx context.Context, orgId string, artefactId string, params *GetOrgsOrgIdArtefactsArtefactIdVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactsArtefactIdVersionsResponse, error)
+	// ListArtefactVersions request
+	ListArtefactVersionsWithResponse(ctx context.Context, orgId string, artefactId string, params *ListArtefactVersionsParams, reqEditors ...RequestEditorFn) (*ListArtefactVersionsResponse, error)
 
-	// PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId request with any body
-	PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithBodyWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse, error)
+	// PatchArtefactVersion request with any body
+	PatchArtefactVersionWithBodyWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchArtefactVersionResponse, error)
 
-	PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, body PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse, error)
+	PatchArtefactVersionWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, body PatchArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchArtefactVersionResponse, error)
 
 	// GetOrgsOrgIdEnvTypes request
 	GetOrgsOrgIdEnvTypesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypesResponse, error)
@@ -17164,22 +17308,22 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdEvents request
 	GetOrgsOrgIdEventsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEventsResponse, error)
 
-	// GetHumanitecPublicKeys request
-	GetHumanitecPublicKeysWithResponse(ctx context.Context, orgId string, params *GetHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*GetHumanitecPublicKeysResponse, error)
+	// ListHumanitecPublicKeys request
+	ListHumanitecPublicKeysWithResponse(ctx context.Context, orgId string, params *ListHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*ListHumanitecPublicKeysResponse, error)
 
-	// GetOrgsOrgIdImages request
-	GetOrgsOrgIdImagesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdImagesResponse, error)
+	// ListDeprecatedImages request
+	ListDeprecatedImagesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListDeprecatedImagesResponse, error)
 
-	// GetOrgsOrgIdImagesImageId request
-	GetOrgsOrgIdImagesImageIdWithResponse(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdImagesImageIdResponse, error)
+	// GetDeprecatedImage request
+	GetDeprecatedImageWithResponse(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*GetDeprecatedImageResponse, error)
 
-	// GetOrgsOrgIdImagesImageIdBuilds request
-	GetOrgsOrgIdImagesImageIdBuildsWithResponse(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdImagesImageIdBuildsResponse, error)
+	// ListDeprecatedImageBuilds request
+	ListDeprecatedImageBuildsWithResponse(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*ListDeprecatedImageBuildsResponse, error)
 
-	// PostOrgsOrgIdImagesImageIdBuilds request with any body
-	PostOrgsOrgIdImagesImageIdBuildsWithBodyWithResponse(ctx context.Context, orgId string, imageId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdImagesImageIdBuildsResponse, error)
+	// CreateDeprecatedImageBuild request with any body
+	CreateDeprecatedImageBuildWithBodyWithResponse(ctx context.Context, orgId string, imageId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDeprecatedImageBuildResponse, error)
 
-	PostOrgsOrgIdImagesImageIdBuildsWithResponse(ctx context.Context, orgId string, imageId string, body PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdImagesImageIdBuildsResponse, error)
+	CreateDeprecatedImageBuildWithResponse(ctx context.Context, orgId string, imageId string, body CreateDeprecatedImageBuildJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDeprecatedImageBuildResponse, error)
 
 	// GetOrgsOrgIdInvitations request
 	GetOrgsOrgIdInvitationsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdInvitationsResponse, error)
@@ -17189,8 +17333,8 @@ type ClientWithResponsesInterface interface {
 
 	PostOrgsOrgIdInvitationsWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdInvitationsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdInvitationsResponse, error)
 
-	// GetPublicKeys request
-	GetPublicKeysWithResponse(ctx context.Context, orgId string, params *GetPublicKeysParams, reqEditors ...RequestEditorFn) (*GetPublicKeysResponse, error)
+	// ListPublicKeys request
+	ListPublicKeysWithResponse(ctx context.Context, orgId string, params *ListPublicKeysParams, reqEditors ...RequestEditorFn) (*ListPublicKeysResponse, error)
 
 	// CreatePublicKey request with any body
 	CreatePublicKeyWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePublicKeyResponse, error)
@@ -17357,22 +17501,24 @@ type ClientWithResponsesInterface interface {
 	// CreateWorkloadProfileChartVersion request with any body
 	CreateWorkloadProfileChartVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileChartVersionResponse, error)
 
-	// GetOrgsOrgIdWorkloadProfiles request
-	GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error)
+	// ListWorkloadProfiles request
+	ListWorkloadProfilesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfilesResponse, error)
 
-	// PostOrgsOrgIdWorkloadProfiles request with any body
-	PostOrgsOrgIdWorkloadProfilesWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesResponse, error)
+	// CreateWorkloadProfile request with any body
+	CreateWorkloadProfileWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileResponse, error)
 
-	PostOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdWorkloadProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesResponse, error)
+	CreateWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, body CreateWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileResponse, error)
 
-	// DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion request
-	DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionWithResponse(ctx context.Context, orgId string, profileId string, version string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse, error)
+	// DeleteWorkloadProfile request
+	DeleteWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*DeleteWorkloadProfileResponse, error)
 
-	// DeleteOrgsOrgIdWorkloadProfilesProfileQid request
-	DeleteOrgsOrgIdWorkloadProfilesProfileQidWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse, error)
+	// GetWorkloadProfile request
+	GetWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetWorkloadProfileResponse, error)
 
-	// GetOrgsOrgIdWorkloadProfilesProfileQid request
-	GetOrgsOrgIdWorkloadProfilesProfileQidWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesProfileQidResponse, error)
+	// PatchWorkloadProfile request with any body
+	PatchWorkloadProfileWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchWorkloadProfileResponse, error)
+
+	PatchWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchWorkloadProfileResponse, error)
 
 	// ListWorkloadProfileVersions request
 	ListWorkloadProfileVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileVersionsResponse, error)
@@ -17384,6 +17530,9 @@ type ClientWithResponsesInterface interface {
 
 	// GetLatestWorkloadProfileVersion request
 	GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error)
+
+	// DeleteWorkloadProfileVersion request
+	DeleteWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam, reqEditors ...RequestEditorFn) (*DeleteWorkloadProfileVersionResponse, error)
 
 	// GetTokens request
 	GetTokensWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTokensResponse, error)
@@ -17593,15 +17742,15 @@ func (r GetOrgsOrgIdAppsAppIdResponse) StatusCode() int {
 	return 0
 }
 
-type ListApprovalRequestsResponse struct {
+type ListPipelineApprovalRequestsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]ApprovalRequest
+	JSON200      *[]PipelineApprovalRequest
 	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ListApprovalRequestsResponse) Status() string {
+func (r ListPipelineApprovalRequestsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -17609,7 +17758,7 @@ func (r ListApprovalRequestsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListApprovalRequestsResponse) StatusCode() int {
+func (r ListPipelineApprovalRequestsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -17895,7 +18044,7 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse struct {
+type ListDeploymentsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]DeploymentResponse
@@ -17903,7 +18052,7 @@ type GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse) Status() string {
+func (r ListDeploymentsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -17911,7 +18060,7 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse) StatusCode() int {
+func (r ListDeploymentsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -17943,7 +18092,7 @@ func (r PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse struct {
+type GetDeploymentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeploymentResponse
@@ -17951,7 +18100,7 @@ type GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse) Status() string {
+func (r GetDeploymentResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -17959,21 +18108,21 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse) StatusCode() int {
+func (r GetDeploymentResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse struct {
+type ListDeploymentErrorsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]DeploymentErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse) Status() string {
+func (r ListDeploymentErrorsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -17981,7 +18130,7 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse) Status() st
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse) StatusCode() int {
+func (r ListDeploymentErrorsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -18663,7 +18812,7 @@ func (r UpdatePipelineResponse) StatusCode() int {
 type ListPipelineRunsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]RunResponse
+	JSON200      *[]PipelineRun
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -18687,7 +18836,7 @@ func (r ListPipelineRunsResponse) StatusCode() int {
 type CreatePipelineRunResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *RunResponse
+	JSON201      *PipelineRun
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
@@ -18710,7 +18859,7 @@ func (r CreatePipelineRunResponse) StatusCode() int {
 	return 0
 }
 
-type DeleteRunResponse struct {
+type DeletePipelineRunResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON400      *HumanitecErrorResponse
@@ -18720,7 +18869,7 @@ type DeleteRunResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r DeleteRunResponse) Status() string {
+func (r DeletePipelineRunResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18728,22 +18877,22 @@ func (r DeleteRunResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r DeleteRunResponse) StatusCode() int {
+func (r DeletePipelineRunResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetRunResponse struct {
+type GetPipelineRunResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *RunResponse
+	JSON200      *PipelineRun
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetRunResponse) Status() string {
+func (r GetPipelineRunResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18751,14 +18900,14 @@ func (r GetRunResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetRunResponse) StatusCode() int {
+func (r GetPipelineRunResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type CancelRunResponse struct {
+type CancelPipelineRunResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON400      *HumanitecErrorResponse
@@ -18768,7 +18917,7 @@ type CancelRunResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r CancelRunResponse) Status() string {
+func (r CancelPipelineRunResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18776,22 +18925,22 @@ func (r CancelRunResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CancelRunResponse) StatusCode() int {
+func (r CancelPipelineRunResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ListRunJobsResponse struct {
+type ListPipelineJobsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]RunJobListResponse
+	JSON200      *[]PipelineJobPartial
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ListRunJobsResponse) Status() string {
+func (r ListPipelineJobsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18799,22 +18948,22 @@ func (r ListRunJobsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListRunJobsResponse) StatusCode() int {
+func (r ListPipelineJobsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetRunJobResponse struct {
+type GetPipelineJobResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *RunJobResponse
+	JSON200      *PipelineJob
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetRunJobResponse) Status() string {
+func (r GetPipelineJobResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18822,22 +18971,22 @@ func (r GetRunJobResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetRunJobResponse) StatusCode() int {
+func (r GetPipelineJobResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetApprovalRequestResponse struct {
+type GetPipelineApprovalRequestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ApprovalRequest
+	JSON200      *PipelineApprovalRequest
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetApprovalRequestResponse) Status() string {
+func (r GetPipelineApprovalRequestResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18845,24 +18994,24 @@ func (r GetApprovalRequestResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetApprovalRequestResponse) StatusCode() int {
+func (r GetPipelineApprovalRequestResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ApproveApprovalRequestResponse struct {
+type ApprovePipelineApprovalRequestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ApprovalRequest
+	JSON200      *PipelineApprovalRequest
 	JSON400      *HumanitecErrorResponse
 	JSON403      *ErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ApproveApprovalRequestResponse) Status() string {
+func (r ApprovePipelineApprovalRequestResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18870,24 +19019,24 @@ func (r ApproveApprovalRequestResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ApproveApprovalRequestResponse) StatusCode() int {
+func (r ApprovePipelineApprovalRequestResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type DenyApprovalRequestResponse struct {
+type DenyPipelineApprovalRequestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ApprovalRequest
+	JSON200      *PipelineApprovalRequest
 	JSON400      *HumanitecErrorResponse
 	JSON403      *ErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r DenyApprovalRequestResponse) Status() string {
+func (r DenyPipelineApprovalRequestResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18895,22 +19044,22 @@ func (r DenyApprovalRequestResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r DenyApprovalRequestResponse) StatusCode() int {
+func (r DenyPipelineApprovalRequestResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ListRunJobStepLogsResponse struct {
+type ListPipelineStepLogsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]RunJobStepLog
+	JSON200      *[]PipelineStepLog
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ListRunJobStepLogsResponse) Status() string {
+func (r ListPipelineStepLogsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18918,17 +19067,17 @@ func (r ListRunJobStepLogsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListRunJobStepLogsResponse) StatusCode() int {
+func (r ListPipelineStepLogsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type RestartRunResponse struct {
+type RestartPipelineRunResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *RunResponse
+	JSON201      *PipelineRun
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
@@ -18936,7 +19085,7 @@ type RestartRunResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r RestartRunResponse) Status() string {
+func (r RestartPipelineRunResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18944,7 +19093,7 @@ func (r RestartRunResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r RestartRunResponse) StatusCode() int {
+func (r RestartPipelineRunResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -19598,7 +19747,7 @@ func (r PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdArtefactVersionsResponse struct {
+type ListArtefactVersionsInOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]ArtefactVersionResponse
@@ -19606,7 +19755,7 @@ type GetOrgsOrgIdArtefactVersionsResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdArtefactVersionsResponse) Status() string {
+func (r ListArtefactVersionsInOrgResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19614,14 +19763,14 @@ func (r GetOrgsOrgIdArtefactVersionsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdArtefactVersionsResponse) StatusCode() int {
+func (r ListArtefactVersionsInOrgResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostOrgsOrgIdArtefactVersionsResponse struct {
+type CreateArtefactVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ArtefactVersionResponse
@@ -19630,7 +19779,7 @@ type PostOrgsOrgIdArtefactVersionsResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdArtefactVersionsResponse) Status() string {
+func (r CreateArtefactVersionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19638,14 +19787,14 @@ func (r PostOrgsOrgIdArtefactVersionsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdArtefactVersionsResponse) StatusCode() int {
+func (r CreateArtefactVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse struct {
+type GetArtefactVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ArtefactVersionResponse
@@ -19654,7 +19803,7 @@ type GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse) Status() string {
+func (r GetArtefactVersionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19662,21 +19811,21 @@ func (r GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse) StatusCode() int {
+func (r GetArtefactVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdArtefactsResponse struct {
+type ListArtefactsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]ArtefactResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdArtefactsResponse) Status() string {
+func (r ListArtefactsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19684,14 +19833,14 @@ func (r GetOrgsOrgIdArtefactsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdArtefactsResponse) StatusCode() int {
+func (r ListArtefactsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type DeleteOrgsOrgIdArtefactsArtefactIdResponse struct {
+type DeleteArtefactResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON403      *HumanitecErrorResponse
@@ -19699,7 +19848,7 @@ type DeleteOrgsOrgIdArtefactsArtefactIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r DeleteOrgsOrgIdArtefactsArtefactIdResponse) Status() string {
+func (r DeleteArtefactResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19707,14 +19856,14 @@ func (r DeleteOrgsOrgIdArtefactsArtefactIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r DeleteOrgsOrgIdArtefactsArtefactIdResponse) StatusCode() int {
+func (r DeleteArtefactResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdArtefactsArtefactIdVersionsResponse struct {
+type ListArtefactVersionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]ArtefactVersionResponse
@@ -19723,7 +19872,7 @@ type GetOrgsOrgIdArtefactsArtefactIdVersionsResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdArtefactsArtefactIdVersionsResponse) Status() string {
+func (r ListArtefactVersionsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19731,14 +19880,14 @@ func (r GetOrgsOrgIdArtefactsArtefactIdVersionsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdArtefactsArtefactIdVersionsResponse) StatusCode() int {
+func (r ListArtefactVersionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse struct {
+type PatchArtefactVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ArtefactVersionResponse
@@ -19749,7 +19898,7 @@ type PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse) Status() string {
+func (r PatchArtefactVersionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19757,7 +19906,7 @@ func (r PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse) Status() str
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse) StatusCode() int {
+func (r PatchArtefactVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -19972,14 +20121,14 @@ func (r GetOrgsOrgIdEventsResponse) StatusCode() int {
 	return 0
 }
 
-type GetHumanitecPublicKeysResponse struct {
+type ListHumanitecPublicKeysResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]HumanitecPublicKey
 }
 
 // Status returns HTTPResponse.Status
-func (r GetHumanitecPublicKeysResponse) Status() string {
+func (r ListHumanitecPublicKeysResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19987,21 +20136,21 @@ func (r GetHumanitecPublicKeysResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetHumanitecPublicKeysResponse) StatusCode() int {
+func (r ListHumanitecPublicKeysResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdImagesResponse struct {
+type ListDeprecatedImagesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]ImageResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdImagesResponse) Status() string {
+func (r ListDeprecatedImagesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20009,14 +20158,14 @@ func (r GetOrgsOrgIdImagesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdImagesResponse) StatusCode() int {
+func (r ListDeprecatedImagesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdImagesImageIdResponse struct {
+type GetDeprecatedImageResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ImageResponse
@@ -20024,7 +20173,7 @@ type GetOrgsOrgIdImagesImageIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdImagesImageIdResponse) Status() string {
+func (r GetDeprecatedImageResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20032,14 +20181,14 @@ func (r GetOrgsOrgIdImagesImageIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdImagesImageIdResponse) StatusCode() int {
+func (r GetDeprecatedImageResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdImagesImageIdBuildsResponse struct {
+type ListDeprecatedImageBuildsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]ImageBuildResponse
@@ -20047,7 +20196,7 @@ type GetOrgsOrgIdImagesImageIdBuildsResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdImagesImageIdBuildsResponse) Status() string {
+func (r ListDeprecatedImageBuildsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20055,14 +20204,14 @@ func (r GetOrgsOrgIdImagesImageIdBuildsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdImagesImageIdBuildsResponse) StatusCode() int {
+func (r ListDeprecatedImageBuildsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostOrgsOrgIdImagesImageIdBuildsResponse struct {
+type CreateDeprecatedImageBuildResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON400      *HumanitecErrorResponse
@@ -20071,7 +20220,7 @@ type PostOrgsOrgIdImagesImageIdBuildsResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdImagesImageIdBuildsResponse) Status() string {
+func (r CreateDeprecatedImageBuildResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20079,7 +20228,7 @@ func (r PostOrgsOrgIdImagesImageIdBuildsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdImagesImageIdBuildsResponse) StatusCode() int {
+func (r CreateDeprecatedImageBuildResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -20131,7 +20280,7 @@ func (r PostOrgsOrgIdInvitationsResponse) StatusCode() int {
 	return 0
 }
 
-type GetPublicKeysResponse struct {
+type ListPublicKeysResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]PublicKey
@@ -20139,7 +20288,7 @@ type GetPublicKeysResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetPublicKeysResponse) Status() string {
+func (r ListPublicKeysResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -20147,7 +20296,7 @@ func (r GetPublicKeysResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetPublicKeysResponse) StatusCode() int {
+func (r ListPublicKeysResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -20228,7 +20377,7 @@ func (r GetPublicKeyResponse) StatusCode() int {
 type ListPipelineRunsByOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]RunResponse
+	JSON200      *[]PipelineRun
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -21225,14 +21374,14 @@ func (r CreateWorkloadProfileChartVersionResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdWorkloadProfilesResponse struct {
+type ListWorkloadProfilesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]WorkloadProfileResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdWorkloadProfilesResponse) Status() string {
+func (r ListWorkloadProfilesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21240,14 +21389,14 @@ func (r GetOrgsOrgIdWorkloadProfilesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdWorkloadProfilesResponse) StatusCode() int {
+func (r ListWorkloadProfilesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostOrgsOrgIdWorkloadProfilesResponse struct {
+type CreateWorkloadProfileResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *WorkloadProfileResponse
@@ -21256,7 +21405,7 @@ type PostOrgsOrgIdWorkloadProfilesResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdWorkloadProfilesResponse) Status() string {
+func (r CreateWorkloadProfileResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21264,21 +21413,22 @@ func (r PostOrgsOrgIdWorkloadProfilesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdWorkloadProfilesResponse) StatusCode() int {
+func (r CreateWorkloadProfileResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse struct {
+type DeleteWorkloadProfileResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse) Status() string {
+func (r DeleteWorkloadProfileResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21286,44 +21436,23 @@ func (r DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse) Status(
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse) StatusCode() int {
+func (r DeleteWorkloadProfileResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON404      *HumanitecErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetOrgsOrgIdWorkloadProfilesProfileQidResponse struct {
+type GetWorkloadProfileResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *WorkloadProfileResponse
+	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdWorkloadProfilesProfileQidResponse) Status() string {
+func (r GetWorkloadProfileResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21331,7 +21460,31 @@ func (r GetOrgsOrgIdWorkloadProfilesProfileQidResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdWorkloadProfilesProfileQidResponse) StatusCode() int {
+func (r GetWorkloadProfileResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PatchWorkloadProfileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadProfileResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PatchWorkloadProfileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PatchWorkloadProfileResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21403,6 +21556,28 @@ func (r GetLatestWorkloadProfileVersionResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetLatestWorkloadProfileVersionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteWorkloadProfileVersionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteWorkloadProfileVersionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteWorkloadProfileVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21650,13 +21825,13 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdWithResponse(ctx context.Cont
 	return ParseGetOrgsOrgIdAppsAppIdResponse(rsp)
 }
 
-// ListApprovalRequestsWithResponse request returning *ListApprovalRequestsResponse
-func (c *ClientWithResponses) ListApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListApprovalRequestsResponse, error) {
-	rsp, err := c.ListApprovalRequests(ctx, orgId, appId, params, reqEditors...)
+// ListPipelineApprovalRequestsWithResponse request returning *ListPipelineApprovalRequestsResponse
+func (c *ClientWithResponses) ListPipelineApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListPipelineApprovalRequestsResponse, error) {
+	rsp, err := c.ListPipelineApprovalRequests(ctx, orgId, appId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListApprovalRequestsResponse(rsp)
+	return ParseListPipelineApprovalRequestsResponse(rsp)
 }
 
 // GetOrgsOrgIdAppsAppIdDeltasWithResponse request returning *GetOrgsOrgIdAppsAppIdDeltasResponse
@@ -21823,13 +21998,13 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdWithResponse(ctx con
 	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploys(ctx, orgId, appId, envId, reqEditors...)
+// ListDeploymentsWithResponse request returning *ListDeploymentsResponse
+func (c *ClientWithResponses) ListDeploymentsWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*ListDeploymentsResponse, error) {
+	rsp, err := c.ListDeployments(ctx, orgId, appId, envId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse(rsp)
+	return ParseListDeploymentsResponse(rsp)
 }
 
 // PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse
@@ -21849,22 +22024,22 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithResponse
 	return ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdWithResponse(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployId(ctx, orgId, appId, envId, deployId, reqEditors...)
+// GetDeploymentWithResponse request returning *GetDeploymentResponse
+func (c *ClientWithResponses) GetDeploymentWithResponse(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*GetDeploymentResponse, error) {
+	rsp, err := c.GetDeployment(ctx, orgId, appId, envId, deployId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse(rsp)
+	return ParseGetDeploymentResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsWithResponse(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrors(ctx, orgId, appId, envId, deployId, reqEditors...)
+// ListDeploymentErrorsWithResponse request returning *ListDeploymentErrorsResponse
+func (c *ClientWithResponses) ListDeploymentErrorsWithResponse(ctx context.Context, orgId string, appId string, envId string, deployId string, reqEditors ...RequestEditorFn) (*ListDeploymentErrorsResponse, error) {
+	rsp, err := c.ListDeploymentErrors(ctx, orgId, appId, envId, deployId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse(rsp)
+	return ParseListDeploymentErrorsResponse(rsp)
 }
 
 // PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdResponse
@@ -22250,94 +22425,94 @@ func (c *ClientWithResponses) CreatePipelineRunWithResponse(ctx context.Context,
 	return ParseCreatePipelineRunResponse(rsp)
 }
 
-// DeleteRunWithResponse request returning *DeleteRunResponse
-func (c *ClientWithResponses) DeleteRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeleteRunParams, reqEditors ...RequestEditorFn) (*DeleteRunResponse, error) {
-	rsp, err := c.DeleteRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
+// DeletePipelineRunWithResponse request returning *DeletePipelineRunResponse
+func (c *ClientWithResponses) DeletePipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *DeletePipelineRunParams, reqEditors ...RequestEditorFn) (*DeletePipelineRunResponse, error) {
+	rsp, err := c.DeletePipelineRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteRunResponse(rsp)
+	return ParseDeletePipelineRunResponse(rsp)
 }
 
-// GetRunWithResponse request returning *GetRunResponse
-func (c *ClientWithResponses) GetRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*GetRunResponse, error) {
-	rsp, err := c.GetRun(ctx, orgId, appId, pipelineId, runId, reqEditors...)
+// GetPipelineRunWithResponse request returning *GetPipelineRunResponse
+func (c *ClientWithResponses) GetPipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, reqEditors ...RequestEditorFn) (*GetPipelineRunResponse, error) {
+	rsp, err := c.GetPipelineRun(ctx, orgId, appId, pipelineId, runId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetRunResponse(rsp)
+	return ParseGetPipelineRunResponse(rsp)
 }
 
-// CancelRunWithResponse request returning *CancelRunResponse
-func (c *ClientWithResponses) CancelRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelRunParams, reqEditors ...RequestEditorFn) (*CancelRunResponse, error) {
-	rsp, err := c.CancelRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
+// CancelPipelineRunWithResponse request returning *CancelPipelineRunResponse
+func (c *ClientWithResponses) CancelPipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *CancelPipelineRunParams, reqEditors ...RequestEditorFn) (*CancelPipelineRunResponse, error) {
+	rsp, err := c.CancelPipelineRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCancelRunResponse(rsp)
+	return ParseCancelPipelineRunResponse(rsp)
 }
 
-// ListRunJobsWithResponse request returning *ListRunJobsResponse
-func (c *ClientWithResponses) ListRunJobsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListRunJobsParams, reqEditors ...RequestEditorFn) (*ListRunJobsResponse, error) {
-	rsp, err := c.ListRunJobs(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
+// ListPipelineJobsWithResponse request returning *ListPipelineJobsResponse
+func (c *ClientWithResponses) ListPipelineJobsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *ListPipelineJobsParams, reqEditors ...RequestEditorFn) (*ListPipelineJobsResponse, error) {
+	rsp, err := c.ListPipelineJobs(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListRunJobsResponse(rsp)
+	return ParseListPipelineJobsResponse(rsp)
 }
 
-// GetRunJobWithResponse request returning *GetRunJobResponse
-func (c *ClientWithResponses) GetRunJobWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*GetRunJobResponse, error) {
-	rsp, err := c.GetRunJob(ctx, orgId, appId, pipelineId, runId, jobId, reqEditors...)
+// GetPipelineJobWithResponse request returning *GetPipelineJobResponse
+func (c *ClientWithResponses) GetPipelineJobWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, reqEditors ...RequestEditorFn) (*GetPipelineJobResponse, error) {
+	rsp, err := c.GetPipelineJob(ctx, orgId, appId, pipelineId, runId, jobId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetRunJobResponse(rsp)
+	return ParseGetPipelineJobResponse(rsp)
 }
 
-// GetApprovalRequestWithResponse request returning *GetApprovalRequestResponse
-func (c *ClientWithResponses) GetApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*GetApprovalRequestResponse, error) {
-	rsp, err := c.GetApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
+// GetPipelineApprovalRequestWithResponse request returning *GetPipelineApprovalRequestResponse
+func (c *ClientWithResponses) GetPipelineApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*GetPipelineApprovalRequestResponse, error) {
+	rsp, err := c.GetPipelineApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetApprovalRequestResponse(rsp)
+	return ParseGetPipelineApprovalRequestResponse(rsp)
 }
 
-// ApproveApprovalRequestWithResponse request returning *ApproveApprovalRequestResponse
-func (c *ClientWithResponses) ApproveApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*ApproveApprovalRequestResponse, error) {
-	rsp, err := c.ApproveApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
+// ApprovePipelineApprovalRequestWithResponse request returning *ApprovePipelineApprovalRequestResponse
+func (c *ClientWithResponses) ApprovePipelineApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*ApprovePipelineApprovalRequestResponse, error) {
+	rsp, err := c.ApprovePipelineApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseApproveApprovalRequestResponse(rsp)
+	return ParseApprovePipelineApprovalRequestResponse(rsp)
 }
 
-// DenyApprovalRequestWithResponse request returning *DenyApprovalRequestResponse
-func (c *ClientWithResponses) DenyApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*DenyApprovalRequestResponse, error) {
-	rsp, err := c.DenyApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
+// DenyPipelineApprovalRequestWithResponse request returning *DenyPipelineApprovalRequestResponse
+func (c *ClientWithResponses) DenyPipelineApprovalRequestWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, approvalId ApprovalIdPathParam, reqEditors ...RequestEditorFn) (*DenyPipelineApprovalRequestResponse, error) {
+	rsp, err := c.DenyPipelineApprovalRequest(ctx, orgId, appId, pipelineId, runId, jobId, approvalId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDenyApprovalRequestResponse(rsp)
+	return ParseDenyPipelineApprovalRequestResponse(rsp)
 }
 
-// ListRunJobStepLogsWithResponse request returning *ListRunJobStepLogsResponse
-func (c *ClientWithResponses) ListRunJobStepLogsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListRunJobStepLogsParams, reqEditors ...RequestEditorFn) (*ListRunJobStepLogsResponse, error) {
-	rsp, err := c.ListRunJobStepLogs(ctx, orgId, appId, pipelineId, runId, jobId, stepIndex, params, reqEditors...)
+// ListPipelineStepLogsWithResponse request returning *ListPipelineStepLogsResponse
+func (c *ClientWithResponses) ListPipelineStepLogsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, jobId JobIdPathParam, stepIndex StepIndexPathParam, params *ListPipelineStepLogsParams, reqEditors ...RequestEditorFn) (*ListPipelineStepLogsResponse, error) {
+	rsp, err := c.ListPipelineStepLogs(ctx, orgId, appId, pipelineId, runId, jobId, stepIndex, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListRunJobStepLogsResponse(rsp)
+	return ParseListPipelineStepLogsResponse(rsp)
 }
 
-// RestartRunWithResponse request returning *RestartRunResponse
-func (c *ClientWithResponses) RestartRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartRunParams, reqEditors ...RequestEditorFn) (*RestartRunResponse, error) {
-	rsp, err := c.RestartRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
+// RestartPipelineRunWithResponse request returning *RestartPipelineRunResponse
+func (c *ClientWithResponses) RestartPipelineRunWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, runId RunIdPathParam, params *RestartPipelineRunParams, reqEditors ...RequestEditorFn) (*RestartPipelineRunResponse, error) {
+	rsp, err := c.RestartPipelineRun(ctx, orgId, appId, pipelineId, runId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseRestartRunResponse(rsp)
+	return ParseRestartPipelineRunResponse(rsp)
 }
 
 // GetPipelineDefinitionWithResponse request returning *GetPipelineDefinitionResponse
@@ -22680,83 +22855,83 @@ func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdWebhooksJobIdWithResponse(c
 	return ParsePatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp)
 }
 
-// GetOrgsOrgIdArtefactVersionsWithResponse request returning *GetOrgsOrgIdArtefactVersionsResponse
-func (c *ClientWithResponses) GetOrgsOrgIdArtefactVersionsWithResponse(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactVersionsResponse, error) {
-	rsp, err := c.GetOrgsOrgIdArtefactVersions(ctx, orgId, params, reqEditors...)
+// ListArtefactVersionsInOrgWithResponse request returning *ListArtefactVersionsInOrgResponse
+func (c *ClientWithResponses) ListArtefactVersionsInOrgWithResponse(ctx context.Context, orgId string, params *ListArtefactVersionsInOrgParams, reqEditors ...RequestEditorFn) (*ListArtefactVersionsInOrgResponse, error) {
+	rsp, err := c.ListArtefactVersionsInOrg(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdArtefactVersionsResponse(rsp)
+	return ParseListArtefactVersionsInOrgResponse(rsp)
 }
 
-// PostOrgsOrgIdArtefactVersionsWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdArtefactVersionsResponse
-func (c *ClientWithResponses) PostOrgsOrgIdArtefactVersionsWithBodyWithResponse(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdArtefactVersionsResponse, error) {
-	rsp, err := c.PostOrgsOrgIdArtefactVersionsWithBody(ctx, orgId, params, contentType, body, reqEditors...)
+// CreateArtefactVersionWithBodyWithResponse request with arbitrary body returning *CreateArtefactVersionResponse
+func (c *ClientWithResponses) CreateArtefactVersionWithBodyWithResponse(ctx context.Context, orgId string, params *CreateArtefactVersionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateArtefactVersionResponse, error) {
+	rsp, err := c.CreateArtefactVersionWithBody(ctx, orgId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdArtefactVersionsResponse(rsp)
+	return ParseCreateArtefactVersionResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdArtefactVersionsWithResponse(ctx context.Context, orgId string, params *PostOrgsOrgIdArtefactVersionsParams, body PostOrgsOrgIdArtefactVersionsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdArtefactVersionsResponse, error) {
-	rsp, err := c.PostOrgsOrgIdArtefactVersions(ctx, orgId, params, body, reqEditors...)
+func (c *ClientWithResponses) CreateArtefactVersionWithResponse(ctx context.Context, orgId string, params *CreateArtefactVersionParams, body CreateArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateArtefactVersionResponse, error) {
+	rsp, err := c.CreateArtefactVersion(ctx, orgId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdArtefactVersionsResponse(rsp)
+	return ParseCreateArtefactVersionResponse(rsp)
 }
 
-// GetOrgsOrgIdArtefactVersionsArtefactVersionIdWithResponse request returning *GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdArtefactVersionsArtefactVersionIdWithResponse(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse, error) {
-	rsp, err := c.GetOrgsOrgIdArtefactVersionsArtefactVersionId(ctx, orgId, artefactVersionId, reqEditors...)
+// GetArtefactVersionWithResponse request returning *GetArtefactVersionResponse
+func (c *ClientWithResponses) GetArtefactVersionWithResponse(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*GetArtefactVersionResponse, error) {
+	rsp, err := c.GetArtefactVersion(ctx, orgId, artefactVersionId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse(rsp)
+	return ParseGetArtefactVersionResponse(rsp)
 }
 
-// GetOrgsOrgIdArtefactsWithResponse request returning *GetOrgsOrgIdArtefactsResponse
-func (c *ClientWithResponses) GetOrgsOrgIdArtefactsWithResponse(ctx context.Context, orgId string, params *GetOrgsOrgIdArtefactsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactsResponse, error) {
-	rsp, err := c.GetOrgsOrgIdArtefacts(ctx, orgId, params, reqEditors...)
+// ListArtefactsWithResponse request returning *ListArtefactsResponse
+func (c *ClientWithResponses) ListArtefactsWithResponse(ctx context.Context, orgId string, params *ListArtefactsParams, reqEditors ...RequestEditorFn) (*ListArtefactsResponse, error) {
+	rsp, err := c.ListArtefacts(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdArtefactsResponse(rsp)
+	return ParseListArtefactsResponse(rsp)
 }
 
-// DeleteOrgsOrgIdArtefactsArtefactIdWithResponse request returning *DeleteOrgsOrgIdArtefactsArtefactIdResponse
-func (c *ClientWithResponses) DeleteOrgsOrgIdArtefactsArtefactIdWithResponse(ctx context.Context, orgId string, artefactId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdArtefactsArtefactIdResponse, error) {
-	rsp, err := c.DeleteOrgsOrgIdArtefactsArtefactId(ctx, orgId, artefactId, reqEditors...)
+// DeleteArtefactWithResponse request returning *DeleteArtefactResponse
+func (c *ClientWithResponses) DeleteArtefactWithResponse(ctx context.Context, orgId string, artefactId string, reqEditors ...RequestEditorFn) (*DeleteArtefactResponse, error) {
+	rsp, err := c.DeleteArtefact(ctx, orgId, artefactId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteOrgsOrgIdArtefactsArtefactIdResponse(rsp)
+	return ParseDeleteArtefactResponse(rsp)
 }
 
-// GetOrgsOrgIdArtefactsArtefactIdVersionsWithResponse request returning *GetOrgsOrgIdArtefactsArtefactIdVersionsResponse
-func (c *ClientWithResponses) GetOrgsOrgIdArtefactsArtefactIdVersionsWithResponse(ctx context.Context, orgId string, artefactId string, params *GetOrgsOrgIdArtefactsArtefactIdVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdArtefactsArtefactIdVersionsResponse, error) {
-	rsp, err := c.GetOrgsOrgIdArtefactsArtefactIdVersions(ctx, orgId, artefactId, params, reqEditors...)
+// ListArtefactVersionsWithResponse request returning *ListArtefactVersionsResponse
+func (c *ClientWithResponses) ListArtefactVersionsWithResponse(ctx context.Context, orgId string, artefactId string, params *ListArtefactVersionsParams, reqEditors ...RequestEditorFn) (*ListArtefactVersionsResponse, error) {
+	rsp, err := c.ListArtefactVersions(ctx, orgId, artefactId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdArtefactsArtefactIdVersionsResponse(rsp)
+	return ParseListArtefactVersionsResponse(rsp)
 }
 
-// PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse
-func (c *ClientWithResponses) PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithBodyWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse, error) {
-	rsp, err := c.PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithBody(ctx, orgId, artefactId, versionId, contentType, body, reqEditors...)
+// PatchArtefactVersionWithBodyWithResponse request with arbitrary body returning *PatchArtefactVersionResponse
+func (c *ClientWithResponses) PatchArtefactVersionWithBodyWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchArtefactVersionResponse, error) {
+	rsp, err := c.PatchArtefactVersionWithBody(ctx, orgId, artefactId, versionId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse(rsp)
+	return ParsePatchArtefactVersionResponse(rsp)
 }
 
-func (c *ClientWithResponses) PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, body PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse, error) {
-	rsp, err := c.PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionId(ctx, orgId, artefactId, versionId, body, reqEditors...)
+func (c *ClientWithResponses) PatchArtefactVersionWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, body PatchArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchArtefactVersionResponse, error) {
+	rsp, err := c.PatchArtefactVersion(ctx, orgId, artefactId, versionId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse(rsp)
+	return ParsePatchArtefactVersionResponse(rsp)
 }
 
 // GetOrgsOrgIdEnvTypesWithResponse request returning *GetOrgsOrgIdEnvTypesResponse
@@ -22864,57 +23039,57 @@ func (c *ClientWithResponses) GetOrgsOrgIdEventsWithResponse(ctx context.Context
 	return ParseGetOrgsOrgIdEventsResponse(rsp)
 }
 
-// GetHumanitecPublicKeysWithResponse request returning *GetHumanitecPublicKeysResponse
-func (c *ClientWithResponses) GetHumanitecPublicKeysWithResponse(ctx context.Context, orgId string, params *GetHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*GetHumanitecPublicKeysResponse, error) {
-	rsp, err := c.GetHumanitecPublicKeys(ctx, orgId, params, reqEditors...)
+// ListHumanitecPublicKeysWithResponse request returning *ListHumanitecPublicKeysResponse
+func (c *ClientWithResponses) ListHumanitecPublicKeysWithResponse(ctx context.Context, orgId string, params *ListHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*ListHumanitecPublicKeysResponse, error) {
+	rsp, err := c.ListHumanitecPublicKeys(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetHumanitecPublicKeysResponse(rsp)
+	return ParseListHumanitecPublicKeysResponse(rsp)
 }
 
-// GetOrgsOrgIdImagesWithResponse request returning *GetOrgsOrgIdImagesResponse
-func (c *ClientWithResponses) GetOrgsOrgIdImagesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdImagesResponse, error) {
-	rsp, err := c.GetOrgsOrgIdImages(ctx, orgId, reqEditors...)
+// ListDeprecatedImagesWithResponse request returning *ListDeprecatedImagesResponse
+func (c *ClientWithResponses) ListDeprecatedImagesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListDeprecatedImagesResponse, error) {
+	rsp, err := c.ListDeprecatedImages(ctx, orgId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdImagesResponse(rsp)
+	return ParseListDeprecatedImagesResponse(rsp)
 }
 
-// GetOrgsOrgIdImagesImageIdWithResponse request returning *GetOrgsOrgIdImagesImageIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdImagesImageIdWithResponse(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdImagesImageIdResponse, error) {
-	rsp, err := c.GetOrgsOrgIdImagesImageId(ctx, orgId, imageId, reqEditors...)
+// GetDeprecatedImageWithResponse request returning *GetDeprecatedImageResponse
+func (c *ClientWithResponses) GetDeprecatedImageWithResponse(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*GetDeprecatedImageResponse, error) {
+	rsp, err := c.GetDeprecatedImage(ctx, orgId, imageId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdImagesImageIdResponse(rsp)
+	return ParseGetDeprecatedImageResponse(rsp)
 }
 
-// GetOrgsOrgIdImagesImageIdBuildsWithResponse request returning *GetOrgsOrgIdImagesImageIdBuildsResponse
-func (c *ClientWithResponses) GetOrgsOrgIdImagesImageIdBuildsWithResponse(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdImagesImageIdBuildsResponse, error) {
-	rsp, err := c.GetOrgsOrgIdImagesImageIdBuilds(ctx, orgId, imageId, reqEditors...)
+// ListDeprecatedImageBuildsWithResponse request returning *ListDeprecatedImageBuildsResponse
+func (c *ClientWithResponses) ListDeprecatedImageBuildsWithResponse(ctx context.Context, orgId string, imageId string, reqEditors ...RequestEditorFn) (*ListDeprecatedImageBuildsResponse, error) {
+	rsp, err := c.ListDeprecatedImageBuilds(ctx, orgId, imageId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdImagesImageIdBuildsResponse(rsp)
+	return ParseListDeprecatedImageBuildsResponse(rsp)
 }
 
-// PostOrgsOrgIdImagesImageIdBuildsWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdImagesImageIdBuildsResponse
-func (c *ClientWithResponses) PostOrgsOrgIdImagesImageIdBuildsWithBodyWithResponse(ctx context.Context, orgId string, imageId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdImagesImageIdBuildsResponse, error) {
-	rsp, err := c.PostOrgsOrgIdImagesImageIdBuildsWithBody(ctx, orgId, imageId, contentType, body, reqEditors...)
+// CreateDeprecatedImageBuildWithBodyWithResponse request with arbitrary body returning *CreateDeprecatedImageBuildResponse
+func (c *ClientWithResponses) CreateDeprecatedImageBuildWithBodyWithResponse(ctx context.Context, orgId string, imageId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDeprecatedImageBuildResponse, error) {
+	rsp, err := c.CreateDeprecatedImageBuildWithBody(ctx, orgId, imageId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdImagesImageIdBuildsResponse(rsp)
+	return ParseCreateDeprecatedImageBuildResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdImagesImageIdBuildsWithResponse(ctx context.Context, orgId string, imageId string, body PostOrgsOrgIdImagesImageIdBuildsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdImagesImageIdBuildsResponse, error) {
-	rsp, err := c.PostOrgsOrgIdImagesImageIdBuilds(ctx, orgId, imageId, body, reqEditors...)
+func (c *ClientWithResponses) CreateDeprecatedImageBuildWithResponse(ctx context.Context, orgId string, imageId string, body CreateDeprecatedImageBuildJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDeprecatedImageBuildResponse, error) {
+	rsp, err := c.CreateDeprecatedImageBuild(ctx, orgId, imageId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdImagesImageIdBuildsResponse(rsp)
+	return ParseCreateDeprecatedImageBuildResponse(rsp)
 }
 
 // GetOrgsOrgIdInvitationsWithResponse request returning *GetOrgsOrgIdInvitationsResponse
@@ -22943,13 +23118,13 @@ func (c *ClientWithResponses) PostOrgsOrgIdInvitationsWithResponse(ctx context.C
 	return ParsePostOrgsOrgIdInvitationsResponse(rsp)
 }
 
-// GetPublicKeysWithResponse request returning *GetPublicKeysResponse
-func (c *ClientWithResponses) GetPublicKeysWithResponse(ctx context.Context, orgId string, params *GetPublicKeysParams, reqEditors ...RequestEditorFn) (*GetPublicKeysResponse, error) {
-	rsp, err := c.GetPublicKeys(ctx, orgId, params, reqEditors...)
+// ListPublicKeysWithResponse request returning *ListPublicKeysResponse
+func (c *ClientWithResponses) ListPublicKeysWithResponse(ctx context.Context, orgId string, params *ListPublicKeysParams, reqEditors ...RequestEditorFn) (*ListPublicKeysResponse, error) {
+	rsp, err := c.ListPublicKeys(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetPublicKeysResponse(rsp)
+	return ParseListPublicKeysResponse(rsp)
 }
 
 // CreatePublicKeyWithBodyWithResponse request with arbitrary body returning *CreatePublicKeyResponse
@@ -23477,57 +23652,65 @@ func (c *ClientWithResponses) CreateWorkloadProfileChartVersionWithBodyWithRespo
 	return ParseCreateWorkloadProfileChartVersionResponse(rsp)
 }
 
-// GetOrgsOrgIdWorkloadProfilesWithResponse request returning *GetOrgsOrgIdWorkloadProfilesResponse
-func (c *ClientWithResponses) GetOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *GetOrgsOrgIdWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesResponse, error) {
-	rsp, err := c.GetOrgsOrgIdWorkloadProfiles(ctx, orgId, params, reqEditors...)
+// ListWorkloadProfilesWithResponse request returning *ListWorkloadProfilesResponse
+func (c *ClientWithResponses) ListWorkloadProfilesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfilesResponse, error) {
+	rsp, err := c.ListWorkloadProfiles(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdWorkloadProfilesResponse(rsp)
+	return ParseListWorkloadProfilesResponse(rsp)
 }
 
-// PostOrgsOrgIdWorkloadProfilesWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdWorkloadProfilesResponse
-func (c *ClientWithResponses) PostOrgsOrgIdWorkloadProfilesWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesResponse, error) {
-	rsp, err := c.PostOrgsOrgIdWorkloadProfilesWithBody(ctx, orgId, contentType, body, reqEditors...)
+// CreateWorkloadProfileWithBodyWithResponse request with arbitrary body returning *CreateWorkloadProfileResponse
+func (c *ClientWithResponses) CreateWorkloadProfileWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileResponse, error) {
+	rsp, err := c.CreateWorkloadProfileWithBody(ctx, orgId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdWorkloadProfilesResponse(rsp)
+	return ParseCreateWorkloadProfileResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdWorkloadProfilesWithResponse(ctx context.Context, orgId string, body PostOrgsOrgIdWorkloadProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdWorkloadProfilesResponse, error) {
-	rsp, err := c.PostOrgsOrgIdWorkloadProfiles(ctx, orgId, body, reqEditors...)
+func (c *ClientWithResponses) CreateWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, body CreateWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileResponse, error) {
+	rsp, err := c.CreateWorkloadProfile(ctx, orgId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdWorkloadProfilesResponse(rsp)
+	return ParseCreateWorkloadProfileResponse(rsp)
 }
 
-// DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionWithResponse request returning *DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse
-func (c *ClientWithResponses) DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionWithResponse(ctx context.Context, orgId string, profileId string, version string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse, error) {
-	rsp, err := c.DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersion(ctx, orgId, profileId, version, reqEditors...)
+// DeleteWorkloadProfileWithResponse request returning *DeleteWorkloadProfileResponse
+func (c *ClientWithResponses) DeleteWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*DeleteWorkloadProfileResponse, error) {
+	rsp, err := c.DeleteWorkloadProfile(ctx, orgId, profileQid, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse(rsp)
+	return ParseDeleteWorkloadProfileResponse(rsp)
 }
 
-// DeleteOrgsOrgIdWorkloadProfilesProfileQidWithResponse request returning *DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse
-func (c *ClientWithResponses) DeleteOrgsOrgIdWorkloadProfilesProfileQidWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse, error) {
-	rsp, err := c.DeleteOrgsOrgIdWorkloadProfilesProfileQid(ctx, orgId, profileQid, reqEditors...)
+// GetWorkloadProfileWithResponse request returning *GetWorkloadProfileResponse
+func (c *ClientWithResponses) GetWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetWorkloadProfileResponse, error) {
+	rsp, err := c.GetWorkloadProfile(ctx, orgId, profileQid, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp)
+	return ParseGetWorkloadProfileResponse(rsp)
 }
 
-// GetOrgsOrgIdWorkloadProfilesProfileQidWithResponse request returning *GetOrgsOrgIdWorkloadProfilesProfileQidResponse
-func (c *ClientWithResponses) GetOrgsOrgIdWorkloadProfilesProfileQidWithResponse(ctx context.Context, orgId string, profileQid string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdWorkloadProfilesProfileQidResponse, error) {
-	rsp, err := c.GetOrgsOrgIdWorkloadProfilesProfileQid(ctx, orgId, profileQid, reqEditors...)
+// PatchWorkloadProfileWithBodyWithResponse request with arbitrary body returning *PatchWorkloadProfileResponse
+func (c *ClientWithResponses) PatchWorkloadProfileWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchWorkloadProfileResponse, error) {
+	rsp, err := c.PatchWorkloadProfileWithBody(ctx, orgId, profileQid, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp)
+	return ParsePatchWorkloadProfileResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchWorkloadProfileResponse, error) {
+	rsp, err := c.PatchWorkloadProfile(ctx, orgId, profileQid, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchWorkloadProfileResponse(rsp)
 }
 
 // ListWorkloadProfileVersionsWithResponse request returning *ListWorkloadProfileVersionsResponse
@@ -23563,6 +23746,15 @@ func (c *ClientWithResponses) GetLatestWorkloadProfileVersionWithResponse(ctx co
 		return nil, err
 	}
 	return ParseGetLatestWorkloadProfileVersionResponse(rsp)
+}
+
+// DeleteWorkloadProfileVersionWithResponse request returning *DeleteWorkloadProfileVersionResponse
+func (c *ClientWithResponses) DeleteWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam, reqEditors ...RequestEditorFn) (*DeleteWorkloadProfileVersionResponse, error) {
+	rsp, err := c.DeleteWorkloadProfileVersion(ctx, orgId, profileQid, version, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteWorkloadProfileVersionResponse(rsp)
 }
 
 // GetTokensWithResponse request returning *GetTokensResponse
@@ -23900,22 +24092,22 @@ func ParseGetOrgsOrgIdAppsAppIdResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAp
 	return response, nil
 }
 
-// ParseListApprovalRequestsResponse parses an HTTP response from a ListApprovalRequestsWithResponse call
-func ParseListApprovalRequestsResponse(rsp *http.Response) (*ListApprovalRequestsResponse, error) {
+// ParseListPipelineApprovalRequestsResponse parses an HTTP response from a ListPipelineApprovalRequestsWithResponse call
+func ParseListPipelineApprovalRequestsResponse(rsp *http.Response) (*ListPipelineApprovalRequestsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListApprovalRequestsResponse{
+	response := &ListPipelineApprovalRequestsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []ApprovalRequest
+		var dest []PipelineApprovalRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -24338,15 +24530,15 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdResponse(rsp *http.Response) (*GetOrgsOr
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse, error) {
+// ParseListDeploymentsResponse parses an HTTP response from a ListDeploymentsWithResponse call
+func ParseListDeploymentsResponse(rsp *http.Response) (*ListDeploymentsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse{
+	response := &ListDeploymentsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -24418,15 +24610,15 @@ func ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse(rsp *http.Response) (*P
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse, error) {
+// ParseGetDeploymentResponse parses an HTTP response from a GetDeploymentWithResponse call
+func ParseGetDeploymentResponse(rsp *http.Response) (*GetDeploymentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse{
+	response := &GetDeploymentResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -24451,15 +24643,15 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdResponse(rsp *http.Respon
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse, error) {
+// ParseListDeploymentErrorsResponse parses an HTTP response from a ListDeploymentErrorsWithResponse call
+func ParseListDeploymentErrorsResponse(rsp *http.Response) (*ListDeploymentErrorsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdEnvsEnvIdDeploysDeployIdErrorsResponse{
+	response := &ListDeploymentErrorsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -25472,7 +25664,7 @@ func ParseListPipelineRunsResponse(rsp *http.Response) (*ListPipelineRunsRespons
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []RunResponse
+		var dest []PipelineRun
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25512,7 +25704,7 @@ func ParseCreatePipelineRunResponse(rsp *http.Response) (*CreatePipelineRunRespo
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest RunResponse
+		var dest PipelineRun
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25551,15 +25743,15 @@ func ParseCreatePipelineRunResponse(rsp *http.Response) (*CreatePipelineRunRespo
 	return response, nil
 }
 
-// ParseDeleteRunResponse parses an HTTP response from a DeleteRunWithResponse call
-func ParseDeleteRunResponse(rsp *http.Response) (*DeleteRunResponse, error) {
+// ParseDeletePipelineRunResponse parses an HTTP response from a DeletePipelineRunWithResponse call
+func ParseDeletePipelineRunResponse(rsp *http.Response) (*DeletePipelineRunResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteRunResponse{
+	response := &DeletePipelineRunResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -25598,22 +25790,22 @@ func ParseDeleteRunResponse(rsp *http.Response) (*DeleteRunResponse, error) {
 	return response, nil
 }
 
-// ParseGetRunResponse parses an HTTP response from a GetRunWithResponse call
-func ParseGetRunResponse(rsp *http.Response) (*GetRunResponse, error) {
+// ParseGetPipelineRunResponse parses an HTTP response from a GetPipelineRunWithResponse call
+func ParseGetPipelineRunResponse(rsp *http.Response) (*GetPipelineRunResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetRunResponse{
+	response := &GetPipelineRunResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest RunResponse
+		var dest PipelineRun
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25631,15 +25823,15 @@ func ParseGetRunResponse(rsp *http.Response) (*GetRunResponse, error) {
 	return response, nil
 }
 
-// ParseCancelRunResponse parses an HTTP response from a CancelRunWithResponse call
-func ParseCancelRunResponse(rsp *http.Response) (*CancelRunResponse, error) {
+// ParseCancelPipelineRunResponse parses an HTTP response from a CancelPipelineRunWithResponse call
+func ParseCancelPipelineRunResponse(rsp *http.Response) (*CancelPipelineRunResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CancelRunResponse{
+	response := &CancelPipelineRunResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -25678,22 +25870,22 @@ func ParseCancelRunResponse(rsp *http.Response) (*CancelRunResponse, error) {
 	return response, nil
 }
 
-// ParseListRunJobsResponse parses an HTTP response from a ListRunJobsWithResponse call
-func ParseListRunJobsResponse(rsp *http.Response) (*ListRunJobsResponse, error) {
+// ParseListPipelineJobsResponse parses an HTTP response from a ListPipelineJobsWithResponse call
+func ParseListPipelineJobsResponse(rsp *http.Response) (*ListPipelineJobsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListRunJobsResponse{
+	response := &ListPipelineJobsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []RunJobListResponse
+		var dest []PipelineJobPartial
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25711,22 +25903,22 @@ func ParseListRunJobsResponse(rsp *http.Response) (*ListRunJobsResponse, error) 
 	return response, nil
 }
 
-// ParseGetRunJobResponse parses an HTTP response from a GetRunJobWithResponse call
-func ParseGetRunJobResponse(rsp *http.Response) (*GetRunJobResponse, error) {
+// ParseGetPipelineJobResponse parses an HTTP response from a GetPipelineJobWithResponse call
+func ParseGetPipelineJobResponse(rsp *http.Response) (*GetPipelineJobResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetRunJobResponse{
+	response := &GetPipelineJobResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest RunJobResponse
+		var dest PipelineJob
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25744,22 +25936,22 @@ func ParseGetRunJobResponse(rsp *http.Response) (*GetRunJobResponse, error) {
 	return response, nil
 }
 
-// ParseGetApprovalRequestResponse parses an HTTP response from a GetApprovalRequestWithResponse call
-func ParseGetApprovalRequestResponse(rsp *http.Response) (*GetApprovalRequestResponse, error) {
+// ParseGetPipelineApprovalRequestResponse parses an HTTP response from a GetPipelineApprovalRequestWithResponse call
+func ParseGetPipelineApprovalRequestResponse(rsp *http.Response) (*GetPipelineApprovalRequestResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetApprovalRequestResponse{
+	response := &GetPipelineApprovalRequestResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ApprovalRequest
+		var dest PipelineApprovalRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25777,69 +25969,22 @@ func ParseGetApprovalRequestResponse(rsp *http.Response) (*GetApprovalRequestRes
 	return response, nil
 }
 
-// ParseApproveApprovalRequestResponse parses an HTTP response from a ApproveApprovalRequestWithResponse call
-func ParseApproveApprovalRequestResponse(rsp *http.Response) (*ApproveApprovalRequestResponse, error) {
+// ParseApprovePipelineApprovalRequestResponse parses an HTTP response from a ApprovePipelineApprovalRequestWithResponse call
+func ParseApprovePipelineApprovalRequestResponse(rsp *http.Response) (*ApprovePipelineApprovalRequestResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ApproveApprovalRequestResponse{
+	response := &ApprovePipelineApprovalRequestResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ApprovalRequest
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDenyApprovalRequestResponse parses an HTTP response from a DenyApprovalRequestWithResponse call
-func ParseDenyApprovalRequestResponse(rsp *http.Response) (*DenyApprovalRequestResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DenyApprovalRequestResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ApprovalRequest
+		var dest PipelineApprovalRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25871,22 +26016,69 @@ func ParseDenyApprovalRequestResponse(rsp *http.Response) (*DenyApprovalRequestR
 	return response, nil
 }
 
-// ParseListRunJobStepLogsResponse parses an HTTP response from a ListRunJobStepLogsWithResponse call
-func ParseListRunJobStepLogsResponse(rsp *http.Response) (*ListRunJobStepLogsResponse, error) {
+// ParseDenyPipelineApprovalRequestResponse parses an HTTP response from a DenyPipelineApprovalRequestWithResponse call
+func ParseDenyPipelineApprovalRequestResponse(rsp *http.Response) (*DenyPipelineApprovalRequestResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListRunJobStepLogsResponse{
+	response := &DenyPipelineApprovalRequestResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []RunJobStepLog
+		var dest PipelineApprovalRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListPipelineStepLogsResponse parses an HTTP response from a ListPipelineStepLogsWithResponse call
+func ParseListPipelineStepLogsResponse(rsp *http.Response) (*ListPipelineStepLogsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPipelineStepLogsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []PipelineStepLog
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25904,22 +26096,22 @@ func ParseListRunJobStepLogsResponse(rsp *http.Response) (*ListRunJobStepLogsRes
 	return response, nil
 }
 
-// ParseRestartRunResponse parses an HTTP response from a RestartRunWithResponse call
-func ParseRestartRunResponse(rsp *http.Response) (*RestartRunResponse, error) {
+// ParseRestartPipelineRunResponse parses an HTTP response from a RestartPipelineRunWithResponse call
+func ParseRestartPipelineRunResponse(rsp *http.Response) (*RestartPipelineRunResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &RestartRunResponse{
+	response := &RestartPipelineRunResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest RunResponse
+		var dest PipelineRun
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -26891,15 +27083,15 @@ func ParsePatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp *http.Response) (*Pat
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdArtefactVersionsResponse parses an HTTP response from a GetOrgsOrgIdArtefactVersionsWithResponse call
-func ParseGetOrgsOrgIdArtefactVersionsResponse(rsp *http.Response) (*GetOrgsOrgIdArtefactVersionsResponse, error) {
+// ParseListArtefactVersionsInOrgResponse parses an HTTP response from a ListArtefactVersionsInOrgWithResponse call
+func ParseListArtefactVersionsInOrgResponse(rsp *http.Response) (*ListArtefactVersionsInOrgResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdArtefactVersionsResponse{
+	response := &ListArtefactVersionsInOrgResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -26924,15 +27116,15 @@ func ParseGetOrgsOrgIdArtefactVersionsResponse(rsp *http.Response) (*GetOrgsOrgI
 	return response, nil
 }
 
-// ParsePostOrgsOrgIdArtefactVersionsResponse parses an HTTP response from a PostOrgsOrgIdArtefactVersionsWithResponse call
-func ParsePostOrgsOrgIdArtefactVersionsResponse(rsp *http.Response) (*PostOrgsOrgIdArtefactVersionsResponse, error) {
+// ParseCreateArtefactVersionResponse parses an HTTP response from a CreateArtefactVersionWithResponse call
+func ParseCreateArtefactVersionResponse(rsp *http.Response) (*CreateArtefactVersionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOrgsOrgIdArtefactVersionsResponse{
+	response := &CreateArtefactVersionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -26964,15 +27156,15 @@ func ParsePostOrgsOrgIdArtefactVersionsResponse(rsp *http.Response) (*PostOrgsOr
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse parses an HTTP response from a GetOrgsOrgIdArtefactVersionsArtefactVersionIdWithResponse call
-func ParseGetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse(rsp *http.Response) (*GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse, error) {
+// ParseGetArtefactVersionResponse parses an HTTP response from a GetArtefactVersionWithResponse call
+func ParseGetArtefactVersionResponse(rsp *http.Response) (*GetArtefactVersionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse{
+	response := &GetArtefactVersionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27004,15 +27196,15 @@ func ParseGetOrgsOrgIdArtefactVersionsArtefactVersionIdResponse(rsp *http.Respon
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdArtefactsResponse parses an HTTP response from a GetOrgsOrgIdArtefactsWithResponse call
-func ParseGetOrgsOrgIdArtefactsResponse(rsp *http.Response) (*GetOrgsOrgIdArtefactsResponse, error) {
+// ParseListArtefactsResponse parses an HTTP response from a ListArtefactsWithResponse call
+func ParseListArtefactsResponse(rsp *http.Response) (*ListArtefactsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdArtefactsResponse{
+	response := &ListArtefactsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27030,15 +27222,15 @@ func ParseGetOrgsOrgIdArtefactsResponse(rsp *http.Response) (*GetOrgsOrgIdArtefa
 	return response, nil
 }
 
-// ParseDeleteOrgsOrgIdArtefactsArtefactIdResponse parses an HTTP response from a DeleteOrgsOrgIdArtefactsArtefactIdWithResponse call
-func ParseDeleteOrgsOrgIdArtefactsArtefactIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdArtefactsArtefactIdResponse, error) {
+// ParseDeleteArtefactResponse parses an HTTP response from a DeleteArtefactWithResponse call
+func ParseDeleteArtefactResponse(rsp *http.Response) (*DeleteArtefactResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteOrgsOrgIdArtefactsArtefactIdResponse{
+	response := &DeleteArtefactResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27063,15 +27255,15 @@ func ParseDeleteOrgsOrgIdArtefactsArtefactIdResponse(rsp *http.Response) (*Delet
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdArtefactsArtefactIdVersionsResponse parses an HTTP response from a GetOrgsOrgIdArtefactsArtefactIdVersionsWithResponse call
-func ParseGetOrgsOrgIdArtefactsArtefactIdVersionsResponse(rsp *http.Response) (*GetOrgsOrgIdArtefactsArtefactIdVersionsResponse, error) {
+// ParseListArtefactVersionsResponse parses an HTTP response from a ListArtefactVersionsWithResponse call
+func ParseListArtefactVersionsResponse(rsp *http.Response) (*ListArtefactVersionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdArtefactsArtefactIdVersionsResponse{
+	response := &ListArtefactVersionsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27103,15 +27295,15 @@ func ParseGetOrgsOrgIdArtefactsArtefactIdVersionsResponse(rsp *http.Response) (*
 	return response, nil
 }
 
-// ParsePatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse parses an HTTP response from a PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdWithResponse call
-func ParsePatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse(rsp *http.Response) (*PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse, error) {
+// ParsePatchArtefactVersionResponse parses an HTTP response from a PatchArtefactVersionWithResponse call
+func ParsePatchArtefactVersionResponse(rsp *http.Response) (*PatchArtefactVersionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PatchOrgsOrgIdArtefactsArtefactIdVersionsVersionIdResponse{
+	response := &PatchArtefactVersionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27461,15 +27653,15 @@ func ParseGetOrgsOrgIdEventsResponse(rsp *http.Response) (*GetOrgsOrgIdEventsRes
 	return response, nil
 }
 
-// ParseGetHumanitecPublicKeysResponse parses an HTTP response from a GetHumanitecPublicKeysWithResponse call
-func ParseGetHumanitecPublicKeysResponse(rsp *http.Response) (*GetHumanitecPublicKeysResponse, error) {
+// ParseListHumanitecPublicKeysResponse parses an HTTP response from a ListHumanitecPublicKeysWithResponse call
+func ParseListHumanitecPublicKeysResponse(rsp *http.Response) (*ListHumanitecPublicKeysResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetHumanitecPublicKeysResponse{
+	response := &ListHumanitecPublicKeysResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27487,15 +27679,15 @@ func ParseGetHumanitecPublicKeysResponse(rsp *http.Response) (*GetHumanitecPubli
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdImagesResponse parses an HTTP response from a GetOrgsOrgIdImagesWithResponse call
-func ParseGetOrgsOrgIdImagesResponse(rsp *http.Response) (*GetOrgsOrgIdImagesResponse, error) {
+// ParseListDeprecatedImagesResponse parses an HTTP response from a ListDeprecatedImagesWithResponse call
+func ParseListDeprecatedImagesResponse(rsp *http.Response) (*ListDeprecatedImagesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdImagesResponse{
+	response := &ListDeprecatedImagesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27513,15 +27705,15 @@ func ParseGetOrgsOrgIdImagesResponse(rsp *http.Response) (*GetOrgsOrgIdImagesRes
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdImagesImageIdResponse parses an HTTP response from a GetOrgsOrgIdImagesImageIdWithResponse call
-func ParseGetOrgsOrgIdImagesImageIdResponse(rsp *http.Response) (*GetOrgsOrgIdImagesImageIdResponse, error) {
+// ParseGetDeprecatedImageResponse parses an HTTP response from a GetDeprecatedImageWithResponse call
+func ParseGetDeprecatedImageResponse(rsp *http.Response) (*GetDeprecatedImageResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdImagesImageIdResponse{
+	response := &GetDeprecatedImageResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27546,15 +27738,15 @@ func ParseGetOrgsOrgIdImagesImageIdResponse(rsp *http.Response) (*GetOrgsOrgIdIm
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdImagesImageIdBuildsResponse parses an HTTP response from a GetOrgsOrgIdImagesImageIdBuildsWithResponse call
-func ParseGetOrgsOrgIdImagesImageIdBuildsResponse(rsp *http.Response) (*GetOrgsOrgIdImagesImageIdBuildsResponse, error) {
+// ParseListDeprecatedImageBuildsResponse parses an HTTP response from a ListDeprecatedImageBuildsWithResponse call
+func ParseListDeprecatedImageBuildsResponse(rsp *http.Response) (*ListDeprecatedImageBuildsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdImagesImageIdBuildsResponse{
+	response := &ListDeprecatedImageBuildsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27579,15 +27771,15 @@ func ParseGetOrgsOrgIdImagesImageIdBuildsResponse(rsp *http.Response) (*GetOrgsO
 	return response, nil
 }
 
-// ParsePostOrgsOrgIdImagesImageIdBuildsResponse parses an HTTP response from a PostOrgsOrgIdImagesImageIdBuildsWithResponse call
-func ParsePostOrgsOrgIdImagesImageIdBuildsResponse(rsp *http.Response) (*PostOrgsOrgIdImagesImageIdBuildsResponse, error) {
+// ParseCreateDeprecatedImageBuildResponse parses an HTTP response from a CreateDeprecatedImageBuildWithResponse call
+func ParseCreateDeprecatedImageBuildResponse(rsp *http.Response) (*CreateDeprecatedImageBuildResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOrgsOrgIdImagesImageIdBuildsResponse{
+	response := &CreateDeprecatedImageBuildResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27678,15 +27870,15 @@ func ParsePostOrgsOrgIdInvitationsResponse(rsp *http.Response) (*PostOrgsOrgIdIn
 	return response, nil
 }
 
-// ParseGetPublicKeysResponse parses an HTTP response from a GetPublicKeysWithResponse call
-func ParseGetPublicKeysResponse(rsp *http.Response) (*GetPublicKeysResponse, error) {
+// ParseListPublicKeysResponse parses an HTTP response from a ListPublicKeysWithResponse call
+func ParseListPublicKeysResponse(rsp *http.Response) (*ListPublicKeysResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetPublicKeysResponse{
+	response := &ListPublicKeysResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -27839,7 +28031,7 @@ func ParseListPipelineRunsByOrgResponse(rsp *http.Response) (*ListPipelineRunsBy
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []RunResponse
+		var dest []PipelineRun
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -29448,15 +29640,15 @@ func ParseCreateWorkloadProfileChartVersionResponse(rsp *http.Response) (*Create
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdWorkloadProfilesResponse parses an HTTP response from a GetOrgsOrgIdWorkloadProfilesWithResponse call
-func ParseGetOrgsOrgIdWorkloadProfilesResponse(rsp *http.Response) (*GetOrgsOrgIdWorkloadProfilesResponse, error) {
+// ParseListWorkloadProfilesResponse parses an HTTP response from a ListWorkloadProfilesWithResponse call
+func ParseListWorkloadProfilesResponse(rsp *http.Response) (*ListWorkloadProfilesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdWorkloadProfilesResponse{
+	response := &ListWorkloadProfilesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -29474,15 +29666,15 @@ func ParseGetOrgsOrgIdWorkloadProfilesResponse(rsp *http.Response) (*GetOrgsOrgI
 	return response, nil
 }
 
-// ParsePostOrgsOrgIdWorkloadProfilesResponse parses an HTTP response from a PostOrgsOrgIdWorkloadProfilesWithResponse call
-func ParsePostOrgsOrgIdWorkloadProfilesResponse(rsp *http.Response) (*PostOrgsOrgIdWorkloadProfilesResponse, error) {
+// ParseCreateWorkloadProfileResponse parses an HTTP response from a CreateWorkloadProfileWithResponse call
+func ParseCreateWorkloadProfileResponse(rsp *http.Response) (*CreateWorkloadProfileResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOrgsOrgIdWorkloadProfilesResponse{
+	response := &CreateWorkloadProfileResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -29514,20 +29706,27 @@ func ParsePostOrgsOrgIdWorkloadProfilesResponse(rsp *http.Response) (*PostOrgsOr
 	return response, nil
 }
 
-// ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse parses an HTTP response from a DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionWithResponse call
-func ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse(rsp *http.Response) (*DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse, error) {
+// ParseDeleteWorkloadProfileResponse parses an HTTP response from a DeleteWorkloadProfileWithResponse call
+func ParseDeleteWorkloadProfileResponse(rsp *http.Response) (*DeleteWorkloadProfileResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse{
+	response := &DeleteWorkloadProfileResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -29540,41 +29739,15 @@ func ParseDeleteOrgsOrgIdWorkloadProfilesProfileIdVersionsVersionResponse(rsp *h
 	return response, nil
 }
 
-// ParseDeleteOrgsOrgIdWorkloadProfilesProfileQidResponse parses an HTTP response from a DeleteOrgsOrgIdWorkloadProfilesProfileQidWithResponse call
-func ParseDeleteOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp *http.Response) (*DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse, error) {
+// ParseGetWorkloadProfileResponse parses an HTTP response from a GetWorkloadProfileWithResponse call
+func ParseGetWorkloadProfileResponse(rsp *http.Response) (*GetWorkloadProfileResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteOrgsOrgIdWorkloadProfilesProfileQidResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetOrgsOrgIdWorkloadProfilesProfileQidResponse parses an HTTP response from a GetOrgsOrgIdWorkloadProfilesProfileQidWithResponse call
-func ParseGetOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp *http.Response) (*GetOrgsOrgIdWorkloadProfilesProfileQidResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetOrgsOrgIdWorkloadProfilesProfileQidResponse{
+	response := &GetWorkloadProfileResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -29586,6 +29759,53 @@ func ParseGetOrgsOrgIdWorkloadProfilesProfileQidResponse(rsp *http.Response) (*G
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePatchWorkloadProfileResponse parses an HTTP response from a PatchWorkloadProfileWithResponse call
+func ParsePatchWorkloadProfileResponse(rsp *http.Response) (*PatchWorkloadProfileResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PatchWorkloadProfileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadProfileResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest HumanitecErrorResponse
@@ -29700,6 +29920,32 @@ func ParseGetLatestWorkloadProfileVersionResponse(rsp *http.Response) (*GetLates
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteWorkloadProfileVersionResponse parses an HTTP response from a DeleteWorkloadProfileVersionWithResponse call
+func ParseDeleteWorkloadProfileVersionResponse(rsp *http.Response) (*DeleteWorkloadProfileVersionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteWorkloadProfileVersionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
