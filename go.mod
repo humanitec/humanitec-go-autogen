@@ -2,11 +2,12 @@ module github.com/humanitec/humanitec-go-autogen
 
 go 1.21
 
-toolchain go1.21.0
+toolchain go1.21.5
 
 require (
 	github.com/oapi-codegen/runtime v1.1.0
 	github.com/stretchr/testify v1.8.4
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
