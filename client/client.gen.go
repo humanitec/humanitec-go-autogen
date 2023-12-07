@@ -7,12 +7,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -48,17 +51,17 @@ const (
 	Env ValueSource = "env"
 )
 
-// Defines values for WorkloadProfileVersionSpecDefinitionPropertyType.
+// Defines values for WorkloadProfileSpecDefinitionPropertyType.
 const (
-	WorkloadProfileVersionSpecDefinitionPropertyTypeCollection WorkloadProfileVersionSpecDefinitionPropertyType = "collection"
-	WorkloadProfileVersionSpecDefinitionPropertyTypeFeature    WorkloadProfileVersionSpecDefinitionPropertyType = "feature"
-	WorkloadProfileVersionSpecDefinitionPropertyTypeSchema     WorkloadProfileVersionSpecDefinitionPropertyType = "schema"
+	WorkloadProfileSpecDefinitionPropertyTypeCollection WorkloadProfileSpecDefinitionPropertyType = "collection"
+	WorkloadProfileSpecDefinitionPropertyTypeFeature    WorkloadProfileSpecDefinitionPropertyType = "feature"
+	WorkloadProfileSpecDefinitionPropertyTypeSchema     WorkloadProfileSpecDefinitionPropertyType = "schema"
 )
 
-// Defines values for WorkloadProfileVersionSpecDefinitionRuntimePropertyType.
+// Defines values for WorkloadProfileSpecDefinitionRuntimePropertyType.
 const (
-	WorkloadProfileVersionSpecDefinitionRuntimePropertyTypeCollection WorkloadProfileVersionSpecDefinitionRuntimePropertyType = "collection"
-	WorkloadProfileVersionSpecDefinitionRuntimePropertyTypeFeature    WorkloadProfileVersionSpecDefinitionRuntimePropertyType = "feature"
+	WorkloadProfileSpecDefinitionRuntimePropertyTypeCollection WorkloadProfileSpecDefinitionRuntimePropertyType = "collection"
+	WorkloadProfileSpecDefinitionRuntimePropertyTypeFeature    WorkloadProfileSpecDefinitionRuntimePropertyType = "feature"
 )
 
 // AWSAuthRequest Credentials to authenticate AWS Secret Manager.
@@ -152,27 +155,6 @@ type ActiveResourceResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
-// AddArtefactVersionPayloadRequest AddArtefactVersionPayload describes the payload for a new ArtefactVersion request.
-type AddArtefactVersionPayloadRequest struct {
-	// Commit (Optional) The commit ID the Artefact Version was built on.
-	Commit *string `json:"commit,omitempty"`
-
-	// Digest (Optional) The Artefact Version digest.
-	Digest *string `json:"digest,omitempty"`
-
-	// Name The Artefact name.
-	Name string `json:"name"`
-
-	// Ref (Optional) The ref the Artefact Version was built from.
-	Ref *string `json:"ref,omitempty"`
-
-	// Type The Artefact Version type.
-	Type string `json:"type"`
-
-	// Version (Optional) The Artefact Version.
-	Version *string `json:"version,omitempty"`
-}
-
 // ApplicationCreationRequest defines model for ApplicationCreationRequest.
 type ApplicationCreationRequest struct {
 	Env *EnvironmentBaseRequest `json:"env,omitempty"`
@@ -231,8 +213,15 @@ type ArtefactResponse struct {
 	UpdatedBy *string `json:"updated_by,omitempty"`
 }
 
-// ArtefactVersionResponse An Artefact Version represents a particular version of an Artefact that can be added to an Application.
-type ArtefactVersionResponse struct {
+// ArtefactVersion The details of an Artefact Version. The type field dictates the type of Artefact along with any additional fields.
+type ArtefactVersion struct {
+	// Type The Artefact Version type.
+	Type  string `json:"type"`
+	union json.RawMessage
+}
+
+// ArtefactVersionBase defines model for ArtefactVersionBase.
+type ArtefactVersionBase struct {
 	// Archived If the Artefact Version is archived.
 	Archived bool `json:"archived"`
 
@@ -240,16 +229,13 @@ type ArtefactVersionResponse struct {
 	ArtefactId string `json:"artefact_id"`
 
 	// Commit (Optional) The commit ID the Artefact Version was built on.
-	Commit string `json:"commit"`
+	Commit *string `json:"commit,omitempty"`
 
 	// CreatedAt The time when the Artefact Version was added to Humanitec.
 	CreatedAt *string `json:"created_at,omitempty"`
 
 	// CreatedBy The user ID of the user who added the Artefact Version to Humanitec.
 	CreatedBy *string `json:"created_by,omitempty"`
-
-	// Digest (Optional) The Artefact Version digest.
-	Digest string `json:"digest"`
 
 	// Id The UUID of the Artefact Version.
 	Id string `json:"id"`
@@ -258,7 +244,7 @@ type ArtefactVersionResponse struct {
 	Name string `json:"name"`
 
 	// Ref (Optional) The ref the Artefact Version was built from.
-	Ref string `json:"ref"`
+	Ref *string `json:"ref,omitempty"`
 
 	// UpdatedAt The time when the Artefact Version was updated for the last time.
 	UpdatedAt *string `json:"updated_at,omitempty"`
@@ -267,7 +253,28 @@ type ArtefactVersionResponse struct {
 	UpdatedBy *string `json:"updated_by,omitempty"`
 
 	// Version (Optional) The version of the Artefact Version.
-	Version string `json:"version"`
+	Version *string `json:"version,omitempty"`
+}
+
+// AuditLogEntry An entry in the audit log
+type AuditLogEntry struct {
+	// At The date and time when the event was recorded.
+	At time.Time `json:"at"`
+
+	// OrgId The id of the Organization this event occurred in.
+	OrgId *string `json:"org_id,omitempty"`
+
+	// RequestMethod The HTTP method that was requested. Only POST, PATCH, PUT, and DELETE are audited.
+	RequestMethod string `json:"request_method"`
+
+	// RequestPath The URL path that was called.
+	RequestPath string `json:"request_path"`
+
+	// ResponseStatus The status code of the response. Only successful responses are audited.
+	ResponseStatus int `json:"response_status"`
+
+	// UserId The id of the User who triggered the event.
+	UserId string `json:"user_id"`
 }
 
 // AutomationRuleRequest An Automation Rule defining how and when artefacts in an environment should be updated.
@@ -383,6 +390,45 @@ type ClusterSecretsMapRequest map[string]ClusterSecretRequest
 // ClusterSecretsMapResponse ClusterSecretsMap stores a list of Kuberenetes secret references for the target deployment clusters.
 type ClusterSecretsMapResponse map[string]ClusterSecretResponse
 
+// ContainerArtefactVersion defines model for ContainerArtefactVersion.
+type ContainerArtefactVersion struct {
+	// Archived If the Artefact Version is archived.
+	Archived bool `json:"archived"`
+
+	// ArtefactId The UUID of the Artefact.
+	ArtefactId string `json:"artefact_id"`
+
+	// Commit (Optional) The commit ID the Artefact Version was built on.
+	Commit string `json:"commit"`
+
+	// CreatedAt The time when the Artefact Version was added to Humanitec.
+	CreatedAt *string `json:"created_at,omitempty"`
+
+	// CreatedBy The user ID of the user who added the Artefact Version to Humanitec.
+	CreatedBy *string `json:"created_by,omitempty"`
+
+	// Digest (Optional) The Artefact Version digest.
+	Digest string `json:"digest"`
+
+	// Id The UUID of the Artefact Version.
+	Id string `json:"id"`
+
+	// Name The name of the Artefact.
+	Name string `json:"name"`
+
+	// Ref (Optional) The ref the Artefact Version was built from.
+	Ref string `json:"ref"`
+
+	// UpdatedAt The time when the Artefact Version was updated for the last time.
+	UpdatedAt *string `json:"updated_at,omitempty"`
+
+	// UpdatedBy The user ID of the user who performed the last updated on the Artefact Version.
+	UpdatedBy *string `json:"updated_by,omitempty"`
+
+	// Version (Optional) The version of the Artefact Version.
+	Version *string `json:"version,omitempty"`
+}
+
 // ControllerRequest Controller represents deployment, stateful set etc
 type ControllerRequest struct {
 	Kind     *string            `json:"kind,omitempty"`
@@ -401,6 +447,52 @@ type ControllerResponse struct {
 	Replicas int                `json:"replicas"`
 	Revision int                `json:"revision"`
 	Status   string             `json:"status"`
+}
+
+// CreateArtefactVersion The details of a new Artefact Version to register. The type field is required and dictates the type of Artefact to register.
+type CreateArtefactVersion struct {
+	// Type The Artefact Version type.
+	Type  string `json:"type"`
+	union json.RawMessage
+}
+
+// CreateArtefactVersionBase defines model for CreateArtefactVersionBase.
+type CreateArtefactVersionBase struct {
+	// Commit (Optional) The commit ID the Artefact Version was built on.
+	Commit *string `json:"commit,omitempty"`
+
+	// Name The Artefact name.
+	Name string `json:"name"`
+
+	// Ref (Optional) The ref the Artefact Version was built from.
+	Ref *string `json:"ref,omitempty"`
+
+	// Type The Artefact Version type.
+	Type string `json:"type"`
+
+	// Version (Optional) The Artefact Version.
+	Version *string `json:"version,omitempty"`
+}
+
+// CreateContainerArtefactVersion defines model for CreateContainerArtefactVersion.
+type CreateContainerArtefactVersion struct {
+	// Commit (Optional) The commit ID the Artefact Version was built on.
+	Commit *string `json:"commit,omitempty"`
+
+	// Digest (Optional) The Artefact Version digest.
+	Digest *string `json:"digest,omitempty"`
+
+	// Name The Artefact name.
+	Name string `json:"name"`
+
+	// Ref (Optional) The ref the Artefact Version was built from.
+	Ref *string `json:"ref,omitempty"`
+
+	// Type The Artefact Version type.
+	Type string `json:"type"`
+
+	// Version (Optional) The Artefact Version.
+	Version *string `json:"version,omitempty"`
 }
 
 // CreateDriverRequestRequest CreateDriverRequest describes the new resource driver registration request.
@@ -487,28 +579,73 @@ type CreateSecretStorePayloadRequest struct {
 	Vault *VaultRequest `json:"vault,omitempty"`
 }
 
+// CreateWorkloadArtefactVersion defines model for CreateWorkloadArtefactVersion.
+type CreateWorkloadArtefactVersion struct {
+	// Commit (Optional) The commit ID the Artefact Version was built on.
+	Commit *string `json:"commit,omitempty"`
+
+	// Extensions Humanitec workload extensions for the Workload Artefact Version. These can be used to override the profile, or workload module spec and resource attributes.
+	Extensions *CreateWorkloadArtefactVersionExtensions `json:"extensions,omitempty"`
+
+	// Image An optional default image to assign to any containers in the workload that do not have an image set or whose image is '.'
+	Image *string `json:"image,omitempty"`
+
+	// Name The Artefact name.
+	Name string `json:"name"`
+
+	// Overrides An optional Json object containing the workload overrides. Score v1b1 is expected.
+	Overrides *map[string]interface{} `json:"overrides,omitempty"`
+
+	// PropertyOverrides An optional set of path overrides that will be applied to the workload.
+	PropertyOverrides *map[string]interface{} `json:"property_overrides,omitempty"`
+
+	// Ref (Optional) The ref the Artefact Version was built from.
+	Ref *string `json:"ref,omitempty"`
+
+	// Spec A Json object containing the workload specification. Score v1b1 is expected.
+	Spec map[string]interface{} `json:"spec"`
+
+	// Type The Artefact Version type.
+	Type string `json:"type"`
+
+	// Version (Optional) The Artefact Version.
+	Version *string `json:"version,omitempty"`
+}
+
+// CreateWorkloadArtefactVersionExtensions Humanitec workload extensions for the Workload Artefact Version. These can be used to override the profile, or workload module spec and resource attributes.
+type CreateWorkloadArtefactVersionExtensions struct {
+	// ApiVersion The api version describing the format of the extensions.
+	ApiVersion string `json:"apiVersion"`
+
+	// Profile An optional override for the workload profile
+	Profile *string `json:"profile,omitempty"`
+
+	// Spec A map of additional workload spec fields that will be merged.
+	Spec *map[string]interface{} `json:"spec,omitempty"`
+}
+
 // DeltaMetadataRequest defines model for DeltaMetadataRequest.
 type DeltaMetadataRequest struct {
-	Archived       *bool      `json:"archived,omitempty"`
-	Contributers   *[]string  `json:"contributers"`
-	CreatedAt      *time.Time `json:"created_at,omitempty"`
-	CreatedBy      *string    `json:"created_by,omitempty"`
-	EnvId          *string    `json:"env_id,omitempty"`
-	LastModifiedAt *time.Time `json:"last_modified_at,omitempty"`
-	Name           *string    `json:"name,omitempty"`
-	Shared         *bool      `json:"shared,omitempty"`
+	Archived       *bool          `json:"archived,omitempty"`
+	Contributers   *[]string      `json:"contributers"`
+	CreatedAt      *time.Time     `json:"created_at,omitempty"`
+	CreatedBy      *string        `json:"created_by,omitempty"`
+	EnvId          *EnvironmentID `json:"env_id,omitempty"`
+	LastModifiedAt *time.Time     `json:"last_modified_at,omitempty"`
+	Name           *string        `json:"name,omitempty"`
+	Shared         *bool          `json:"shared,omitempty"`
 }
 
 // DeltaMetadataResponse defines model for DeltaMetadataResponse.
 type DeltaMetadataResponse struct {
-	Archived       bool      `json:"archived"`
-	Contributers   *[]string `json:"contributers,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
-	CreatedBy      string    `json:"created_by"`
-	EnvId          *string   `json:"env_id,omitempty"`
-	LastModifiedAt time.Time `json:"last_modified_at"`
-	Name           *string   `json:"name,omitempty"`
-	Shared         *bool     `json:"shared,omitempty"`
+	Archived       bool           `json:"archived"`
+	Contributers   *[]string      `json:"contributers,omitempty"`
+	CreatedAt      time.Time      `json:"created_at"`
+	CreatedBy      string         `json:"created_by"`
+	EnvId          *EnvironmentID `json:"env_id,omitempty"`
+	LastModifiedAt time.Time      `json:"last_modified_at"`
+	Name           *string        `json:"name,omitempty"`
+	Shared         *bool          `json:"shared,omitempty"`
 }
 
 // DeltaRequest A Deployment Delta (or just "Delta") describes the changes that must be applied to one Deployment Set to generate another Deployment Set. Deployment Deltas are the only way to create new Deployment Sets.
@@ -625,6 +762,36 @@ type DeploymentErrorResponse struct {
 	Summary   string `json:"summary"`
 }
 
+// DeploymentPipelineReferenceRequest defines model for DeploymentPipelineReferenceRequest.
+type DeploymentPipelineReferenceRequest struct {
+	// Id The ID of the Pipeline
+	Id *string `json:"id,omitempty"`
+
+	// JobId The ID of the Pipeline Job within the Run.
+	JobId *string `json:"job_id,omitempty"`
+
+	// RunId The ID of the Pipeline Run
+	RunId *string `json:"run_id,omitempty"`
+
+	// StepIndex The index of the step with in the Job.
+	StepIndex *int `json:"step_index,omitempty"`
+}
+
+// DeploymentPipelineReferenceResponse defines model for DeploymentPipelineReferenceResponse.
+type DeploymentPipelineReferenceResponse struct {
+	// Id The ID of the Pipeline
+	Id string `json:"id"`
+
+	// JobId The ID of the Pipeline Job within the Run.
+	JobId string `json:"job_id"`
+
+	// RunId The ID of the Pipeline Run
+	RunId string `json:"run_id"`
+
+	// StepIndex The index of the step with in the Job.
+	StepIndex int `json:"step_index"`
+}
+
 // DeploymentRequest Deployments represent updates to the running state of an Environment.
 //
 // Deployments are made by applying _Deltas_ to a state defined by an existing Deployment. The Environment’s from_deploy property defines the Deployment. This Deployment is usually but not always in the current Environment. If the Deployment is from another Environment, the state of that Environment will be "cloned" into the current Environment with the option to apply a Delta.
@@ -633,7 +800,8 @@ type DeploymentRequest struct {
 	Comment *string `json:"comment,omitempty"`
 
 	// DeltaId ID of the Deployment Delta describing the changes to the current Environment for this Deployment.
-	DeltaId *string `json:"delta_id,omitempty"`
+	DeltaId  *string                             `json:"delta_id,omitempty"`
+	Pipeline *DeploymentPipelineReferenceRequest `json:"pipeline,omitempty"`
 
 	// SetId ID of the Deployment Set describing the state of the Environment after Deployment.
 	SetId *string `json:"set_id,omitempty"`
@@ -667,7 +835,8 @@ type DeploymentResponse struct {
 	FromId string `json:"from_id"`
 
 	// Id The ID of the Deployment.
-	Id string `json:"id"`
+	Id       string                               `json:"id"`
+	Pipeline *DeploymentPipelineReferenceResponse `json:"pipeline,omitempty"`
 
 	// SetId ID of the Deployment Set describing the state of the Environment after Deployment.
 	SetId string `json:"set_id"`
@@ -746,6 +915,9 @@ type EnvironmentDefinitionRequest struct {
 	// Type The Environment Type. This is used for organizing and managing Environments.
 	Type string `json:"type"`
 }
+
+// EnvironmentID defines model for EnvironmentID.
+type EnvironmentID = string
 
 // EnvironmentResponse Environments are independent spaces where Applications can run. An Application is always deployed into an Environment.
 type EnvironmentResponse struct {
@@ -880,8 +1052,7 @@ type HumanitecErrorResponse struct {
 	Error string `json:"error"`
 
 	// Message A Human readable message about the error.
-	Message    string `json:"message"`
-	StatusCode *int   `json:"status_code,omitempty"`
+	Message string `json:"message"`
 }
 
 // HumanitecPublicKey HumanitecPublicKey stores a Public Key Humanitec shared with an organization.
@@ -969,8 +1140,8 @@ type JSONPatchesResponse = []JSONPatchResponse
 
 // LogoResponse defines model for LogoResponse.
 type LogoResponse struct {
-	DarkUrl  *string `json:"dark_url"`
-	LightUrl *string `json:"light_url"`
+	DarkUrl  *string `json:"dark_url,omitempty"`
+	LightUrl *string `json:"light_url,omitempty"`
 }
 
 // MatchingCriteriaRequest Matching Criteria are a set of rules used to choose which Resource Definition to use to provision a particular Resource Type.
@@ -1138,17 +1309,20 @@ type NodeBodyResponse struct {
 // OrganizationResponse An Organization is the top level object in Humanitec. All other objects belong to an Organization.
 type OrganizationResponse struct {
 	// CreatedAt Timestamp when the Organization was created.
-	CreatedAt *string `json:"created_at"`
+	CreatedAt *time.Time `json:"created_at"`
 
 	// CreatedBy User ID that created the Organization.
 	CreatedBy string `json:"created_by"`
 
 	// Id Unique ID for the Organization.
-	Id   string        `json:"id"`
-	Logo *LogoResponse `json:"logo,omitempty"`
+	Id   string       `json:"id"`
+	Logo LogoResponse `json:"logo"`
 
 	// Name Human friendly name for the Organization.
 	Name string `json:"name"`
+
+	// TrialExpiresAt Timestamp the trial expires at.
+	TrialExpiresAt *time.Time `json:"trial_expires_at"`
 }
 
 // PatchResourceDefinitionRequestRequest PatchResourceDefinitionRequest describes a ResourceDefinition change request.
@@ -1240,6 +1414,59 @@ type PipelineApprovalRequest struct {
 
 // PipelineApprovalRequestStatus The current status of the approval request.
 type PipelineApprovalRequestStatus string
+
+// PipelineCriteria defines model for PipelineCriteria.
+type PipelineCriteria struct {
+	// Trigger The trigger to call
+	Trigger string `json:"trigger"`
+	union   json.RawMessage
+}
+
+// PipelineCriteriaCreateBody defines model for PipelineCriteriaCreateBody.
+type PipelineCriteriaCreateBody struct {
+	// Trigger The trigger to call
+	Trigger string `json:"trigger"`
+	union   json.RawMessage
+}
+
+// PipelineDeploymentRequestCriteria A deployment request matching criteria for a Pipeline.
+type PipelineDeploymentRequestCriteria struct {
+	// AppId The id of the Application for which this criteria matches. If this Pipeline is defined in an Application, then this value can only be null or the id of the Application.
+	AppId *string `json:"app_id,omitempty"`
+
+	// DeploymentType The type of deployment that this criteria will match. Valid values are "deploy" and "redeploy". "redeploy"  applies only to deployment request to redeploy a previous deployment id while "deploy" will apply to all other requests that include a Delta or Deployment Set. If not defined, all deployment types will match.
+	DeploymentType *string `json:"deployment_type,omitempty"`
+
+	// EnvId The exact id of the Environment which this criteria will match.
+	EnvId *string `json:"env_id,omitempty"`
+
+	// EnvType The Environment Type that this criteria will match. If defined, this criteria will only apply to Environments that have this type.
+	EnvType *string `json:"env_type,omitempty"`
+
+	// Id The unique id of the criteria within this Pipeline.
+	Id string `json:"id"`
+
+	// PipelineId The id of the Pipeline tied to this deployment request criteria.
+	PipelineId string `json:"pipeline_id"`
+
+	// PipelineName The current display name of the Pipeline.
+	PipelineName string `json:"pipeline_name"`
+}
+
+// PipelineDeploymentRequestCriteriaCreateBody The details required to create a new deployment request matching criteria for a Pipeline.
+type PipelineDeploymentRequestCriteriaCreateBody struct {
+	// AppId The id of the Application for which this criteria matches. If this Pipeline is defined in an Application, then this value can only be null or the id of the Application.
+	AppId *string `json:"app_id,omitempty"`
+
+	// DeploymentType The type of deployment that this criteria will match. Valid values are "deploy" and "redeploy". "redeploy"  applies only to deployment request to redeploy a previous deployment id while "deploy" will apply to all other requests that include a Delta or Deployment Set. If not defined, all deployment types will match.
+	DeploymentType *string `json:"deployment_type,omitempty"`
+
+	// EnvId The exact id of the Environment which this criteria will match.
+	EnvId *string `json:"env_id,omitempty"`
+
+	// EnvType The Environment Type that this criteria will match. If defined, this criteria will only apply to Environments that have this type.
+	EnvType *string `json:"env_type,omitempty"`
+}
 
 // PipelineJob defines model for PipelineJob.
 type PipelineJob struct {
@@ -1394,6 +1621,35 @@ type PipelineRunCreateBody struct {
 	Inputs map[string]interface{} `json:"inputs"`
 }
 
+// PipelineRunCreateByDeploymentRequestCriteriaBody Trigger the pipeline that has a deployment_request trigger and criteria that match this target environment. If "delta_id" or "set_id" is provided, the matching criteria must support deployment type "deploy". If "deployment_id" is provided, the matching criteria must support deployment type "re-deploy".
+// When "delta_id" is provided, the inputs to the Pipeline Run will be "environment", "comment", "delta_id" and "value_set_version_id" if provided. When "deployment_id" is provided, the inputs to the Pipeline Run will be "environment", "comment", "deployment_id", with "set_id", "value_set_version_id" being retrieved from the deployment itself. When "set_id" is provided, the inputs to the Pipeline Run will be "environment", "comment", "set_id", and "value_set_version_id" if provided.
+type PipelineRunCreateByDeploymentRequestCriteriaBody struct {
+	// Comment An optional comment to apply to the Deployment.
+	Comment *string `json:"comment,omitempty"`
+
+	// DeltaId A deployment delta to apply to the target environment. This delta must already exist. This field is mutually exclusive with "deployment_id" and "set_id".
+	DeltaId *string `json:"delta_id,omitempty"`
+
+	// DeploymentId An existing deployment to redeploy into the target environment. The deployment set and value set will be copied. This field is mutually exclusive with "delta_id" and "set_id".
+	DeploymentId *string `json:"deployment_id,omitempty"`
+
+	// Environment The target environment within the Application to deploy to.
+	Environment string `json:"environment"`
+
+	// SetId A direct deployment set to apply to the target environment. This deployment set must already exist. This field is mutually exclusive with "delta_id" and "set_id".
+	SetId *string `json:"set_id,omitempty"`
+
+	// ValueSetVersionId The exact value set version to use when deploying to the target environment. This value set version must exist. This field can only be used when "delta_id" or "set_id" is specified.
+	ValueSetVersionId *string `json:"value_set_version_id,omitempty"`
+}
+
+// PipelineRunCreateByTriggerCriteriaBody The parameters for creating a new Run based on trigger and inputs.
+type PipelineRunCreateByTriggerCriteriaBody struct {
+	// Trigger The trigger to call
+	Trigger string `json:"trigger"`
+	union   json.RawMessage
+}
+
 // PipelineStep A Step within a Job.
 type PipelineStep struct {
 	// CompletedAt The date and time when this Step entered a successful, failed, or cancelled status.
@@ -1527,7 +1783,7 @@ type PublicKey struct {
 	CreatedBy string    `json:"created_by"`
 	ExpiredAt time.Time `json:"expired_at"`
 
-	// Fingerprint Key is the sha256 public key fingerprint, it's computed and stored when a new key is uploaded.
+	// Fingerprint It's the hexadecimal representation of the sha256 hash of the DER representation of the key, it's computed and stored when a new key is uploaded.
 	Fingerprint string `json:"fingerprint"`
 	Id          string `json:"id"`
 	Key         string `json:"key"`
@@ -2311,6 +2567,51 @@ type WebhookUpdateResponse struct {
 	Url *string `json:"url"`
 }
 
+// WorkloadArtefactVersion defines model for WorkloadArtefactVersion.
+type WorkloadArtefactVersion struct {
+	// Archived If the Artefact Version is archived.
+	Archived bool `json:"archived"`
+
+	// ArtefactId The UUID of the Artefact.
+	ArtefactId string `json:"artefact_id"`
+
+	// Commit (Optional) The commit ID the Artefact Version was built on.
+	Commit *string `json:"commit,omitempty"`
+
+	// CreatedAt The time when the Artefact Version was added to Humanitec.
+	CreatedAt *string `json:"created_at,omitempty"`
+
+	// CreatedBy The user ID of the user who added the Artefact Version to Humanitec.
+	CreatedBy *string `json:"created_by,omitempty"`
+
+	// Id The UUID of the Artefact Version.
+	Id string `json:"id"`
+
+	// Name The name of the Artefact.
+	Name string `json:"name"`
+
+	// Ref (Optional) The ref the Artefact Version was built from.
+	Ref *string `json:"ref,omitempty"`
+
+	// UpdatedAt The time when the Artefact Version was updated for the last time.
+	UpdatedAt *string `json:"updated_at,omitempty"`
+
+	// UpdatedBy The user ID of the user who performed the last updated on the Artefact Version.
+	UpdatedBy *string `json:"updated_by,omitempty"`
+
+	// Version (Optional) The version of the Artefact Version.
+	Version *string `json:"version,omitempty"`
+}
+
+// WorkloadArtefactVersionDeploymentSet Humanitec definition for a Workload Artefact.
+type WorkloadArtefactVersionDeploymentSet struct {
+	// Modules The set of workloads to add when deployed, the key is the name of the workload.
+	Modules map[string]map[string]interface{} `json:"modules"`
+
+	// Shared The set of shared resources to depend on, the key is the resource identifier.
+	Shared map[string]map[string]interface{} `json:"shared"`
+}
+
 // WorkloadProfileChartReference References a workload profile chart.
 type WorkloadProfileChartReference struct {
 	// Id Workload Profile Chart ID
@@ -2338,13 +2639,12 @@ type WorkloadProfileChartVersionResponse struct {
 	Version string `json:"version"`
 }
 
-// WorkloadProfilePatchRequest The proposed properties to update a workload profile.
-type WorkloadProfilePatchRequest struct {
-	// DeprecationMessage A not-empty string indicates that the workload profile is deprecated.
-	DeprecationMessage *string `json:"deprecation_message,omitempty"`
-
-	// Description Describes the workload profile
-	Description *string `json:"description,omitempty"`
+// WorkloadProfileFeatureResponse defines model for WorkloadProfileFeatureResponse.
+type WorkloadProfileFeatureResponse struct {
+	Id      string                 `json:"id"`
+	OrgId   string                 `json:"org_id"`
+	Schema  map[string]interface{} `json:"schema"`
+	Version string                 `json:"version"`
 }
 
 // WorkloadProfileRequest Workload Profiles provide the baseline configuration for Workloads in Applications in Humanitec. Developers can configure various features of a workload profile to suit their needs. Examples of features might be `schedules` used in Kubernetes CronJobs or `ingress` which might be used to expose Pods controlled by a Kubernetes Deployment.
@@ -2359,6 +2659,17 @@ type WorkloadProfileRequest struct {
 
 	// Id Workload Profile ID
 	Id string `json:"id"`
+
+	// SpecDefinition Workload spec definition
+	SpecDefinition WorkloadProfileSpecDefinition `json:"spec_definition"`
+
+	// Version Version identifier. The version must be unique, but the API doesn't not enforce any ordering. Currently workloads will always use the latest update.
+	//
+	// If no identifier is provided, the each update will generate a random version identifier.
+	Version *string `json:"version,omitempty"`
+
+	// WorkloadProfileChart References a workload profile chart.
+	WorkloadProfileChart WorkloadProfileChartReference `json:"workload_profile_chart"`
 }
 
 // WorkloadProfileResponse Workload Profiles provide the baseline configuration for Workloads in Applications in Humanitec. Developers can configure various features of a workload profile to suit their needs. Examples of features might be `schedules` used in Kubernetes CronJobs or `ingress` which might be used to expose Pods controlled by a Kubernetes Deployment.
@@ -2380,40 +2691,94 @@ type WorkloadProfileResponse struct {
 	// Id Workload Profile ID
 	Id string `json:"id"`
 
-	// Latest The latest version of the profile
-	Latest *string `json:"latest,omitempty"`
-
 	// OrgId Organization ID
 	OrgId string `json:"org_id"`
+
+	// SpecDefinition Workload spec definition
+	SpecDefinition WorkloadProfileSpecDefinition `json:"spec_definition"`
+
+	// SpecSchema OpenAPI schema used to validate the spec.
+	SpecSchema interface{} `json:"spec_schema"`
 
 	// UpdatedAt Timestamp when the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at"`
 
 	// UpdatedBy User who last updated the entity.
 	UpdatedBy string `json:"updated_by"`
-}
 
-// WorkloadProfileVersionRequest Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
-type WorkloadProfileVersionRequest struct {
-	// Features A map of Features. If referencing built in Humanitec features, the fully qualified feature name must be used: e.g. `humanitec/annotations`.
-	//
-	// {
-	//
-	// }
-	Features *map[string]interface{} `json:"features,omitempty"`
-
-	// Notes Notes
-	Notes          *string                               `json:"notes,omitempty"`
-	SpecDefinition *WorkloadProfileVersionSpecDefinition `json:"spec_definition,omitempty"`
-
-	// Version Version
+	// Version Version identifier.
 	Version string `json:"version"`
 
 	// WorkloadProfileChart References a workload profile chart.
 	WorkloadProfileChart WorkloadProfileChartReference `json:"workload_profile_chart"`
 }
 
-// WorkloadProfileVersionResponse Each Workload Profile has one or more Versions associated with it. In order to add a version, a Workload Profile must first be created.
+// WorkloadProfileSpecDefinition Workload spec definition
+type WorkloadProfileSpecDefinition struct {
+	// Properties Workload spec definition
+	Properties        *WorkloadProfileSpecDefinitionProperties        `json:"properties,omitempty"`
+	RuntimeProperties *[]WorkloadProfileSpecDefinitionRuntimeProperty `json:"runtime_properties,omitempty"`
+}
+
+// WorkloadProfileSpecDefinitionProperties Workload spec definition
+type WorkloadProfileSpecDefinitionProperties map[string]WorkloadProfileSpecDefinitionProperty
+
+// WorkloadProfileSpecDefinitionProperty defines model for WorkloadProfileSpecDefinitionProperty.
+type WorkloadProfileSpecDefinitionProperty struct {
+	FeatureName *string `json:"feature_name,omitempty"`
+
+	// Properties Workload spec definition
+	Properties        *WorkloadProfileSpecDefinitionProperties        `json:"properties,omitempty"`
+	RuntimeProperties *[]WorkloadProfileSpecDefinitionRuntimeProperty `json:"runtime_properties,omitempty"`
+	Schema            *map[string]interface{}                         `json:"schema,omitempty"`
+	Title             *string                                         `json:"title,omitempty"`
+	Type              WorkloadProfileSpecDefinitionPropertyType       `json:"type"`
+	UiHints           *WorkloadProfileSpecDefinitionPropertyUIHints   `json:"ui_hints,omitempty"`
+	Version           *string                                         `json:"version,omitempty"`
+}
+
+// WorkloadProfileSpecDefinitionPropertyType defines model for WorkloadProfileSpecDefinitionPropertyType.
+type WorkloadProfileSpecDefinitionPropertyType string
+
+// WorkloadProfileSpecDefinitionPropertyUIHints defines model for WorkloadProfileSpecDefinitionPropertyUIHints.
+type WorkloadProfileSpecDefinitionPropertyUIHints struct {
+	Hidden *bool `json:"hidden,omitempty"`
+	Order  *int  `json:"order,omitempty"`
+}
+
+// WorkloadProfileSpecDefinitionRuntimeProperty defines model for WorkloadProfileSpecDefinitionRuntimeProperty.
+type WorkloadProfileSpecDefinitionRuntimeProperty struct {
+	FeatureName *string                                          `json:"feature_name,omitempty"`
+	Title       *string                                          `json:"title,omitempty"`
+	Type        WorkloadProfileSpecDefinitionRuntimePropertyType `json:"type"`
+	UiHints     *WorkloadProfileSpecDefinitionPropertyUIHints    `json:"ui_hints,omitempty"`
+	Version     *string                                          `json:"version,omitempty"`
+}
+
+// WorkloadProfileSpecDefinitionRuntimePropertyType defines model for WorkloadProfileSpecDefinitionRuntimePropertyType.
+type WorkloadProfileSpecDefinitionRuntimePropertyType string
+
+// WorkloadProfileUpdateRequest The proposed properties to update a workload profile.
+type WorkloadProfileUpdateRequest struct {
+	// DeprecationMessage A not-empty string indicates that the workload profile is deprecated.
+	DeprecationMessage *string `json:"deprecation_message,omitempty"`
+
+	// Description Describes the workload profile
+	Description *string `json:"description,omitempty"`
+
+	// SpecDefinition Workload spec definition
+	SpecDefinition WorkloadProfileSpecDefinition `json:"spec_definition"`
+
+	// Version Version identifier. The version must be unique, but the API doesn't not enforce any ordering. Currently workloads will always use the latest update.
+	//
+	// If no identifier is provided, the each update will generate a random version identifier.
+	Version *string `json:"version,omitempty"`
+
+	// WorkloadProfileChart References a workload profile chart.
+	WorkloadProfileChart WorkloadProfileChartReference `json:"workload_profile_chart"`
+}
+
+// WorkloadProfileVersionResponse A version of a workload profile.
 type WorkloadProfileVersionResponse struct {
 	// CreatedAt Creation date
 	CreatedAt time.Time `json:"created_at"`
@@ -2421,77 +2786,30 @@ type WorkloadProfileVersionResponse struct {
 	// CreatedBy User created the profile
 	CreatedBy string `json:"created_by"`
 
-	// Features A map of Features. If referencing built in Humanitec features, the fully qualified feature name must be used: e.g. `humanitec/annotations`.
-	//
-	// {
-	//
-	// }
-	Features map[string]interface{} `json:"features"`
+	// DeprecationMessage A not-empty string indicates that the workload profile is deprecated.
+	DeprecationMessage *string `json:"deprecation_message,omitempty"`
 
-	// Notes Notes
-	Notes string `json:"notes"`
+	// Description Describes the workload profile
+	Description string `json:"description"`
+
+	// Id ID
+	Id string `json:"id"`
 
 	// OrgId Organization ID
 	OrgId string `json:"org_id"`
 
-	// ProfileId Workload Profile ID
-	ProfileId      string                                `json:"profile_id"`
-	SpecDefinition *WorkloadProfileVersionSpecDefinition `json:"spec_definition,omitempty"`
+	// SpecDefinition Workload spec definition
+	SpecDefinition WorkloadProfileSpecDefinition `json:"spec_definition"`
 
 	// SpecSchema OpenAPI schema used to validate the spec.
 	SpecSchema interface{} `json:"spec_schema"`
 
-	// Version Version
-	Version string `json:"version"`
-
 	// WorkloadProfileChart References a workload profile chart.
 	WorkloadProfileChart WorkloadProfileChartReference `json:"workload_profile_chart"`
+
+	// WorkloadProfileId Workload Profile ID
+	WorkloadProfileId string `json:"workload_profile_id"`
 }
-
-// WorkloadProfileVersionSpecDefinition defines model for WorkloadProfileVersionSpecDefinition.
-type WorkloadProfileVersionSpecDefinition struct {
-	// Properties Workload spec definition
-	Properties        *WorkloadProfileVersionSpecDefinitionProperties        `json:"properties,omitempty"`
-	RuntimeProperties *[]WorkloadProfileVersionSpecDefinitionRuntimeProperty `json:"runtime_properties,omitempty"`
-}
-
-// WorkloadProfileVersionSpecDefinitionProperties Workload spec definition
-type WorkloadProfileVersionSpecDefinitionProperties map[string]WorkloadProfileVersionSpecDefinitionProperty
-
-// WorkloadProfileVersionSpecDefinitionProperty defines model for WorkloadProfileVersionSpecDefinitionProperty.
-type WorkloadProfileVersionSpecDefinitionProperty struct {
-	FeatureName *string `json:"feature_name,omitempty"`
-
-	// Properties Workload spec definition
-	Properties        *WorkloadProfileVersionSpecDefinitionProperties        `json:"properties,omitempty"`
-	RuntimeProperties *[]WorkloadProfileVersionSpecDefinitionRuntimeProperty `json:"runtime_properties,omitempty"`
-	Schema            *map[string]interface{}                                `json:"schema,omitempty"`
-	Title             *string                                                `json:"title,omitempty"`
-	Type              WorkloadProfileVersionSpecDefinitionPropertyType       `json:"type"`
-	UiHints           *WorkloadProfileVersionSpecDefinitionPropertyUIHints   `json:"ui_hints,omitempty"`
-	Version           *string                                                `json:"version,omitempty"`
-}
-
-// WorkloadProfileVersionSpecDefinitionPropertyType defines model for WorkloadProfileVersionSpecDefinitionPropertyType.
-type WorkloadProfileVersionSpecDefinitionPropertyType string
-
-// WorkloadProfileVersionSpecDefinitionPropertyUIHints defines model for WorkloadProfileVersionSpecDefinitionPropertyUIHints.
-type WorkloadProfileVersionSpecDefinitionPropertyUIHints struct {
-	Hidden *bool `json:"hidden,omitempty"`
-	Order  *int  `json:"order,omitempty"`
-}
-
-// WorkloadProfileVersionSpecDefinitionRuntimeProperty defines model for WorkloadProfileVersionSpecDefinitionRuntimeProperty.
-type WorkloadProfileVersionSpecDefinitionRuntimeProperty struct {
-	FeatureName *string                                                 `json:"feature_name,omitempty"`
-	Title       *string                                                 `json:"title,omitempty"`
-	Type        WorkloadProfileVersionSpecDefinitionRuntimePropertyType `json:"type"`
-	UiHints     *WorkloadProfileVersionSpecDefinitionPropertyUIHints    `json:"ui_hints,omitempty"`
-	Version     *string                                                 `json:"version,omitempty"`
-}
-
-// WorkloadProfileVersionSpecDefinitionRuntimePropertyType defines model for WorkloadProfileVersionSpecDefinitionRuntimePropertyType.
-type WorkloadProfileVersionSpecDefinitionRuntimePropertyType string
 
 // AppIdPathParam defines model for appIdPathParam.
 type AppIdPathParam = string
@@ -2535,6 +2853,9 @@ type ByVersionQueryParam = string
 // DeprecatedQueryParam defines model for deprecatedQueryParam.
 type DeprecatedQueryParam = bool
 
+// EnvIdPathParam defines model for envIdPathParam.
+type EnvIdPathParam = string
+
 // IdempotencyKey defines model for idempotencyKey.
 type IdempotencyKey = string
 
@@ -2565,14 +2886,11 @@ type RunIdPathParam = string
 // StepIndexPathParam defines model for stepIndexPathParam.
 type StepIndexPathParam = int
 
-// VersionPathParam defines model for versionPathParam.
-type VersionPathParam = string
-
 // N400BadRequest HumanitecError represents a standard Humanitec Error
 type N400BadRequest = HumanitecErrorResponse
 
-// N403Forbidden A standard error response
-type N403Forbidden = ErrorResponse
+// N403Forbidden HumanitecError represents a standard Humanitec Error
+type N403Forbidden = HumanitecErrorResponse
 
 // N404NotFound HumanitecError represents a standard Humanitec Error
 type N404NotFound = HumanitecErrorResponse
@@ -2621,11 +2939,15 @@ type PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONBody = []DeltaRequest
 // PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONBody defines parameters for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived.
 type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONBody = bool
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONBody defines parameters for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId.
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONBody = string
-
 // PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONBody defines parameters for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName.
 type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONBody = string
+
+// ListDeploymentsParams defines parameters for ListDeployments.
+type ListDeploymentsParams struct {
+	// PipelineRunId An optional filter by the Pipeline Run ID.
+	//
+	PipelineRunId *string `form:"pipelineRunId,omitempty" json:"pipelineRunId,omitempty"`
+}
 
 // PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdJSONBody defines parameters for PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployId.
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdJSONBody = string
@@ -2633,17 +2955,38 @@ type PutOrgsOrgIdAppsAppIdEnvsEnvIdFromDeployIdJSONBody = string
 // PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONBody defines parameters for PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraph.
 type PostOrgsOrgIdAppsAppIdEnvsEnvIdResourcesGraphJSONBody = []ResourceProvisionRequestRequest
 
-// PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONBody defines parameters for PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused.
-type PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONBody = bool
+// UpdatePausedJSONBody defines parameters for UpdatePaused.
+type UpdatePausedJSONBody = bool
 
-// PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONBody defines parameters for PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicas.
-type PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONBody map[string]int
+// PatchReplicasJSONBody defines parameters for PatchReplicas.
+type PatchReplicasJSONBody map[string]int
 
 // GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsParams defines parameters for GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersions.
 type GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsParams struct {
 	// KeyChanged (Optional) Return only value set version where the specified key changed
 	//
 	KeyChanged *string `form:"key_changed,omitempty" json:"key_changed,omitempty"`
+}
+
+// ListPipelineCriteriaInAppParams defines parameters for ListPipelineCriteriaInApp.
+type ListPipelineCriteriaInAppParams struct {
+	// Pipeline An optional filter by Pipeline ID.
+	Pipeline *string `form:"pipeline,omitempty" json:"pipeline,omitempty"`
+
+	// Match Optional key value match filters on the criteria.
+	Match *map[string]string `json:"match,omitempty"`
+
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// CreatePipelineRunByTriggerCriteriaParams defines parameters for CreatePipelineRunByTriggerCriteria.
+type CreatePipelineRunByTriggerCriteriaParams struct {
+	// IdempotencyKey The HTTP Idempotency-Key
+	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
 
 // ListPipelinesParams defines parameters for ListPipelines.
@@ -2758,11 +3101,10 @@ type ListPipelineVersionsParams struct {
 	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 }
 
-// GetOrgsOrgIdAppsAppIdRuntimeParams defines parameters for GetOrgsOrgIdAppsAppIdRuntime.
-type GetOrgsOrgIdAppsAppIdRuntimeParams struct {
+// ListRuntimeParams defines parameters for ListRuntime.
+type ListRuntimeParams struct {
 	// Id Filter environments by ID (required). Up to 5 ids can be supplied per request.
-	//
-	Id *string `form:"id,omitempty" json:"id,omitempty"`
+	Id *[]string `form:"id,omitempty" json:"id,omitempty"`
 }
 
 // GetOrgsOrgIdAppsAppIdSetsSetIdParams defines parameters for GetOrgsOrgIdAppsAppIdSetsSetId.
@@ -2781,49 +3123,73 @@ type GetOrgsOrgIdAppsAppIdValueSetVersionsParams struct {
 // ListArtefactVersionsInOrgParams defines parameters for ListArtefactVersionsInOrg.
 type ListArtefactVersionsInOrgParams struct {
 	// Name (Optional) Filter Artefact Versions by name.
-	//
 	Name *string `form:"name,omitempty" json:"name,omitempty"`
 
 	// Reference (Optional) Filter Artefact Versions by the reference to a Version of the same Artefact. This cannot be used together with `name`.
-	//
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
 
 	// Archived (Optional) Filter for non-archived Artefact Versions. If no filter is defined only non-archived Artefact Versions are returned, if the filter is true both archived and non-archived Versions are returned.
-	//
 	Archived *bool `form:"archived,omitempty" json:"archived,omitempty"`
+
+	// Type (Optional) Filter by artefact type.
+	Type *string `form:"type,omitempty" json:"type,omitempty"`
 }
 
 // CreateArtefactVersionParams defines parameters for CreateArtefactVersion.
 type CreateArtefactVersionParams struct {
 	// Vcs (Optional) Which version control system the version comes from. Default value is "git". If this parameter is not supplied or its value is "git", the provided ref, if not empty, is checked to ensure that it has the prefix "refs/".
-	//
 	Vcs *string `form:"vcs,omitempty" json:"vcs,omitempty"`
+
+	// DryRun Optionally validate the request but do not persist the actual artefact.
+	DryRun *bool `form:"dry_run,omitempty" json:"dry_run,omitempty"`
+}
+
+// GetWorkloadArtefactVersionDeploymentSetParams defines parameters for GetWorkloadArtefactVersionDeploymentSet.
+type GetWorkloadArtefactVersionDeploymentSetParams struct {
+	// Accept The accepted content type.
+	Accept *string `json:"Accept,omitempty"`
+}
+
+// GetWorkloadArtefactVersionSpecParams defines parameters for GetWorkloadArtefactVersionSpec.
+type GetWorkloadArtefactVersionSpecParams struct {
+	// Accept The accepted content type.
+	Accept *string `json:"Accept,omitempty"`
 }
 
 // ListArtefactsParams defines parameters for ListArtefacts.
 type ListArtefactsParams struct {
 	// Type (Optional) Filter Artefacts by type.
-	//
 	Type *string `form:"type,omitempty" json:"type,omitempty"`
 
 	// Name (Optional) Filter Artefacts by name.
-	//
 	Name *string `form:"name,omitempty" json:"name,omitempty"`
 }
 
 // ListArtefactVersionsParams defines parameters for ListArtefactVersions.
 type ListArtefactVersionsParams struct {
 	// Archived (Optional) Filter for non-archived Artefact Versions. If no filter is defined only non-archived Artefact Versions are returned, if the filter is true both archived and non-archived Versions are returned.
-	//
 	Archived *bool `form:"archived,omitempty" json:"archived,omitempty"`
 
 	// Reference (Optional) Filter Artefact Versions by by name including a version or digest.
-	//
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
 
 	// Limit (Optional) Limit the number of versions returned by the endpoint.
-	//
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListAuditLogEntriesParams defines parameters for ListAuditLogEntries.
+type ListAuditLogEntriesParams struct {
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+
+	// From Optional filter for entries created after the given time.
+	From *time.Time `form:"from,omitempty" json:"from,omitempty"`
+
+	// To Optional filter for entries created before the given time.
+	To *time.Time `form:"to,omitempty" json:"to,omitempty"`
 }
 
 // ListHumanitecPublicKeysParams defines parameters for ListHumanitecPublicKeys.
@@ -2834,7 +3200,7 @@ type ListHumanitecPublicKeysParams struct {
 
 // ListPublicKeysParams defines parameters for ListPublicKeys.
 type ListPublicKeysParams struct {
-	// Fingerprint The fingerprint of the requested key. If a value is provided, the result will contain a single key, if any.
+	// Fingerprint The fingerprint (the hexadecimal representation of the sha256 hash of the DER representation of the key) of the requested key. If a value is provided, the result will contain a single key, if any.
 	Fingerprint *string `form:"fingerprint,omitempty" json:"fingerprint,omitempty"`
 }
 
@@ -2981,7 +3347,7 @@ type PutDeltaJSONRequestBody = DeltaRequest
 type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody = PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONBody
 
 // PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId for application/json ContentType.
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody = PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONBody
+type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody = EnvironmentID
 
 // PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName for application/json ContentType.
 type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody = PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONBody
@@ -3004,11 +3370,11 @@ type PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody = AutomationRuleRequest
 // PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId for application/json ContentType.
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody = AutomationRuleRequest
 
-// PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused for application/json ContentType.
-type PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONRequestBody = PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONBody
+// UpdatePausedJSONRequestBody defines body for UpdatePaused for application/json ContentType.
+type UpdatePausedJSONRequestBody = UpdatePausedJSONBody
 
-// PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONRequestBody defines body for PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicas for application/json ContentType.
-type PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONRequestBody PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONBody
+// PatchReplicasJSONRequestBody defines body for PatchReplicas for application/json ContentType.
+type PatchReplicasJSONRequestBody PatchReplicasJSONBody
 
 // PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKey for application/json ContentType.
 type PostOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsValueSetVersionIdPurgeKeyJSONRequestBody = ValueSetActionPayloadRequest
@@ -3027,6 +3393,12 @@ type PatchOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyJSONRequestBody = ValuePatchPayloa
 
 // PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKey for application/json ContentType.
 type PutOrgsOrgIdAppsAppIdEnvsEnvIdValuesKeyJSONRequestBody = ValueEditPayloadRequest
+
+// CreatePipelineRunByTriggerCriteriaJSONRequestBody defines body for CreatePipelineRunByTriggerCriteria for application/json ContentType.
+type CreatePipelineRunByTriggerCriteriaJSONRequestBody = PipelineRunCreateByTriggerCriteriaBody
+
+// CreatePipelineCriteriaJSONRequestBody defines body for CreatePipelineCriteria for application/json ContentType.
+type CreatePipelineCriteriaJSONRequestBody = PipelineCriteriaCreateBody
 
 // CreatePipelineRunJSONRequestBody defines body for CreatePipelineRun for application/json ContentType.
 type CreatePipelineRunJSONRequestBody = PipelineRunCreateBody
@@ -3065,7 +3437,10 @@ type PostOrgsOrgIdAppsAppIdWebhooksJSONRequestBody = WebhookRequest
 type PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody = WebhookRequest
 
 // CreateArtefactVersionJSONRequestBody defines body for CreateArtefactVersion for application/json ContentType.
-type CreateArtefactVersionJSONRequestBody = AddArtefactVersionPayloadRequest
+type CreateArtefactVersionJSONRequestBody = CreateArtefactVersion
+
+// CreateArtefactVersionMultipartRequestBody defines body for CreateArtefactVersion for multipart/form-data ContentType.
+type CreateArtefactVersionMultipartRequestBody = CreateArtefactVersion
 
 // PatchArtefactVersionJSONRequestBody defines body for PatchArtefactVersion for application/json ContentType.
 type PatchArtefactVersionJSONRequestBody = UpdateArtefactVersionPayloadRequest
@@ -3136,11 +3511,8 @@ type CreateWorkloadProfileChartVersionMultipartRequestBody CreateWorkloadProfile
 // CreateWorkloadProfileJSONRequestBody defines body for CreateWorkloadProfile for application/json ContentType.
 type CreateWorkloadProfileJSONRequestBody = WorkloadProfileRequest
 
-// PatchWorkloadProfileJSONRequestBody defines body for PatchWorkloadProfile for application/json ContentType.
-type PatchWorkloadProfileJSONRequestBody = WorkloadProfilePatchRequest
-
-// CreateWorkloadProfileVersionJSONRequestBody defines body for CreateWorkloadProfileVersion for application/json ContentType.
-type CreateWorkloadProfileVersionJSONRequestBody = WorkloadProfileVersionRequest
+// UpdateWorkloadProfileJSONRequestBody defines body for UpdateWorkloadProfile for application/json ContentType.
+type UpdateWorkloadProfileJSONRequestBody = WorkloadProfileUpdateRequest
 
 // PostUsersUserIdTokensJSONRequestBody defines body for PostUsersUserIdTokens for application/json ContentType.
 type PostUsersUserIdTokensJSONRequestBody = TokenDefinitionRequest
@@ -3365,6 +3737,540 @@ func (a ModuleResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// AsContainerArtefactVersion returns the union data inside the ArtefactVersion as a ContainerArtefactVersion
+func (t ArtefactVersion) AsContainerArtefactVersion() (ContainerArtefactVersion, error) {
+	var body ContainerArtefactVersion
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromContainerArtefactVersion overwrites any union data inside the ArtefactVersion as the provided ContainerArtefactVersion
+func (t *ArtefactVersion) FromContainerArtefactVersion(v ContainerArtefactVersion) error {
+	t.Type = "container"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeContainerArtefactVersion performs a merge with any union data inside the ArtefactVersion, using the provided ContainerArtefactVersion
+func (t *ArtefactVersion) MergeContainerArtefactVersion(v ContainerArtefactVersion) error {
+	t.Type = "container"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWorkloadArtefactVersion returns the union data inside the ArtefactVersion as a WorkloadArtefactVersion
+func (t ArtefactVersion) AsWorkloadArtefactVersion() (WorkloadArtefactVersion, error) {
+	var body WorkloadArtefactVersion
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWorkloadArtefactVersion overwrites any union data inside the ArtefactVersion as the provided WorkloadArtefactVersion
+func (t *ArtefactVersion) FromWorkloadArtefactVersion(v WorkloadArtefactVersion) error {
+	t.Type = "workload"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWorkloadArtefactVersion performs a merge with any union data inside the ArtefactVersion, using the provided WorkloadArtefactVersion
+func (t *ArtefactVersion) MergeWorkloadArtefactVersion(v WorkloadArtefactVersion) error {
+	t.Type = "workload"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ArtefactVersion) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"type"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t ArtefactVersion) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "container":
+		return t.AsContainerArtefactVersion()
+	case "workload":
+		return t.AsWorkloadArtefactVersion()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t ArtefactVersion) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["type"], err = json.Marshal(t.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *ArtefactVersion) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &t.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsCreateContainerArtefactVersion returns the union data inside the CreateArtefactVersion as a CreateContainerArtefactVersion
+func (t CreateArtefactVersion) AsCreateContainerArtefactVersion() (CreateContainerArtefactVersion, error) {
+	var body CreateContainerArtefactVersion
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCreateContainerArtefactVersion overwrites any union data inside the CreateArtefactVersion as the provided CreateContainerArtefactVersion
+func (t *CreateArtefactVersion) FromCreateContainerArtefactVersion(v CreateContainerArtefactVersion) error {
+	t.Type = "container"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCreateContainerArtefactVersion performs a merge with any union data inside the CreateArtefactVersion, using the provided CreateContainerArtefactVersion
+func (t *CreateArtefactVersion) MergeCreateContainerArtefactVersion(v CreateContainerArtefactVersion) error {
+	t.Type = "container"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCreateWorkloadArtefactVersion returns the union data inside the CreateArtefactVersion as a CreateWorkloadArtefactVersion
+func (t CreateArtefactVersion) AsCreateWorkloadArtefactVersion() (CreateWorkloadArtefactVersion, error) {
+	var body CreateWorkloadArtefactVersion
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCreateWorkloadArtefactVersion overwrites any union data inside the CreateArtefactVersion as the provided CreateWorkloadArtefactVersion
+func (t *CreateArtefactVersion) FromCreateWorkloadArtefactVersion(v CreateWorkloadArtefactVersion) error {
+	t.Type = "workload"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCreateWorkloadArtefactVersion performs a merge with any union data inside the CreateArtefactVersion, using the provided CreateWorkloadArtefactVersion
+func (t *CreateArtefactVersion) MergeCreateWorkloadArtefactVersion(v CreateWorkloadArtefactVersion) error {
+	t.Type = "workload"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t CreateArtefactVersion) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"type"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t CreateArtefactVersion) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "container":
+		return t.AsCreateContainerArtefactVersion()
+	case "workload":
+		return t.AsCreateWorkloadArtefactVersion()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t CreateArtefactVersion) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["type"], err = json.Marshal(t.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *CreateArtefactVersion) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &t.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsPipelineDeploymentRequestCriteria returns the union data inside the PipelineCriteria as a PipelineDeploymentRequestCriteria
+func (t PipelineCriteria) AsPipelineDeploymentRequestCriteria() (PipelineDeploymentRequestCriteria, error) {
+	var body PipelineDeploymentRequestCriteria
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPipelineDeploymentRequestCriteria overwrites any union data inside the PipelineCriteria as the provided PipelineDeploymentRequestCriteria
+func (t *PipelineCriteria) FromPipelineDeploymentRequestCriteria(v PipelineDeploymentRequestCriteria) error {
+	t.Trigger = "deployment_request"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePipelineDeploymentRequestCriteria performs a merge with any union data inside the PipelineCriteria, using the provided PipelineDeploymentRequestCriteria
+func (t *PipelineCriteria) MergePipelineDeploymentRequestCriteria(v PipelineDeploymentRequestCriteria) error {
+	t.Trigger = "deployment_request"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PipelineCriteria) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"trigger"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t PipelineCriteria) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "deployment_request":
+		return t.AsPipelineDeploymentRequestCriteria()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t PipelineCriteria) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["trigger"], err = json.Marshal(t.Trigger)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trigger': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *PipelineCriteria) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["trigger"]; found {
+		err = json.Unmarshal(raw, &t.Trigger)
+		if err != nil {
+			return fmt.Errorf("error reading 'trigger': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsPipelineDeploymentRequestCriteriaCreateBody returns the union data inside the PipelineCriteriaCreateBody as a PipelineDeploymentRequestCriteriaCreateBody
+func (t PipelineCriteriaCreateBody) AsPipelineDeploymentRequestCriteriaCreateBody() (PipelineDeploymentRequestCriteriaCreateBody, error) {
+	var body PipelineDeploymentRequestCriteriaCreateBody
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPipelineDeploymentRequestCriteriaCreateBody overwrites any union data inside the PipelineCriteriaCreateBody as the provided PipelineDeploymentRequestCriteriaCreateBody
+func (t *PipelineCriteriaCreateBody) FromPipelineDeploymentRequestCriteriaCreateBody(v PipelineDeploymentRequestCriteriaCreateBody) error {
+	t.Trigger = "deployment_request"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePipelineDeploymentRequestCriteriaCreateBody performs a merge with any union data inside the PipelineCriteriaCreateBody, using the provided PipelineDeploymentRequestCriteriaCreateBody
+func (t *PipelineCriteriaCreateBody) MergePipelineDeploymentRequestCriteriaCreateBody(v PipelineDeploymentRequestCriteriaCreateBody) error {
+	t.Trigger = "deployment_request"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PipelineCriteriaCreateBody) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"trigger"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t PipelineCriteriaCreateBody) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "deployment_request":
+		return t.AsPipelineDeploymentRequestCriteriaCreateBody()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t PipelineCriteriaCreateBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["trigger"], err = json.Marshal(t.Trigger)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trigger': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *PipelineCriteriaCreateBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["trigger"]; found {
+		err = json.Unmarshal(raw, &t.Trigger)
+		if err != nil {
+			return fmt.Errorf("error reading 'trigger': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsPipelineRunCreateByDeploymentRequestCriteriaBody returns the union data inside the PipelineRunCreateByTriggerCriteriaBody as a PipelineRunCreateByDeploymentRequestCriteriaBody
+func (t PipelineRunCreateByTriggerCriteriaBody) AsPipelineRunCreateByDeploymentRequestCriteriaBody() (PipelineRunCreateByDeploymentRequestCriteriaBody, error) {
+	var body PipelineRunCreateByDeploymentRequestCriteriaBody
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPipelineRunCreateByDeploymentRequestCriteriaBody overwrites any union data inside the PipelineRunCreateByTriggerCriteriaBody as the provided PipelineRunCreateByDeploymentRequestCriteriaBody
+func (t *PipelineRunCreateByTriggerCriteriaBody) FromPipelineRunCreateByDeploymentRequestCriteriaBody(v PipelineRunCreateByDeploymentRequestCriteriaBody) error {
+	t.Trigger = "deployment_request"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePipelineRunCreateByDeploymentRequestCriteriaBody performs a merge with any union data inside the PipelineRunCreateByTriggerCriteriaBody, using the provided PipelineRunCreateByDeploymentRequestCriteriaBody
+func (t *PipelineRunCreateByTriggerCriteriaBody) MergePipelineRunCreateByDeploymentRequestCriteriaBody(v PipelineRunCreateByDeploymentRequestCriteriaBody) error {
+	t.Trigger = "deployment_request"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PipelineRunCreateByTriggerCriteriaBody) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"trigger"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t PipelineRunCreateByTriggerCriteriaBody) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "deployment_request":
+		return t.AsPipelineRunCreateByDeploymentRequestCriteriaBody()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t PipelineRunCreateByTriggerCriteriaBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["trigger"], err = json.Marshal(t.Trigger)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trigger': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *PipelineRunCreateByTriggerCriteriaBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["trigger"]; found {
+		err = json.Unmarshal(raw, &t.Trigger)
+		if err != nil {
+			return fmt.Errorf("error reading 'trigger': %w", err)
+		}
+	}
+
+	return err
+}
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
@@ -3446,11 +4352,11 @@ type ClientInterface interface {
 
 	PatchCurrentUser(ctx context.Context, body PatchCurrentUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgs request
-	GetOrgs(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListOrganizations request
+	ListOrganizations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgId request
-	GetOrgsOrgId(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetOrganization request
+	GetOrganization(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdApps request
 	GetOrgsOrgIdApps(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3470,40 +4376,40 @@ type ClientInterface interface {
 	ListPipelineApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdDeltas request
-	GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdDeltasWithBody request with any body
-	PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx context.Context, orgId string, appId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId string, appId string, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDelta request
-	GetDelta(ctx context.Context, orgId string, appId string, deltaId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody request with any body
-	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx context.Context, orgId string, appId string, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PutDeltaWithBody request with any body
-	PutDeltaWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutDelta(ctx context.Context, orgId string, appId string, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdEnvs request
 	GetOrgsOrgIdAppsAppIdEnvs(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3520,7 +4426,7 @@ type ClientInterface interface {
 	GetOrgsOrgIdAppsAppIdEnvsEnvId(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDeployments request
-	ListDeployments(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListDeployments(ctx context.Context, orgId string, appId string, envId string, params *ListDeploymentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithBody request with any body
 	PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3568,18 +4474,18 @@ type ClientInterface interface {
 
 	PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, orgId string, appId string, envId string, ruleId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntime request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntime(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetRuntime request
+	GetRuntime(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBody request with any body
-	PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdatePausedWithBody request with any body
+	UpdatePausedWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused(ctx context.Context, orgId string, appId string, envId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdatePaused(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body UpdatePausedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBody request with any body
-	PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PatchReplicasWithBody request with any body
+	PatchReplicasWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicas(ctx context.Context, orgId string, appId string, envId string, body PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchReplicas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body PatchReplicasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersions request
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersions(ctx context.Context, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3629,6 +4535,14 @@ type ClientInterface interface {
 	// DeleteOrgsOrgIdAppsAppIdJobs request
 	DeleteOrgsOrgIdAppsAppIdJobs(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListPipelineCriteriaInApp request
+	ListPipelineCriteriaInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineCriteriaInAppParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePipelineRunByTriggerCriteriaWithBody request with any body
+	CreatePipelineRunByTriggerCriteriaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreatePipelineRunByTriggerCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, body CreatePipelineRunByTriggerCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListPipelines request
 	ListPipelines(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3643,6 +4557,14 @@ type ClientInterface interface {
 
 	// UpdatePipelineWithBody request with any body
 	UpdatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *UpdatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePipelineCriteriaWithBody request with any body
+	CreatePipelineCriteriaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreatePipelineCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, body CreatePipelineCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeletePipelineCriteria request
+	DeletePipelineCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListPipelineRuns request
 	ListPipelineRuns(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3688,22 +4610,22 @@ type ClientInterface interface {
 	// ListPipelineVersions request
 	ListPipelineVersions(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdRuntime request
-	GetOrgsOrgIdAppsAppIdRuntime(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdRuntimeParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListRuntime request
+	ListRuntime(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListRuntimeParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSets request
-	GetSets(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetSets(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdSetsSetId request
-	GetOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId string, appId string, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostOrgsOrgIdAppsAppIdSetsSetIdWithBody request with any body
-	PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx context.Context, orgId string, appId string, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId string, appId string, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId request
-	GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx context.Context, orgId string, appId string, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdUsers request
 	GetOrgsOrgIdAppsAppIdUsers(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3799,6 +4721,12 @@ type ClientInterface interface {
 	// GetArtefactVersion request
 	GetArtefactVersion(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetWorkloadArtefactVersionDeploymentSet request
+	GetWorkloadArtefactVersionDeploymentSet(ctx context.Context, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionDeploymentSetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetWorkloadArtefactVersionSpec request
+	GetWorkloadArtefactVersionSpec(ctx context.Context, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionSpecParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListArtefacts request
 	ListArtefacts(ctx context.Context, orgId string, params *ListArtefactsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3812,6 +4740,9 @@ type ClientInterface interface {
 	PatchArtefactVersionWithBody(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PatchArtefactVersion(ctx context.Context, orgId string, artefactId string, versionId string, body PatchArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListAuditLogEntries request
+	ListAuditLogEntries(ctx context.Context, orgId OrgIdPathParam, params *ListAuditLogEntriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdEnvTypes request
 	GetOrgsOrgIdEnvTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4039,6 +4970,9 @@ type ClientInterface interface {
 	// CreateWorkloadProfileChartVersionWithBody request with any body
 	CreateWorkloadProfileChartVersionWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListWorkloadProfileFeatures request
+	ListWorkloadProfileFeatures(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListWorkloadProfiles request
 	ListWorkloadProfiles(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4053,24 +4987,16 @@ type ClientInterface interface {
 	// GetWorkloadProfile request
 	GetWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PatchWorkloadProfileWithBody request with any body
-	PatchWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateWorkloadProfileWithBody request with any body
+	UpdateWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PatchWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body UpdateWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListWorkloadProfileVersions request
 	ListWorkloadProfileVersions(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateWorkloadProfileVersionWithBody request with any body
-	CreateWorkloadProfileVersionWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// GetLatestWorkloadProfileVersion request
 	GetLatestWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteWorkloadProfileVersion request
-	DeleteWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetTokens request
 	GetTokens(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4132,8 +5058,8 @@ func (c *Client) PatchCurrentUser(ctx context.Context, body PatchCurrentUserJSON
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgs(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsRequest(c.Server)
+func (c *Client) ListOrganizations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListOrganizationsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -4144,8 +5070,8 @@ func (c *Client) GetOrgs(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgId(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdRequest(c.Server, orgId)
+func (c *Client) GetOrganization(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrganizationRequest(c.Server, orgId)
 	if err != nil {
 		return nil, err
 	}
@@ -4228,7 +5154,7 @@ func (c *Client) ListPipelineApprovalRequests(ctx context.Context, orgId OrgIdPa
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdDeltasRequest(c.Server, orgId, appId, params)
 	if err != nil {
 		return nil, err
@@ -4240,7 +5166,7 @@ func (c *Client) GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx context.Context, orgId string, appId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody(c.Server, orgId, appId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -4252,7 +5178,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx context.Context, orgId
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId string, appId string, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdDeltasRequest(c.Server, orgId, appId, body)
 	if err != nil {
 		return nil, err
@@ -4264,7 +5190,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetDelta(ctx context.Context, orgId string, appId string, deltaId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDeltaRequest(c.Server, orgId, appId, deltaId)
 	if err != nil {
 		return nil, err
@@ -4276,7 +5202,7 @@ func (c *Client) GetDelta(ctx context.Context, orgId string, appId string, delta
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -4288,7 +5214,7 @@ func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx context.Context, orgId string, appId string, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
@@ -4300,7 +5226,7 @@ func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx context.Context, orgId
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutDeltaWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutDeltaRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -4312,7 +5238,7 @@ func (c *Client) PutDeltaWithBody(ctx context.Context, orgId string, appId strin
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutDelta(ctx context.Context, orgId string, appId string, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutDeltaRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
@@ -4324,7 +5250,7 @@ func (c *Client) PutDelta(ctx context.Context, orgId string, appId string, delta
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -4336,7 +5262,7 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx 
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
@@ -4348,7 +5274,7 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx context.
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -4360,7 +5286,7 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx con
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
@@ -4372,7 +5298,7 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx context.Con
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -4384,7 +5310,7 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
@@ -4456,8 +5382,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvId(ctx context.Context, orgId strin
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListDeployments(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListDeploymentsRequest(c.Server, orgId, appId, envId)
+func (c *Client) ListDeployments(ctx context.Context, orgId string, appId string, envId string, params *ListDeploymentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDeploymentsRequest(c.Server, orgId, appId, envId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4672,8 +5598,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntime(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeRequest(c.Server, orgId, appId, envId)
+func (c *Client) GetRuntime(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRuntimeRequest(c.Server, orgId, appId, envId)
 	if err != nil {
 		return nil, err
 	}
@@ -4684,8 +5610,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntime(ctx context.Context, orgI
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedRequestWithBody(c.Server, orgId, appId, envId, contentType, body)
+func (c *Client) UpdatePausedWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdatePausedRequestWithBody(c.Server, orgId, appId, envId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4696,8 +5622,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBody(ctx context
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused(ctx context.Context, orgId string, appId string, envId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedRequest(c.Server, orgId, appId, envId, body)
+func (c *Client) UpdatePaused(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body UpdatePausedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdatePausedRequest(c.Server, orgId, appId, envId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4708,8 +5634,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasRequestWithBody(c.Server, orgId, appId, envId, contentType, body)
+func (c *Client) PatchReplicasWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchReplicasRequestWithBody(c.Server, orgId, appId, envId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4720,8 +5646,8 @@ func (c *Client) PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBody(ctx con
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicas(ctx context.Context, orgId string, appId string, envId string, body PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasRequest(c.Server, orgId, appId, envId, body)
+func (c *Client) PatchReplicas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body PatchReplicasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchReplicasRequest(c.Server, orgId, appId, envId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4948,6 +5874,42 @@ func (c *Client) DeleteOrgsOrgIdAppsAppIdJobs(ctx context.Context, orgId string,
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListPipelineCriteriaInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineCriteriaInAppParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPipelineCriteriaInAppRequest(c.Server, orgId, appId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePipelineRunByTriggerCriteriaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePipelineRunByTriggerCriteriaRequestWithBody(c.Server, orgId, appId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePipelineRunByTriggerCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, body CreatePipelineRunByTriggerCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePipelineRunByTriggerCriteriaRequest(c.Server, orgId, appId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListPipelines(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListPipelinesRequest(c.Server, orgId, appId, params)
 	if err != nil {
@@ -4998,6 +5960,42 @@ func (c *Client) GetPipeline(ctx context.Context, orgId OrgIdPathParam, appId Ap
 
 func (c *Client) UpdatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *UpdatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdatePipelineRequestWithBody(c.Server, orgId, appId, pipelineId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePipelineCriteriaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePipelineCriteriaRequestWithBody(c.Server, orgId, appId, pipelineId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePipelineCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, body CreatePipelineCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePipelineCriteriaRequest(c.Server, orgId, appId, pipelineId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeletePipelineCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeletePipelineCriteriaRequest(c.Server, orgId, appId, pipelineId, criteriaId)
 	if err != nil {
 		return nil, err
 	}
@@ -5188,8 +6186,8 @@ func (c *Client) ListPipelineVersions(ctx context.Context, orgId OrgIdPathParam,
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdRuntime(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdRuntimeParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdRuntimeRequest(c.Server, orgId, appId, params)
+func (c *Client) ListRuntime(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListRuntimeParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListRuntimeRequest(c.Server, orgId, appId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5200,7 +6198,7 @@ func (c *Client) GetOrgsOrgIdAppsAppIdRuntime(ctx context.Context, orgId string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSets(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetSets(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSetsRequest(c.Server, orgId, appId)
 	if err != nil {
 		return nil, err
@@ -5212,7 +6210,7 @@ func (c *Client) GetSets(ctx context.Context, orgId string, appId string, reqEdi
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId string, appId string, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest(c.Server, orgId, appId, setId, params)
 	if err != nil {
 		return nil, err
@@ -5224,7 +6222,7 @@ func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId strin
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx context.Context, orgId string, appId string, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody(c.Server, orgId, appId, setId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -5236,7 +6234,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx context.Context, or
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId string, appId string, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOrgsOrgIdAppsAppIdSetsSetIdRequest(c.Server, orgId, appId, setId, body)
 	if err != nil {
 		return nil, err
@@ -5248,7 +6246,7 @@ func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx context.Context, orgId string, appId string, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest(c.Server, orgId, appId, setId, sourceSetId)
 	if err != nil {
 		return nil, err
@@ -5680,6 +6678,30 @@ func (c *Client) GetArtefactVersion(ctx context.Context, orgId string, artefactV
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetWorkloadArtefactVersionDeploymentSet(ctx context.Context, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionDeploymentSetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWorkloadArtefactVersionDeploymentSetRequest(c.Server, orgId, artefactVersionId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetWorkloadArtefactVersionSpec(ctx context.Context, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionSpecParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWorkloadArtefactVersionSpecRequest(c.Server, orgId, artefactVersionId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListArtefacts(ctx context.Context, orgId string, params *ListArtefactsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListArtefactsRequest(c.Server, orgId, params)
 	if err != nil {
@@ -5730,6 +6752,18 @@ func (c *Client) PatchArtefactVersionWithBody(ctx context.Context, orgId string,
 
 func (c *Client) PatchArtefactVersion(ctx context.Context, orgId string, artefactId string, versionId string, body PatchArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchArtefactVersionRequest(c.Server, orgId, artefactId, versionId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListAuditLogEntries(ctx context.Context, orgId OrgIdPathParam, params *ListAuditLogEntriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAuditLogEntriesRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6724,6 +7758,18 @@ func (c *Client) CreateWorkloadProfileChartVersionWithBody(ctx context.Context, 
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListWorkloadProfileFeatures(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWorkloadProfileFeaturesRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListWorkloadProfiles(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListWorkloadProfilesRequest(c.Server, orgId, params)
 	if err != nil {
@@ -6784,8 +7830,8 @@ func (c *Client) GetWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, p
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchWorkloadProfileRequestWithBody(c.Server, orgId, profileQid, contentType, body)
+func (c *Client) UpdateWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateWorkloadProfileRequestWithBody(c.Server, orgId, profileQid, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6796,8 +7842,8 @@ func (c *Client) PatchWorkloadProfileWithBody(ctx context.Context, orgId OrgIdPa
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchWorkloadProfileRequest(c.Server, orgId, profileQid, body)
+func (c *Client) UpdateWorkloadProfile(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body UpdateWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateWorkloadProfileRequest(c.Server, orgId, profileQid, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6820,44 +7866,8 @@ func (c *Client) ListWorkloadProfileVersions(ctx context.Context, orgId OrgIdPat
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateWorkloadProfileVersionWithBody(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateWorkloadProfileVersionRequestWithBody(c.Server, orgId, profileQid, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateWorkloadProfileVersionRequest(c.Server, orgId, profileQid, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) GetLatestWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLatestWorkloadProfileVersionRequest(c.Server, orgId, profileQid)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteWorkloadProfileVersionRequest(c.Server, orgId, profileQid, version)
 	if err != nil {
 		return nil, err
 	}
@@ -7031,8 +8041,8 @@ func NewPatchCurrentUserRequestWithBody(server string, contentType string, body 
 	return req, nil
 }
 
-// NewGetOrgsRequest generates requests for GetOrgs
-func NewGetOrgsRequest(server string) (*http.Request, error) {
+// NewListOrganizationsRequest generates requests for ListOrganizations
+func NewListOrganizationsRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -7058,8 +8068,8 @@ func NewGetOrgsRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetOrgsOrgIdRequest generates requests for GetOrgsOrgId
-func NewGetOrgsOrgIdRequest(server string, orgId string) (*http.Request, error) {
+// NewGetOrganizationRequest generates requests for GetOrganization
+func NewGetOrganizationRequest(server string, orgId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7383,7 +8393,7 @@ func NewListPipelineApprovalRequestsRequest(server string, orgId OrgIdPathParam,
 }
 
 // NewGetOrgsOrgIdAppsAppIdDeltasRequest generates requests for GetOrgsOrgIdAppsAppIdDeltas
-func NewGetOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams) (*http.Request, error) {
+func NewGetOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7462,7 +8472,7 @@ func NewGetOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId string, appId st
 }
 
 // NewPostOrgsOrgIdAppsAppIdDeltasRequest calls the generic PostOrgsOrgIdAppsAppIdDeltas builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId string, appId string, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -7473,7 +8483,7 @@ func NewPostOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId string, appId s
 }
 
 // NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdDeltas with any type of body
-func NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody(server string, orgId string, appId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7516,7 +8526,7 @@ func NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody(server string, orgId string,
 }
 
 // NewGetDeltaRequest generates requests for GetDelta
-func NewGetDeltaRequest(server string, orgId string, appId string, deltaId string) (*http.Request, error) {
+func NewGetDeltaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7564,7 +8574,7 @@ func NewGetDeltaRequest(server string, orgId string, appId string, deltaId strin
 }
 
 // NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequest calls the generic PatchOrgsOrgIdAppsAppIdDeltasDeltaId builder with application/json body
-func NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequest(server string, orgId string, appId string, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody) (*http.Request, error) {
+func NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -7575,7 +8585,7 @@ func NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequest(server string, orgId string,
 }
 
 // NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody generates requests for PatchOrgsOrgIdAppsAppIdDeltasDeltaId with any type of body
-func NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody(server string, orgId string, appId string, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7625,7 +8635,7 @@ func NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody(server string, orgId
 }
 
 // NewPutDeltaRequest calls the generic PutDelta builder with application/json body
-func NewPutDeltaRequest(server string, orgId string, appId string, deltaId string, body PutDeltaJSONRequestBody) (*http.Request, error) {
+func NewPutDeltaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutDeltaJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -7636,7 +8646,7 @@ func NewPutDeltaRequest(server string, orgId string, appId string, deltaId strin
 }
 
 // NewPutDeltaRequestWithBody generates requests for PutDelta with any type of body
-func NewPutDeltaRequestWithBody(server string, orgId string, appId string, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPutDeltaRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7686,7 +8696,7 @@ func NewPutDeltaRequestWithBody(server string, orgId string, appId string, delta
 }
 
 // NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequest calls the generic PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived builder with application/json body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequest(server string, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody) (*http.Request, error) {
+func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -7697,7 +8707,7 @@ func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequest(server string,
 }
 
 // NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody generates requests for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived with any type of body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody(server string, orgId string, appId string, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7747,7 +8757,7 @@ func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody(server
 }
 
 // NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequest calls the generic PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId builder with application/json body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequest(server string, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody) (*http.Request, error) {
+func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -7758,7 +8768,7 @@ func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequest(server string, or
 }
 
 // NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody generates requests for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId with any type of body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody(server string, orgId string, appId string, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7808,7 +8818,7 @@ func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody(server st
 }
 
 // NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequest calls the generic PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName builder with application/json body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequest(server string, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody) (*http.Request, error) {
+func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -7819,7 +8829,7 @@ func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequest(server string, org
 }
 
 // NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequestWithBody generates requests for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName with any type of body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequestWithBody(server string, orgId string, appId string, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8060,7 +9070,7 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRequest(server string, orgId string, appId
 }
 
 // NewListDeploymentsRequest generates requests for ListDeployments
-func NewListDeploymentsRequest(server string, orgId string, appId string, envId string) (*http.Request, error) {
+func NewListDeploymentsRequest(server string, orgId string, appId string, envId string, params *ListDeploymentsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8097,6 +9107,28 @@ func NewListDeploymentsRequest(server string, orgId string, appId string, envId 
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PipelineRunId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pipelineRunId", runtime.ParamLocationQuery, *params.PipelineRunId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -8797,8 +9829,8 @@ func NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequestWithBody(server string, 
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeRequest generates requests for GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntime
-func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeRequest(server string, orgId string, appId string, envId string) (*http.Request, error) {
+// NewGetRuntimeRequest generates requests for GetRuntime
+func NewGetRuntimeRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8845,19 +9877,19 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeRequest(server string, orgId string
 	return req, nil
 }
 
-// NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedRequest calls the generic PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused builder with application/json body
-func NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedRequest(server string, orgId string, appId string, envId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONRequestBody) (*http.Request, error) {
+// NewUpdatePausedRequest calls the generic UpdatePaused builder with application/json body
+func NewUpdatePausedRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body UpdatePausedJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedRequestWithBody(server, orgId, appId, envId, "application/json", bodyReader)
+	return NewUpdatePausedRequestWithBody(server, orgId, appId, envId, "application/json", bodyReader)
 }
 
-// NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedRequestWithBody generates requests for PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused with any type of body
-func NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedRequestWithBody(server string, orgId string, appId string, envId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdatePausedRequestWithBody generates requests for UpdatePaused with any type of body
+func NewUpdatePausedRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8906,19 +9938,19 @@ func NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedRequestWithBody(server string
 	return req, nil
 }
 
-// NewPatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasRequest calls the generic PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicas builder with application/json body
-func NewPatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasRequest(server string, orgId string, appId string, envId string, body PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONRequestBody) (*http.Request, error) {
+// NewPatchReplicasRequest calls the generic PatchReplicas builder with application/json body
+func NewPatchReplicasRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body PatchReplicasJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasRequestWithBody(server, orgId, appId, envId, "application/json", bodyReader)
+	return NewPatchReplicasRequestWithBody(server, orgId, appId, envId, "application/json", bodyReader)
 }
 
-// NewPatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasRequestWithBody generates requests for PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicas with any type of body
-func NewPatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasRequestWithBody(server string, orgId string, appId string, envId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPatchReplicasRequestWithBody generates requests for PatchReplicas with any type of body
+func NewPatchReplicasRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9699,6 +10731,186 @@ func NewDeleteOrgsOrgIdAppsAppIdJobsRequest(server string, orgId string, appId s
 	return req, nil
 }
 
+// NewListPipelineCriteriaInAppRequest generates requests for ListPipelineCriteriaInApp
+func NewListPipelineCriteriaInAppRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineCriteriaInAppParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipeline-criteria", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Pipeline != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pipeline", runtime.ParamLocationQuery, *params.Pipeline); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Match != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("deepObject", true, "match", runtime.ParamLocationQuery, *params.Match); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePipelineRunByTriggerCriteriaRequest calls the generic CreatePipelineRunByTriggerCriteria builder with application/json body
+func NewCreatePipelineRunByTriggerCriteriaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, body CreatePipelineRunByTriggerCriteriaJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePipelineRunByTriggerCriteriaRequestWithBody(server, orgId, appId, params, "application/json", bodyReader)
+}
+
+// NewCreatePipelineRunByTriggerCriteriaRequestWithBody generates requests for CreatePipelineRunByTriggerCriteria with any type of body
+func NewCreatePipelineRunByTriggerCriteriaRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipeline-runs", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.IdempotencyKey != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Idempotency-Key", runtime.ParamLocationHeader, *params.IdempotencyKey)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Idempotency-Key", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewListPipelinesRequest generates requests for ListPipelines
 func NewListPipelinesRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams) (*http.Request, error) {
 	var err error
@@ -10046,6 +11258,122 @@ func NewUpdatePipelineRequestWithBody(server string, orgId OrgIdPathParam, appId
 			req.Header.Set("If-Match", headerParam0)
 		}
 
+	}
+
+	return req, nil
+}
+
+// NewCreatePipelineCriteriaRequest calls the generic CreatePipelineCriteria builder with application/json body
+func NewCreatePipelineCriteriaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, body CreatePipelineCriteriaJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePipelineCriteriaRequestWithBody(server, orgId, appId, pipelineId, "application/json", bodyReader)
+}
+
+// NewCreatePipelineCriteriaRequestWithBody generates requests for CreatePipelineCriteria with any type of body
+func NewCreatePipelineCriteriaRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/criteria", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeletePipelineCriteriaRequest generates requests for DeletePipelineCriteria
+func NewDeletePipelineCriteriaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "criteriaId", runtime.ParamLocationPath, criteriaId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/criteria/%s", pathParam0, pathParam1, pathParam2, pathParam3)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -11182,8 +12510,8 @@ func NewListPipelineVersionsRequest(server string, orgId OrgIdPathParam, appId A
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdRuntimeRequest generates requests for GetOrgsOrgIdAppsAppIdRuntime
-func NewGetOrgsOrgIdAppsAppIdRuntimeRequest(server string, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdRuntimeParams) (*http.Request, error) {
+// NewListRuntimeRequest generates requests for ListRuntime
+func NewListRuntimeRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListRuntimeParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11246,7 +12574,7 @@ func NewGetOrgsOrgIdAppsAppIdRuntimeRequest(server string, orgId string, appId s
 }
 
 // NewGetSetsRequest generates requests for GetSets
-func NewGetSetsRequest(server string, orgId string, appId string) (*http.Request, error) {
+func NewGetSetsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11287,7 +12615,7 @@ func NewGetSetsRequest(server string, orgId string, appId string) (*http.Request
 }
 
 // NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest generates requests for GetOrgsOrgIdAppsAppIdSetsSetId
-func NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId string, appId string, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams) (*http.Request, error) {
+func NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11357,7 +12685,7 @@ func NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId string, appId
 }
 
 // NewPostOrgsOrgIdAppsAppIdSetsSetIdRequest calls the generic PostOrgsOrgIdAppsAppIdSetsSetId builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId string, appId string, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -11368,7 +12696,7 @@ func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId string, appI
 }
 
 // NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdSetsSetId with any type of body
-func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody(server string, orgId string, appId string, setId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11418,7 +12746,7 @@ func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody(server string, orgId stri
 }
 
 // NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest generates requests for GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId
-func NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest(server string, orgId string, appId string, setId string, sourceSetId string) (*http.Request, error) {
+func NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12667,6 +13995,22 @@ func NewListArtefactVersionsInOrgRequest(server string, orgId string, params *Li
 
 		}
 
+		if params.Type != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "type", runtime.ParamLocationQuery, *params.Type); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
@@ -12734,6 +14078,22 @@ func NewCreateArtefactVersionRequestWithBody(server string, orgId string, params
 
 		}
 
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "dry_run", runtime.ParamLocationQuery, *params.DryRun); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
@@ -12783,6 +14143,118 @@ func NewGetArtefactVersionRequest(server string, orgId string, artefactVersionId
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetWorkloadArtefactVersionDeploymentSetRequest generates requests for GetWorkloadArtefactVersionDeploymentSet
+func NewGetWorkloadArtefactVersionDeploymentSetRequest(server string, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionDeploymentSetParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "artefactVersionId", runtime.ParamLocationPath, artefactVersionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/artefact-versions/%s/workload-deployment-set", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.Accept != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Accept", runtime.ParamLocationHeader, *params.Accept)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Accept", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetWorkloadArtefactVersionSpecRequest generates requests for GetWorkloadArtefactVersionSpec
+func NewGetWorkloadArtefactVersionSpecRequest(server string, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionSpecParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "artefactVersionId", runtime.ParamLocationPath, artefactVersionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/artefact-versions/%s/workload-spec", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.Accept != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Accept", runtime.ParamLocationHeader, *params.Accept)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Accept", headerParam0)
+		}
+
 	}
 
 	return req, nil
@@ -13053,6 +14525,110 @@ func NewPatchArtefactVersionRequestWithBody(server string, orgId string, artefac
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListAuditLogEntriesRequest generates requests for ListAuditLogEntries
+func NewListAuditLogEntriesRequest(server string, orgId OrgIdPathParam, params *ListAuditLogEntriesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/audit-logs", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.From != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "from", runtime.ParamLocationQuery, *params.From); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.To != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "to", runtime.ParamLocationQuery, *params.To); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -16141,6 +17717,40 @@ func NewCreateWorkloadProfileChartVersionRequestWithBody(server string, orgId Or
 	return req, nil
 }
 
+// NewListWorkloadProfileFeaturesRequest generates requests for ListWorkloadProfileFeatures
+func NewListWorkloadProfileFeaturesRequest(server string, orgId OrgIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/workload-profile-features", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListWorkloadProfilesRequest generates requests for ListWorkloadProfiles
 func NewListWorkloadProfilesRequest(server string, orgId OrgIdPathParam, params *ListWorkloadProfilesParams) (*http.Request, error) {
 	var err error
@@ -16358,19 +17968,19 @@ func NewGetWorkloadProfileRequest(server string, orgId OrgIdPathParam, profileQi
 	return req, nil
 }
 
-// NewPatchWorkloadProfileRequest calls the generic PatchWorkloadProfile builder with application/json body
-func NewPatchWorkloadProfileRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody) (*http.Request, error) {
+// NewUpdateWorkloadProfileRequest calls the generic UpdateWorkloadProfile builder with application/json body
+func NewUpdateWorkloadProfileRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body UpdateWorkloadProfileJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPatchWorkloadProfileRequestWithBody(server, orgId, profileQid, "application/json", bodyReader)
+	return NewUpdateWorkloadProfileRequestWithBody(server, orgId, profileQid, "application/json", bodyReader)
 }
 
-// NewPatchWorkloadProfileRequestWithBody generates requests for PatchWorkloadProfile with any type of body
-func NewPatchWorkloadProfileRequestWithBody(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateWorkloadProfileRequestWithBody generates requests for UpdateWorkloadProfile with any type of body
+func NewUpdateWorkloadProfileRequestWithBody(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16402,7 +18012,7 @@ func NewPatchWorkloadProfileRequestWithBody(server string, orgId OrgIdPathParam,
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -16491,60 +18101,6 @@ func NewListWorkloadProfileVersionsRequest(server string, orgId OrgIdPathParam, 
 	return req, nil
 }
 
-// NewCreateWorkloadProfileVersionRequest calls the generic CreateWorkloadProfileVersion builder with application/json body
-func NewCreateWorkloadProfileVersionRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateWorkloadProfileVersionRequestWithBody(server, orgId, profileQid, "application/json", bodyReader)
-}
-
-// NewCreateWorkloadProfileVersionRequestWithBody generates requests for CreateWorkloadProfileVersion with any type of body
-func NewCreateWorkloadProfileVersionRequestWithBody(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileQid", runtime.ParamLocationPath, profileQid)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s/versions", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
 // NewGetLatestWorkloadProfileVersionRequest generates requests for GetLatestWorkloadProfileVersion
 func NewGetLatestWorkloadProfileVersionRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam) (*http.Request, error) {
 	var err error
@@ -16579,54 +18135,6 @@ func NewGetLatestWorkloadProfileVersionRequest(server string, orgId OrgIdPathPar
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewDeleteWorkloadProfileVersionRequest generates requests for DeleteWorkloadProfileVersion
-func NewDeleteWorkloadProfileVersionRequest(server string, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "profileQid", runtime.ParamLocationPath, profileQid)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam2 string
-
-	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "version", runtime.ParamLocationPath, version)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/workload-profiles/%s/versions/%s", pathParam0, pathParam1, pathParam2)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -16936,11 +18444,11 @@ type ClientWithResponsesInterface interface {
 
 	PatchCurrentUserWithResponse(ctx context.Context, body PatchCurrentUserJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchCurrentUserResponse, error)
 
-	// GetOrgsWithResponse request
-	GetOrgsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOrgsResponse, error)
+	// ListOrganizationsWithResponse request
+	ListOrganizationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListOrganizationsResponse, error)
 
-	// GetOrgsOrgIdWithResponse request
-	GetOrgsOrgIdWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdResponse, error)
+	// GetOrganizationWithResponse request
+	GetOrganizationWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrganizationResponse, error)
 
 	// GetOrgsOrgIdAppsWithResponse request
 	GetOrgsOrgIdAppsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsResponse, error)
@@ -16960,40 +18468,40 @@ type ClientWithResponsesInterface interface {
 	ListPipelineApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListPipelineApprovalRequestsResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdDeltasWithResponse request
-	GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error)
+	GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse request with any body
-	PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse(ctx context.Context, orgId string, appId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error)
+	PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error)
 
-	PostOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId string, appId string, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error)
+	PostOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error)
 
 	// GetDeltaWithResponse request
-	GetDeltaWithResponse(ctx context.Context, orgId string, appId string, deltaId string, reqEditors ...RequestEditorFn) (*GetDeltaResponse, error)
+	GetDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, reqEditors ...RequestEditorFn) (*GetDeltaResponse, error)
 
 	// PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse request with any body
-	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error)
+	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error)
 
-	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error)
+	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error)
 
 	// PutDeltaWithBodyWithResponse request with any body
-	PutDeltaWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error)
+	PutDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error)
 
-	PutDeltaWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error)
+	PutDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error)
 
 	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error)
 
 	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error)
 
 	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error)
+	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdEnvsWithResponse request
 	GetOrgsOrgIdAppsAppIdEnvsWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsResponse, error)
@@ -17010,7 +18518,7 @@ type ClientWithResponsesInterface interface {
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdResponse, error)
 
 	// ListDeploymentsWithResponse request
-	ListDeploymentsWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*ListDeploymentsResponse, error)
+	ListDeploymentsWithResponse(ctx context.Context, orgId string, appId string, envId string, params *ListDeploymentsParams, reqEditors ...RequestEditorFn) (*ListDeploymentsResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithBodyWithResponse request with any body
 	PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdDeploysResponse, error)
@@ -17058,18 +18566,18 @@ type ClientWithResponsesInterface interface {
 
 	PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeWithResponse request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse, error)
+	// GetRuntimeWithResponse request
+	GetRuntimeWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*GetRuntimeResponse, error)
 
-	// PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBodyWithResponse request with any body
-	PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse, error)
+	// UpdatePausedWithBodyWithResponse request with any body
+	UpdatePausedWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePausedResponse, error)
 
-	PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithResponse(ctx context.Context, orgId string, appId string, envId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse, error)
+	UpdatePausedWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body UpdatePausedJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdatePausedResponse, error)
 
-	// PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBodyWithResponse request with any body
-	PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse, error)
+	// PatchReplicasWithBodyWithResponse request with any body
+	PatchReplicasWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchReplicasResponse, error)
 
-	PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithResponse(ctx context.Context, orgId string, appId string, envId string, body PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse, error)
+	PatchReplicasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body PatchReplicasJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchReplicasResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsWithResponse request
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsWithResponse(ctx context.Context, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsResponse, error)
@@ -17119,6 +18627,14 @@ type ClientWithResponsesInterface interface {
 	// DeleteOrgsOrgIdAppsAppIdJobsWithResponse request
 	DeleteOrgsOrgIdAppsAppIdJobsWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdJobsResponse, error)
 
+	// ListPipelineCriteriaInAppWithResponse request
+	ListPipelineCriteriaInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineCriteriaInAppParams, reqEditors ...RequestEditorFn) (*ListPipelineCriteriaInAppResponse, error)
+
+	// CreatePipelineRunByTriggerCriteriaWithBodyWithResponse request with any body
+	CreatePipelineRunByTriggerCriteriaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineRunByTriggerCriteriaResponse, error)
+
+	CreatePipelineRunByTriggerCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, body CreatePipelineRunByTriggerCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePipelineRunByTriggerCriteriaResponse, error)
+
 	// ListPipelinesWithResponse request
 	ListPipelinesWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*ListPipelinesResponse, error)
 
@@ -17133,6 +18649,14 @@ type ClientWithResponsesInterface interface {
 
 	// UpdatePipelineWithBodyWithResponse request with any body
 	UpdatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *UpdatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePipelineResponse, error)
+
+	// CreatePipelineCriteriaWithBodyWithResponse request with any body
+	CreatePipelineCriteriaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineCriteriaResponse, error)
+
+	CreatePipelineCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, body CreatePipelineCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePipelineCriteriaResponse, error)
+
+	// DeletePipelineCriteriaWithResponse request
+	DeletePipelineCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*DeletePipelineCriteriaResponse, error)
 
 	// ListPipelineRunsWithResponse request
 	ListPipelineRunsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams, reqEditors ...RequestEditorFn) (*ListPipelineRunsResponse, error)
@@ -17178,22 +18702,22 @@ type ClientWithResponsesInterface interface {
 	// ListPipelineVersionsWithResponse request
 	ListPipelineVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineVersionsParams, reqEditors ...RequestEditorFn) (*ListPipelineVersionsResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdRuntimeWithResponse request
-	GetOrgsOrgIdAppsAppIdRuntimeWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdRuntimeParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdRuntimeResponse, error)
+	// ListRuntimeWithResponse request
+	ListRuntimeWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListRuntimeParams, reqEditors ...RequestEditorFn) (*ListRuntimeResponse, error)
 
 	// GetSetsWithResponse request
-	GetSetsWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*GetSetsResponse, error)
+	GetSetsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*GetSetsResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse request
-	GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId string, appId string, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
+	GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
 
 	// PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse request with any body
-	PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
+	PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
 
-	PostOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId string, appId string, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
+	PostOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse request
-	GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse(ctx context.Context, orgId string, appId string, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse, error)
+	GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdUsersWithResponse request
 	GetOrgsOrgIdAppsAppIdUsersWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdUsersResponse, error)
@@ -17289,6 +18813,12 @@ type ClientWithResponsesInterface interface {
 	// GetArtefactVersionWithResponse request
 	GetArtefactVersionWithResponse(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*GetArtefactVersionResponse, error)
 
+	// GetWorkloadArtefactVersionDeploymentSetWithResponse request
+	GetWorkloadArtefactVersionDeploymentSetWithResponse(ctx context.Context, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionDeploymentSetParams, reqEditors ...RequestEditorFn) (*GetWorkloadArtefactVersionDeploymentSetResponse, error)
+
+	// GetWorkloadArtefactVersionSpecWithResponse request
+	GetWorkloadArtefactVersionSpecWithResponse(ctx context.Context, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionSpecParams, reqEditors ...RequestEditorFn) (*GetWorkloadArtefactVersionSpecResponse, error)
+
 	// ListArtefactsWithResponse request
 	ListArtefactsWithResponse(ctx context.Context, orgId string, params *ListArtefactsParams, reqEditors ...RequestEditorFn) (*ListArtefactsResponse, error)
 
@@ -17302,6 +18832,9 @@ type ClientWithResponsesInterface interface {
 	PatchArtefactVersionWithBodyWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchArtefactVersionResponse, error)
 
 	PatchArtefactVersionWithResponse(ctx context.Context, orgId string, artefactId string, versionId string, body PatchArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchArtefactVersionResponse, error)
+
+	// ListAuditLogEntriesWithResponse request
+	ListAuditLogEntriesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListAuditLogEntriesParams, reqEditors ...RequestEditorFn) (*ListAuditLogEntriesResponse, error)
 
 	// GetOrgsOrgIdEnvTypesWithResponse request
 	GetOrgsOrgIdEnvTypesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEnvTypesResponse, error)
@@ -17529,6 +19062,9 @@ type ClientWithResponsesInterface interface {
 	// CreateWorkloadProfileChartVersionWithBodyWithResponse request with any body
 	CreateWorkloadProfileChartVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileChartVersionResponse, error)
 
+	// ListWorkloadProfileFeaturesWithResponse request
+	ListWorkloadProfileFeaturesWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*ListWorkloadProfileFeaturesResponse, error)
+
 	// ListWorkloadProfilesWithResponse request
 	ListWorkloadProfilesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfilesResponse, error)
 
@@ -17543,24 +19079,16 @@ type ClientWithResponsesInterface interface {
 	// GetWorkloadProfileWithResponse request
 	GetWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetWorkloadProfileResponse, error)
 
-	// PatchWorkloadProfileWithBodyWithResponse request with any body
-	PatchWorkloadProfileWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchWorkloadProfileResponse, error)
+	// UpdateWorkloadProfileWithBodyWithResponse request with any body
+	UpdateWorkloadProfileWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateWorkloadProfileResponse, error)
 
-	PatchWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchWorkloadProfileResponse, error)
+	UpdateWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body UpdateWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateWorkloadProfileResponse, error)
 
 	// ListWorkloadProfileVersionsWithResponse request
 	ListWorkloadProfileVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, params *ListWorkloadProfileVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileVersionsResponse, error)
 
-	// CreateWorkloadProfileVersionWithBodyWithResponse request with any body
-	CreateWorkloadProfileVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileVersionResponse, error)
-
-	CreateWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileVersionResponse, error)
-
 	// GetLatestWorkloadProfileVersionWithResponse request
 	GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error)
-
-	// DeleteWorkloadProfileVersionWithResponse request
-	DeleteWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam, reqEditors ...RequestEditorFn) (*DeleteWorkloadProfileVersionResponse, error)
 
 	// GetTokensWithResponse request
 	GetTokensWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTokensResponse, error)
@@ -17631,14 +19159,15 @@ func (r PatchCurrentUserResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsResponse struct {
+type ListOrganizationsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]OrganizationResponse
+	JSON403      *N403Forbidden
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsResponse) Status() string {
+func (r ListOrganizationsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -17646,23 +19175,22 @@ func (r GetOrgsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsResponse) StatusCode() int {
+func (r ListOrganizationsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdResponse struct {
+type GetOrganizationResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *OrganizationResponse
-	JSON400      *HumanitecErrorResponse
-	JSON409      *HumanitecErrorResponse
+	JSON403      *N403Forbidden
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdResponse) Status() string {
+func (r GetOrganizationResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -17670,7 +19198,7 @@ func (r GetOrgsOrgIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdResponse) StatusCode() int {
+func (r GetOrganizationResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -18004,7 +19532,7 @@ func (r GetOrgsOrgIdAppsAppIdEnvsResponse) StatusCode() int {
 type PostOrgsOrgIdAppsAppIdEnvsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *EnvironmentResponse
+	JSON201      *EnvironmentResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
@@ -18367,16 +19895,16 @@ func (r PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse struct {
+type GetRuntimeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RuntimeInfoResponse
-	JSON400      *HumanitecErrorResponse
-	JSON404      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse) Status() string {
+func (r GetRuntimeResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18384,23 +19912,23 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse) StatusCode() int {
+func (r GetRuntimeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse struct {
+type UpdatePausedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *HumanitecErrorResponse
-	JSON403      *HumanitecErrorResponse
-	JSON404      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
-func (r PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse) Status() string {
+func (r UpdatePausedResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18408,23 +19936,23 @@ func (r PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse) StatusCode() int {
+func (r UpdatePausedResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse struct {
+type PatchReplicasResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *HumanitecErrorResponse
-	JSON403      *HumanitecErrorResponse
-	JSON404      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
-func (r PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse) Status() string {
+func (r PatchReplicasResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -18432,7 +19960,7 @@ func (r PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse) Status() string
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse) StatusCode() int {
+func (r PatchReplicasResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -18713,6 +20241,55 @@ func (r DeleteOrgsOrgIdAppsAppIdJobsResponse) StatusCode() int {
 	return 0
 }
 
+type ListPipelineCriteriaInAppResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]PipelineCriteria
+	JSON400      *N400BadRequest
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPipelineCriteriaInAppResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPipelineCriteriaInAppResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreatePipelineRunByTriggerCriteriaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *PipelineRun
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
+	JSON409      *N409Conflict
+	JSON422      *N422UnprocessableContent
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePipelineRunByTriggerCriteriaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePipelineRunByTriggerCriteriaResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListPipelinesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -18831,6 +20408,54 @@ func (r UpdatePipelineResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdatePipelineResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreatePipelineCriteriaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *PipelineCriteria
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
+	JSON409      *N409Conflict
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePipelineCriteriaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePipelineCriteriaResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeletePipelineCriteriaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r DeletePipelineCriteriaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeletePipelineCriteriaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -19176,15 +20801,15 @@ func (r ListPipelineVersionsResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdRuntimeResponse struct {
+type ListRuntimeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]EnvironmentRuntimeInfoResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdRuntimeResponse) Status() string {
+func (r ListRuntimeResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -19192,7 +20817,7 @@ func (r GetOrgsOrgIdAppsAppIdRuntimeResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdRuntimeResponse) StatusCode() int {
+func (r ListRuntimeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -19778,7 +21403,7 @@ func (r PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse) StatusCode() int {
 type ListArtefactVersionsInOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]ArtefactVersionResponse
+	JSON200      *[]ArtefactVersion
 	JSON400      *HumanitecErrorResponse
 }
 
@@ -19801,7 +21426,7 @@ func (r ListArtefactVersionsInOrgResponse) StatusCode() int {
 type CreateArtefactVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ArtefactVersionResponse
+	JSON200      *ArtefactVersion
 	JSON400      *HumanitecErrorResponse
 	JSON401      *HumanitecErrorResponse
 }
@@ -19825,7 +21450,7 @@ func (r CreateArtefactVersionResponse) StatusCode() int {
 type GetArtefactVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ArtefactVersionResponse
+	JSON200      *ArtefactVersion
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -19840,6 +21465,56 @@ func (r GetArtefactVersionResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetArtefactVersionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetWorkloadArtefactVersionDeploymentSetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadArtefactVersionDeploymentSet
+	YAML200      *WorkloadArtefactVersionDeploymentSet
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWorkloadArtefactVersionDeploymentSetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWorkloadArtefactVersionDeploymentSetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetWorkloadArtefactVersionSpecResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *map[string]interface{}
+	YAML200      *map[string]interface{}
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWorkloadArtefactVersionSpecResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWorkloadArtefactVersionSpecResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -19894,7 +21569,7 @@ func (r DeleteArtefactResponse) StatusCode() int {
 type ListArtefactVersionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]ArtefactVersionResponse
+	JSON200      *[]ArtefactVersion
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -19918,7 +21593,7 @@ func (r ListArtefactVersionsResponse) StatusCode() int {
 type PatchArtefactVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ArtefactVersionResponse
+	JSON200      *ArtefactVersion
 	JSON400      *HumanitecErrorResponse
 	JSON401      *HumanitecErrorResponse
 	JSON403      *HumanitecErrorResponse
@@ -19935,6 +21610,31 @@ func (r PatchArtefactVersionResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PatchArtefactVersionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListAuditLogEntriesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]AuditLogEntry
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAuditLogEntriesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAuditLogEntriesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -20312,7 +22012,7 @@ type ListPublicKeysResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]PublicKey
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
 }
 
 // Status returns HTTPResponse.Status
@@ -20335,9 +22035,9 @@ type CreatePublicKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *PublicKey
-	JSON400      *HumanitecErrorResponse
-	JSON403      *HumanitecErrorResponse
-	JSON409      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON409      *N409Conflict
 }
 
 // Status returns HTTPResponse.Status
@@ -20359,8 +22059,8 @@ func (r CreatePublicKeyResponse) StatusCode() int {
 type DeletePublicKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON403      *HumanitecErrorResponse
-	JSON404      *HumanitecErrorResponse
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -20383,7 +22083,7 @@ type GetPublicKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *PublicKey
-	JSON404      *HumanitecErrorResponse
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -21402,6 +23102,28 @@ func (r CreateWorkloadProfileChartVersionResponse) StatusCode() int {
 	return 0
 }
 
+type ListWorkloadProfileFeaturesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]WorkloadProfileFeatureResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListWorkloadProfileFeaturesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListWorkloadProfileFeaturesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListWorkloadProfilesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -21495,16 +23217,17 @@ func (r GetWorkloadProfileResponse) StatusCode() int {
 	return 0
 }
 
-type PatchWorkloadProfileResponse struct {
+type UpdateWorkloadProfileResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *WorkloadProfileResponse
 	JSON400      *N400BadRequest
 	JSON404      *N404NotFound
+	JSON409      *N409Conflict
 }
 
 // Status returns HTTPResponse.Status
-func (r PatchWorkloadProfileResponse) Status() string {
+func (r UpdateWorkloadProfileResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21512,7 +23235,7 @@ func (r PatchWorkloadProfileResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PatchWorkloadProfileResponse) StatusCode() int {
+func (r UpdateWorkloadProfileResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21542,31 +23265,6 @@ func (r ListWorkloadProfileVersionsResponse) StatusCode() int {
 	return 0
 }
 
-type CreateWorkloadProfileVersionResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON201      *WorkloadProfileVersionResponse
-	JSON400      *N400BadRequest
-	JSON404      *N404NotFound
-	JSON409      *N409Conflict
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateWorkloadProfileVersionResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateWorkloadProfileVersionResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type GetLatestWorkloadProfileVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -21584,28 +23282,6 @@ func (r GetLatestWorkloadProfileVersionResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetLatestWorkloadProfileVersionResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type DeleteWorkloadProfileVersionResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON404      *N404NotFound
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteWorkloadProfileVersionResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteWorkloadProfileVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21791,22 +23467,22 @@ func (c *ClientWithResponses) PatchCurrentUserWithResponse(ctx context.Context, 
 	return ParsePatchCurrentUserResponse(rsp)
 }
 
-// GetOrgsWithResponse request returning *GetOrgsResponse
-func (c *ClientWithResponses) GetOrgsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOrgsResponse, error) {
-	rsp, err := c.GetOrgs(ctx, reqEditors...)
+// ListOrganizationsWithResponse request returning *ListOrganizationsResponse
+func (c *ClientWithResponses) ListOrganizationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListOrganizationsResponse, error) {
+	rsp, err := c.ListOrganizations(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsResponse(rsp)
+	return ParseListOrganizationsResponse(rsp)
 }
 
-// GetOrgsOrgIdWithResponse request returning *GetOrgsOrgIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdResponse, error) {
-	rsp, err := c.GetOrgsOrgId(ctx, orgId, reqEditors...)
+// GetOrganizationWithResponse request returning *GetOrganizationResponse
+func (c *ClientWithResponses) GetOrganizationWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrganizationResponse, error) {
+	rsp, err := c.GetOrganization(ctx, orgId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdResponse(rsp)
+	return ParseGetOrganizationResponse(rsp)
 }
 
 // GetOrgsOrgIdAppsWithResponse request returning *GetOrgsOrgIdAppsResponse
@@ -21863,7 +23539,7 @@ func (c *ClientWithResponses) ListPipelineApprovalRequestsWithResponse(ctx conte
 }
 
 // GetOrgsOrgIdAppsAppIdDeltasWithResponse request returning *GetOrgsOrgIdAppsAppIdDeltasResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error) {
+func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error) {
 	rsp, err := c.GetOrgsOrgIdAppsAppIdDeltas(ctx, orgId, appId, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21872,7 +23548,7 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx contex
 }
 
 // PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdDeltasResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse(ctx context.Context, orgId string, appId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx, orgId, appId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21880,7 +23556,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse(c
 	return ParsePostOrgsOrgIdAppsAppIdDeltasResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId string, appId string, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdDeltas(ctx, orgId, appId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21889,7 +23565,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdDeltasWithResponse(ctx conte
 }
 
 // GetDeltaWithResponse request returning *GetDeltaResponse
-func (c *ClientWithResponses) GetDeltaWithResponse(ctx context.Context, orgId string, appId string, deltaId string, reqEditors ...RequestEditorFn) (*GetDeltaResponse, error) {
+func (c *ClientWithResponses) GetDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, reqEditors ...RequestEditorFn) (*GetDeltaResponse, error) {
 	rsp, err := c.GetDelta(ctx, orgId, appId, deltaId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21898,7 +23574,7 @@ func (c *ClientWithResponses) GetDeltaWithResponse(ctx context.Context, orgId st
 }
 
 // PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse
-func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error) {
+func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error) {
 	rsp, err := c.PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21906,7 +23582,7 @@ func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithRe
 	return ParsePatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse(rsp)
 }
 
-func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error) {
+func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error) {
 	rsp, err := c.PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21915,7 +23591,7 @@ func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithResponse(c
 }
 
 // PutDeltaWithBodyWithResponse request with arbitrary body returning *PutDeltaResponse
-func (c *ClientWithResponses) PutDeltaWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error) {
+func (c *ClientWithResponses) PutDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error) {
 	rsp, err := c.PutDeltaWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21923,7 +23599,7 @@ func (c *ClientWithResponses) PutDeltaWithBodyWithResponse(ctx context.Context, 
 	return ParsePutDeltaResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutDeltaWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error) {
+func (c *ClientWithResponses) PutDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error) {
 	rsp, err := c.PutDelta(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21932,7 +23608,7 @@ func (c *ClientWithResponses) PutDeltaWithResponse(ctx context.Context, orgId st
 }
 
 // PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error) {
+func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error) {
 	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21940,7 +23616,7 @@ func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived
 	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error) {
+func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error) {
 	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21949,7 +23625,7 @@ func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived
 }
 
 // PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error) {
+func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error) {
 	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21957,7 +23633,7 @@ func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWit
 	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error) {
+func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error) {
 	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21966,7 +23642,7 @@ func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWit
 }
 
 // PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse(ctx context.Context, orgId string, appId string, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error) {
+func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error) {
 	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -21974,7 +23650,7 @@ func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWith
 	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithResponse(ctx context.Context, orgId string, appId string, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error) {
+func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error) {
 	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -22027,8 +23703,8 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdWithResponse(ctx con
 }
 
 // ListDeploymentsWithResponse request returning *ListDeploymentsResponse
-func (c *ClientWithResponses) ListDeploymentsWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*ListDeploymentsResponse, error) {
-	rsp, err := c.ListDeployments(ctx, orgId, appId, envId, reqEditors...)
+func (c *ClientWithResponses) ListDeploymentsWithResponse(ctx context.Context, orgId string, appId string, envId string, params *ListDeploymentsParams, reqEditors ...RequestEditorFn) (*ListDeploymentsResponse, error) {
+	rsp, err := c.ListDeployments(ctx, orgId, appId, envId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -22183,47 +23859,47 @@ func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithRespo
 	return ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntime(ctx, orgId, appId, envId, reqEditors...)
+// GetRuntimeWithResponse request returning *GetRuntimeResponse
+func (c *ClientWithResponses) GetRuntimeWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*GetRuntimeResponse, error) {
+	rsp, err := c.GetRuntime(ctx, orgId, appId, envId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse(rsp)
+	return ParseGetRuntimeResponse(rsp)
 }
 
-// PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithBody(ctx, orgId, appId, envId, contentType, body, reqEditors...)
+// UpdatePausedWithBodyWithResponse request with arbitrary body returning *UpdatePausedResponse
+func (c *ClientWithResponses) UpdatePausedWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePausedResponse, error) {
+	rsp, err := c.UpdatePausedWithBody(ctx, orgId, appId, envId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse(rsp)
+	return ParseUpdatePausedResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithResponse(ctx context.Context, orgId string, appId string, envId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePaused(ctx, orgId, appId, envId, body, reqEditors...)
+func (c *ClientWithResponses) UpdatePausedWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body UpdatePausedJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdatePausedResponse, error) {
+	rsp, err := c.UpdatePaused(ctx, orgId, appId, envId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse(rsp)
+	return ParseUpdatePausedResponse(rsp)
 }
 
-// PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse
-func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse, error) {
-	rsp, err := c.PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithBody(ctx, orgId, appId, envId, contentType, body, reqEditors...)
+// PatchReplicasWithBodyWithResponse request with arbitrary body returning *PatchReplicasResponse
+func (c *ClientWithResponses) PatchReplicasWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchReplicasResponse, error) {
+	rsp, err := c.PatchReplicasWithBody(ctx, orgId, appId, envId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse(rsp)
+	return ParsePatchReplicasResponse(rsp)
 }
 
-func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithResponse(ctx context.Context, orgId string, appId string, envId string, body PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse, error) {
-	rsp, err := c.PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicas(ctx, orgId, appId, envId, body, reqEditors...)
+func (c *ClientWithResponses) PatchReplicasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body PatchReplicasJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchReplicasResponse, error) {
+	rsp, err := c.PatchReplicas(ctx, orgId, appId, envId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse(rsp)
+	return ParsePatchReplicasResponse(rsp)
 }
 
 // GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdValueSetVersionsResponse
@@ -22382,6 +24058,32 @@ func (c *ClientWithResponses) DeleteOrgsOrgIdAppsAppIdJobsWithResponse(ctx conte
 	return ParseDeleteOrgsOrgIdAppsAppIdJobsResponse(rsp)
 }
 
+// ListPipelineCriteriaInAppWithResponse request returning *ListPipelineCriteriaInAppResponse
+func (c *ClientWithResponses) ListPipelineCriteriaInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineCriteriaInAppParams, reqEditors ...RequestEditorFn) (*ListPipelineCriteriaInAppResponse, error) {
+	rsp, err := c.ListPipelineCriteriaInApp(ctx, orgId, appId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPipelineCriteriaInAppResponse(rsp)
+}
+
+// CreatePipelineRunByTriggerCriteriaWithBodyWithResponse request with arbitrary body returning *CreatePipelineRunByTriggerCriteriaResponse
+func (c *ClientWithResponses) CreatePipelineRunByTriggerCriteriaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineRunByTriggerCriteriaResponse, error) {
+	rsp, err := c.CreatePipelineRunByTriggerCriteriaWithBody(ctx, orgId, appId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePipelineRunByTriggerCriteriaResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreatePipelineRunByTriggerCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineRunByTriggerCriteriaParams, body CreatePipelineRunByTriggerCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePipelineRunByTriggerCriteriaResponse, error) {
+	rsp, err := c.CreatePipelineRunByTriggerCriteria(ctx, orgId, appId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePipelineRunByTriggerCriteriaResponse(rsp)
+}
+
 // ListPipelinesWithResponse request returning *ListPipelinesResponse
 func (c *ClientWithResponses) ListPipelinesWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*ListPipelinesResponse, error) {
 	rsp, err := c.ListPipelines(ctx, orgId, appId, params, reqEditors...)
@@ -22425,6 +24127,32 @@ func (c *ClientWithResponses) UpdatePipelineWithBodyWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParseUpdatePipelineResponse(rsp)
+}
+
+// CreatePipelineCriteriaWithBodyWithResponse request with arbitrary body returning *CreatePipelineCriteriaResponse
+func (c *ClientWithResponses) CreatePipelineCriteriaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineCriteriaResponse, error) {
+	rsp, err := c.CreatePipelineCriteriaWithBody(ctx, orgId, appId, pipelineId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePipelineCriteriaResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreatePipelineCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, body CreatePipelineCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePipelineCriteriaResponse, error) {
+	rsp, err := c.CreatePipelineCriteria(ctx, orgId, appId, pipelineId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePipelineCriteriaResponse(rsp)
+}
+
+// DeletePipelineCriteriaWithResponse request returning *DeletePipelineCriteriaResponse
+func (c *ClientWithResponses) DeletePipelineCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*DeletePipelineCriteriaResponse, error) {
+	rsp, err := c.DeletePipelineCriteria(ctx, orgId, appId, pipelineId, criteriaId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeletePipelineCriteriaResponse(rsp)
 }
 
 // ListPipelineRunsWithResponse request returning *ListPipelineRunsResponse
@@ -22561,17 +24289,17 @@ func (c *ClientWithResponses) ListPipelineVersionsWithResponse(ctx context.Conte
 	return ParseListPipelineVersionsResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdRuntimeWithResponse request returning *GetOrgsOrgIdAppsAppIdRuntimeResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdRuntimeWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdRuntimeParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdRuntimeResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdRuntime(ctx, orgId, appId, params, reqEditors...)
+// ListRuntimeWithResponse request returning *ListRuntimeResponse
+func (c *ClientWithResponses) ListRuntimeWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListRuntimeParams, reqEditors ...RequestEditorFn) (*ListRuntimeResponse, error) {
+	rsp, err := c.ListRuntime(ctx, orgId, appId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdRuntimeResponse(rsp)
+	return ParseListRuntimeResponse(rsp)
 }
 
 // GetSetsWithResponse request returning *GetSetsResponse
-func (c *ClientWithResponses) GetSetsWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*GetSetsResponse, error) {
+func (c *ClientWithResponses) GetSetsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*GetSetsResponse, error) {
 	rsp, err := c.GetSets(ctx, orgId, appId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -22580,7 +24308,7 @@ func (c *ClientWithResponses) GetSetsWithResponse(ctx context.Context, orgId str
 }
 
 // GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse request returning *GetOrgsOrgIdAppsAppIdSetsSetIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId string, appId string, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
+func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
 	rsp, err := c.GetOrgsOrgIdAppsAppIdSetsSetId(ctx, orgId, appId, setId, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -22589,7 +24317,7 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx con
 }
 
 // PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdSetsSetIdResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx, orgId, appId, setId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -22597,7 +24325,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithRespons
 	return ParsePostOrgsOrgIdAppsAppIdSetsSetIdResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId string, appId string, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
+func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
 	rsp, err := c.PostOrgsOrgIdAppsAppIdSetsSetId(ctx, orgId, appId, setId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -22606,7 +24334,7 @@ func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx co
 }
 
 // GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse request returning *GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse(ctx context.Context, orgId string, appId string, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse, error) {
+func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse, error) {
 	rsp, err := c.GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx, orgId, appId, setId, sourceSetId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -22918,6 +24646,24 @@ func (c *ClientWithResponses) GetArtefactVersionWithResponse(ctx context.Context
 	return ParseGetArtefactVersionResponse(rsp)
 }
 
+// GetWorkloadArtefactVersionDeploymentSetWithResponse request returning *GetWorkloadArtefactVersionDeploymentSetResponse
+func (c *ClientWithResponses) GetWorkloadArtefactVersionDeploymentSetWithResponse(ctx context.Context, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionDeploymentSetParams, reqEditors ...RequestEditorFn) (*GetWorkloadArtefactVersionDeploymentSetResponse, error) {
+	rsp, err := c.GetWorkloadArtefactVersionDeploymentSet(ctx, orgId, artefactVersionId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWorkloadArtefactVersionDeploymentSetResponse(rsp)
+}
+
+// GetWorkloadArtefactVersionSpecWithResponse request returning *GetWorkloadArtefactVersionSpecResponse
+func (c *ClientWithResponses) GetWorkloadArtefactVersionSpecWithResponse(ctx context.Context, orgId string, artefactVersionId string, params *GetWorkloadArtefactVersionSpecParams, reqEditors ...RequestEditorFn) (*GetWorkloadArtefactVersionSpecResponse, error) {
+	rsp, err := c.GetWorkloadArtefactVersionSpec(ctx, orgId, artefactVersionId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWorkloadArtefactVersionSpecResponse(rsp)
+}
+
 // ListArtefactsWithResponse request returning *ListArtefactsResponse
 func (c *ClientWithResponses) ListArtefactsWithResponse(ctx context.Context, orgId string, params *ListArtefactsParams, reqEditors ...RequestEditorFn) (*ListArtefactsResponse, error) {
 	rsp, err := c.ListArtefacts(ctx, orgId, params, reqEditors...)
@@ -22960,6 +24706,15 @@ func (c *ClientWithResponses) PatchArtefactVersionWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParsePatchArtefactVersionResponse(rsp)
+}
+
+// ListAuditLogEntriesWithResponse request returning *ListAuditLogEntriesResponse
+func (c *ClientWithResponses) ListAuditLogEntriesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListAuditLogEntriesParams, reqEditors ...RequestEditorFn) (*ListAuditLogEntriesResponse, error) {
+	rsp, err := c.ListAuditLogEntries(ctx, orgId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAuditLogEntriesResponse(rsp)
 }
 
 // GetOrgsOrgIdEnvTypesWithResponse request returning *GetOrgsOrgIdEnvTypesResponse
@@ -23680,6 +25435,15 @@ func (c *ClientWithResponses) CreateWorkloadProfileChartVersionWithBodyWithRespo
 	return ParseCreateWorkloadProfileChartVersionResponse(rsp)
 }
 
+// ListWorkloadProfileFeaturesWithResponse request returning *ListWorkloadProfileFeaturesResponse
+func (c *ClientWithResponses) ListWorkloadProfileFeaturesWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*ListWorkloadProfileFeaturesResponse, error) {
+	rsp, err := c.ListWorkloadProfileFeatures(ctx, orgId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListWorkloadProfileFeaturesResponse(rsp)
+}
+
 // ListWorkloadProfilesWithResponse request returning *ListWorkloadProfilesResponse
 func (c *ClientWithResponses) ListWorkloadProfilesWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfilesParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfilesResponse, error) {
 	rsp, err := c.ListWorkloadProfiles(ctx, orgId, params, reqEditors...)
@@ -23724,21 +25488,21 @@ func (c *ClientWithResponses) GetWorkloadProfileWithResponse(ctx context.Context
 	return ParseGetWorkloadProfileResponse(rsp)
 }
 
-// PatchWorkloadProfileWithBodyWithResponse request with arbitrary body returning *PatchWorkloadProfileResponse
-func (c *ClientWithResponses) PatchWorkloadProfileWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchWorkloadProfileResponse, error) {
-	rsp, err := c.PatchWorkloadProfileWithBody(ctx, orgId, profileQid, contentType, body, reqEditors...)
+// UpdateWorkloadProfileWithBodyWithResponse request with arbitrary body returning *UpdateWorkloadProfileResponse
+func (c *ClientWithResponses) UpdateWorkloadProfileWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateWorkloadProfileResponse, error) {
+	rsp, err := c.UpdateWorkloadProfileWithBody(ctx, orgId, profileQid, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePatchWorkloadProfileResponse(rsp)
+	return ParseUpdateWorkloadProfileResponse(rsp)
 }
 
-func (c *ClientWithResponses) PatchWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body PatchWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchWorkloadProfileResponse, error) {
-	rsp, err := c.PatchWorkloadProfile(ctx, orgId, profileQid, body, reqEditors...)
+func (c *ClientWithResponses) UpdateWorkloadProfileWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body UpdateWorkloadProfileJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateWorkloadProfileResponse, error) {
+	rsp, err := c.UpdateWorkloadProfile(ctx, orgId, profileQid, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePatchWorkloadProfileResponse(rsp)
+	return ParseUpdateWorkloadProfileResponse(rsp)
 }
 
 // ListWorkloadProfileVersionsWithResponse request returning *ListWorkloadProfileVersionsResponse
@@ -23750,23 +25514,6 @@ func (c *ClientWithResponses) ListWorkloadProfileVersionsWithResponse(ctx contex
 	return ParseListWorkloadProfileVersionsResponse(rsp)
 }
 
-// CreateWorkloadProfileVersionWithBodyWithResponse request with arbitrary body returning *CreateWorkloadProfileVersionResponse
-func (c *ClientWithResponses) CreateWorkloadProfileVersionWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileVersionResponse, error) {
-	rsp, err := c.CreateWorkloadProfileVersionWithBody(ctx, orgId, profileQid, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateWorkloadProfileVersionResponse(rsp)
-}
-
-func (c *ClientWithResponses) CreateWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, body CreateWorkloadProfileVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWorkloadProfileVersionResponse, error) {
-	rsp, err := c.CreateWorkloadProfileVersion(ctx, orgId, profileQid, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateWorkloadProfileVersionResponse(rsp)
-}
-
 // GetLatestWorkloadProfileVersionWithResponse request returning *GetLatestWorkloadProfileVersionResponse
 func (c *ClientWithResponses) GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error) {
 	rsp, err := c.GetLatestWorkloadProfileVersion(ctx, orgId, profileQid, reqEditors...)
@@ -23774,15 +25521,6 @@ func (c *ClientWithResponses) GetLatestWorkloadProfileVersionWithResponse(ctx co
 		return nil, err
 	}
 	return ParseGetLatestWorkloadProfileVersionResponse(rsp)
-}
-
-// DeleteWorkloadProfileVersionWithResponse request returning *DeleteWorkloadProfileVersionResponse
-func (c *ClientWithResponses) DeleteWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, version VersionPathParam, reqEditors ...RequestEditorFn) (*DeleteWorkloadProfileVersionResponse, error) {
-	rsp, err := c.DeleteWorkloadProfileVersion(ctx, orgId, profileQid, version, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteWorkloadProfileVersionResponse(rsp)
 }
 
 // GetTokensWithResponse request returning *GetTokensResponse
@@ -23915,15 +25653,15 @@ func ParsePatchCurrentUserResponse(rsp *http.Response) (*PatchCurrentUserRespons
 	return response, nil
 }
 
-// ParseGetOrgsResponse parses an HTTP response from a GetOrgsWithResponse call
-func ParseGetOrgsResponse(rsp *http.Response) (*GetOrgsResponse, error) {
+// ParseListOrganizationsResponse parses an HTTP response from a ListOrganizationsWithResponse call
+func ParseListOrganizationsResponse(rsp *http.Response) (*ListOrganizationsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsResponse{
+	response := &ListOrganizationsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -23936,20 +25674,27 @@ func ParseGetOrgsResponse(rsp *http.Response) (*GetOrgsResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
 	}
 
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdResponse parses an HTTP response from a GetOrgsOrgIdWithResponse call
-func ParseGetOrgsOrgIdResponse(rsp *http.Response) (*GetOrgsOrgIdResponse, error) {
+// ParseGetOrganizationResponse parses an HTTP response from a GetOrganizationWithResponse call
+func ParseGetOrganizationResponse(rsp *http.Response) (*GetOrganizationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdResponse{
+	response := &GetOrganizationResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -23962,19 +25707,12 @@ func ParseGetOrgsOrgIdResponse(rsp *http.Response) (*GetOrgsOrgIdResponse, error
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
+		response.JSON403 = &dest
 
 	}
 
@@ -24459,12 +26197,12 @@ func ParsePostOrgsOrgIdAppsAppIdEnvsResponse(rsp *http.Response) (*PostOrgsOrgId
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest EnvironmentResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
@@ -24953,15 +26691,15 @@ func ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp *http.Response) 
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse, error) {
+// ParseGetRuntimeResponse parses an HTTP response from a GetRuntimeWithResponse call
+func ParseGetRuntimeResponse(rsp *http.Response) (*GetRuntimeResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse{
+	response := &GetRuntimeResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -24975,14 +26713,14 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse(rsp *http.Response) (*Ge
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
+		var dest N404NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -24993,36 +26731,36 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeResponse(rsp *http.Response) (*Ge
 	return response, nil
 }
 
-// ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse parses an HTTP response from a PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedWithResponse call
-func ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse(rsp *http.Response) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse, error) {
+// ParseUpdatePausedResponse parses an HTTP response from a UpdatePausedWithResponse call
+func ParseUpdatePausedResponse(rsp *http.Response) (*UpdatePausedResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse{
+	response := &UpdatePausedResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest HumanitecErrorResponse
+		var dest N403Forbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
+		var dest N404NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25033,36 +26771,36 @@ func ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRuntimePausedResponse(rsp *http.Response
 	return response, nil
 }
 
-// ParsePatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse parses an HTTP response from a PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasWithResponse call
-func ParsePatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse(rsp *http.Response) (*PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse, error) {
+// ParsePatchReplicasResponse parses an HTTP response from a PatchReplicasWithResponse call
+func ParsePatchReplicasResponse(rsp *http.Response) (*PatchReplicasResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PatchOrgsOrgIdAppsAppIdEnvsEnvIdRuntimeReplicasResponse{
+	response := &PatchReplicasResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest HumanitecErrorResponse
+		var dest N403Forbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
+		var dest N404NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25449,6 +27187,93 @@ func ParseDeleteOrgsOrgIdAppsAppIdJobsResponse(rsp *http.Response) (*DeleteOrgsO
 	return response, nil
 }
 
+// ParseListPipelineCriteriaInAppResponse parses an HTTP response from a ListPipelineCriteriaInAppWithResponse call
+func ParseListPipelineCriteriaInAppResponse(rsp *http.Response) (*ListPipelineCriteriaInAppResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPipelineCriteriaInAppResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []PipelineCriteria
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreatePipelineRunByTriggerCriteriaResponse parses an HTTP response from a CreatePipelineRunByTriggerCriteriaWithResponse call
+func ParseCreatePipelineRunByTriggerCriteriaResponse(rsp *http.Response) (*CreatePipelineRunByTriggerCriteriaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePipelineRunByTriggerCriteriaResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest PipelineRun
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest N409Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest N422UnprocessableContent
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListPipelinesResponse parses an HTTP response from a ListPipelinesWithResponse call
 func ParseListPipelinesResponse(rsp *http.Response) (*ListPipelinesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -25671,6 +27496,86 @@ func ParseUpdatePipelineResponse(rsp *http.Response) (*UpdatePipelineResponse, e
 			return nil, err
 		}
 		response.JSON412 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreatePipelineCriteriaResponse parses an HTTP response from a CreatePipelineCriteriaWithResponse call
+func ParseCreatePipelineCriteriaResponse(rsp *http.Response) (*CreatePipelineCriteriaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePipelineCriteriaResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest PipelineCriteria
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest N409Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeletePipelineCriteriaResponse parses an HTTP response from a DeletePipelineCriteriaWithResponse call
+func ParseDeletePipelineCriteriaResponse(rsp *http.Response) (*DeletePipelineCriteriaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeletePipelineCriteriaResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -26261,15 +28166,15 @@ func ParseListPipelineVersionsResponse(rsp *http.Response) (*ListPipelineVersion
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdRuntimeResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdRuntimeWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdRuntimeResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdRuntimeResponse, error) {
+// ParseListRuntimeResponse parses an HTTP response from a ListRuntimeWithResponse call
+func ParseListRuntimeResponse(rsp *http.Response) (*ListRuntimeResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdRuntimeResponse{
+	response := &ListRuntimeResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -26283,7 +28188,7 @@ func ParseGetOrgsOrgIdAppsAppIdRuntimeResponse(rsp *http.Response) (*GetOrgsOrgI
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27126,7 +29031,7 @@ func ParseListArtefactVersionsInOrgResponse(rsp *http.Response) (*ListArtefactVe
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []ArtefactVersionResponse
+		var dest []ArtefactVersion
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27159,7 +29064,7 @@ func ParseCreateArtefactVersionResponse(rsp *http.Response) (*CreateArtefactVers
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ArtefactVersionResponse
+		var dest ArtefactVersion
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27199,7 +29104,7 @@ func ParseGetArtefactVersionResponse(rsp *http.Response) (*GetArtefactVersionRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ArtefactVersionResponse
+		var dest ArtefactVersion
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27218,6 +29123,100 @@ func ParseGetArtefactVersionResponse(rsp *http.Response) (*GetArtefactVersionRes
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetWorkloadArtefactVersionDeploymentSetResponse parses an HTTP response from a GetWorkloadArtefactVersionDeploymentSetWithResponse call
+func ParseGetWorkloadArtefactVersionDeploymentSetResponse(rsp *http.Response) (*GetWorkloadArtefactVersionDeploymentSetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWorkloadArtefactVersionDeploymentSetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadArtefactVersionDeploymentSet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "yaml") && rsp.StatusCode == 200:
+		var dest WorkloadArtefactVersionDeploymentSet
+		if err := yaml.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.YAML200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetWorkloadArtefactVersionSpecResponse parses an HTTP response from a GetWorkloadArtefactVersionSpecWithResponse call
+func ParseGetWorkloadArtefactVersionSpecResponse(rsp *http.Response) (*GetWorkloadArtefactVersionSpecResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWorkloadArtefactVersionSpecResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "yaml") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := yaml.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.YAML200 = &dest
 
 	}
 
@@ -27298,7 +29297,7 @@ func ParseListArtefactVersionsResponse(rsp *http.Response) (*ListArtefactVersion
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []ArtefactVersionResponse
+		var dest []ArtefactVersion
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27338,7 +29337,7 @@ func ParsePatchArtefactVersionResponse(rsp *http.Response) (*PatchArtefactVersio
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ArtefactVersionResponse
+		var dest ArtefactVersion
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27367,6 +29366,53 @@ func ParsePatchArtefactVersionResponse(rsp *http.Response) (*PatchArtefactVersio
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListAuditLogEntriesResponse parses an HTTP response from a ListAuditLogEntriesWithResponse call
+func ParseListAuditLogEntriesResponse(rsp *http.Response) (*ListAuditLogEntriesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAuditLogEntriesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []AuditLogEntry
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27920,7 +29966,7 @@ func ParseListPublicKeysResponse(rsp *http.Response) (*ListPublicKeysResponse, e
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27953,21 +29999,21 @@ func ParseCreatePublicKeyResponse(rsp *http.Response) (*CreatePublicKeyResponse,
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest HumanitecErrorResponse
+		var dest N403Forbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest HumanitecErrorResponse
+		var dest N409Conflict
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27993,14 +30039,14 @@ func ParseDeletePublicKeyResponse(rsp *http.Response) (*DeletePublicKeyResponse,
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest HumanitecErrorResponse
+		var dest N403Forbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
+		var dest N404NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -28033,7 +30079,7 @@ func ParseGetPublicKeyResponse(rsp *http.Response) (*GetPublicKeyResponse, error
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
+		var dest N404NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -29668,6 +31714,32 @@ func ParseCreateWorkloadProfileChartVersionResponse(rsp *http.Response) (*Create
 	return response, nil
 }
 
+// ParseListWorkloadProfileFeaturesResponse parses an HTTP response from a ListWorkloadProfileFeaturesWithResponse call
+func ParseListWorkloadProfileFeaturesResponse(rsp *http.Response) (*ListWorkloadProfileFeaturesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListWorkloadProfileFeaturesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []WorkloadProfileFeatureResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListWorkloadProfilesResponse parses an HTTP response from a ListWorkloadProfilesWithResponse call
 func ParseListWorkloadProfilesResponse(rsp *http.Response) (*ListWorkloadProfilesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -29807,15 +31879,15 @@ func ParseGetWorkloadProfileResponse(rsp *http.Response) (*GetWorkloadProfileRes
 	return response, nil
 }
 
-// ParsePatchWorkloadProfileResponse parses an HTTP response from a PatchWorkloadProfileWithResponse call
-func ParsePatchWorkloadProfileResponse(rsp *http.Response) (*PatchWorkloadProfileResponse, error) {
+// ParseUpdateWorkloadProfileResponse parses an HTTP response from a UpdateWorkloadProfileWithResponse call
+func ParseUpdateWorkloadProfileResponse(rsp *http.Response) (*UpdateWorkloadProfileResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PatchWorkloadProfileResponse{
+	response := &UpdateWorkloadProfileResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -29841,6 +31913,13 @@ func ParsePatchWorkloadProfileResponse(rsp *http.Response) (*PatchWorkloadProfil
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest N409Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	}
 
@@ -29880,53 +31959,6 @@ func ParseListWorkloadProfileVersionsResponse(rsp *http.Response) (*ListWorkload
 	return response, nil
 }
 
-// ParseCreateWorkloadProfileVersionResponse parses an HTTP response from a CreateWorkloadProfileVersionWithResponse call
-func ParseCreateWorkloadProfileVersionResponse(rsp *http.Response) (*CreateWorkloadProfileVersionResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateWorkloadProfileVersionResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest WorkloadProfileVersionResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest N400BadRequest
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404NotFound
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest N409Conflict
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseGetLatestWorkloadProfileVersionResponse parses an HTTP response from a GetLatestWorkloadProfileVersionWithResponse call
 func ParseGetLatestWorkloadProfileVersionResponse(rsp *http.Response) (*GetLatestWorkloadProfileVersionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -29948,32 +31980,6 @@ func ParseGetLatestWorkloadProfileVersionResponse(rsp *http.Response) (*GetLates
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404NotFound
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteWorkloadProfileVersionResponse parses an HTTP response from a DeleteWorkloadProfileVersionWithResponse call
-func ParseDeleteWorkloadProfileVersionResponse(rsp *http.Response) (*DeleteWorkloadProfileVersionResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteWorkloadProfileVersionResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest N404NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
