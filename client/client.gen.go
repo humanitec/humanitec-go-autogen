@@ -22250,7 +22250,7 @@ func (r DeleteOrgsOrgIdRegistriesRegIdResponse) StatusCode() int {
 type GetOrgsOrgIdRegistriesRegIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *RegistryResponse
+	JSON200      *RegistryResponse
 	JSON400      *ErrorInfoResponse
 	JSON404      *ErrorInfoResponse
 }
@@ -30351,12 +30351,12 @@ func ParseGetOrgsOrgIdRegistriesRegIdResponse(rsp *http.Response) (*GetOrgsOrgId
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest RegistryResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest ErrorInfoResponse

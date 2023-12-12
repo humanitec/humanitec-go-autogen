@@ -5971,7 +5971,7 @@
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "A registry details.\n\n",
             "content": {
               "application/json": {
