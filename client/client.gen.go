@@ -142,8 +142,11 @@ type ActiveResourceResponse struct {
 	// ResId The ID of the resource
 	ResId string `json:"res_id"`
 
-	// Resource The data that the resource passes into the deployment ('values' only).
+	// Resource The resource provisioning outputs ('values' only).
 	Resource map[string]interface{} `json:"resource"`
+
+	// SecretRefs Secret references from the resource provisioning output.
+	SecretRefs map[string]interface{} `json:"secret_refs"`
 
 	// Status Current resource status: 'pending', 'active', or 'deleting'.
 	Status string `json:"status"`
@@ -22250,7 +22253,7 @@ func (r DeleteOrgsOrgIdRegistriesRegIdResponse) StatusCode() int {
 type GetOrgsOrgIdRegistriesRegIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *RegistryResponse
+	JSON200      *RegistryResponse
 	JSON400      *ErrorInfoResponse
 	JSON404      *ErrorInfoResponse
 }
@@ -30351,12 +30354,12 @@ func ParseGetOrgsOrgIdRegistriesRegIdResponse(rsp *http.Response) (*GetOrgsOrgId
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest RegistryResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest ErrorInfoResponse
