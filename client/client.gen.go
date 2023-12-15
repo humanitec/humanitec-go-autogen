@@ -2988,6 +2988,9 @@ type ListPipelineCriteriaInAppParams struct {
 
 // CreatePipelineRunByTriggerCriteriaParams defines parameters for CreatePipelineRunByTriggerCriteria.
 type CreatePipelineRunByTriggerCriteriaParams struct {
+	// DryRun Optionally validate the request but do not persist the actual Pipeline Run.
+	DryRun *bool `form:"dry_run,omitempty" json:"dry_run,omitempty"`
+
 	// IdempotencyKey The HTTP Idempotency-Key
 	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
@@ -3007,6 +3010,12 @@ type ListPipelinesParams struct {
 	Metadata *ByMetadata `json:"metadata,omitempty"`
 }
 
+// CreatePipelineParams defines parameters for CreatePipeline.
+type CreatePipelineParams struct {
+	// DryRun Optionally validate the request but do not persist the actual Pipeline.
+	DryRun *bool `form:"dry_run,omitempty" json:"dry_run,omitempty"`
+}
+
 // DeletePipelineParams defines parameters for DeletePipeline.
 type DeletePipelineParams struct {
 	// IfMatch Indicate that the request should only succeed if there is an etag match
@@ -3021,6 +3030,9 @@ type GetPipelineParams struct {
 
 // UpdatePipelineParams defines parameters for UpdatePipeline.
 type UpdatePipelineParams struct {
+	// DryRun Optionally validate the request but do not persist the update.
+	DryRun *bool `form:"dry_run,omitempty" json:"dry_run,omitempty"`
+
 	// IfMatch Indicate that the request should only succeed if there is an etag match
 	IfMatch *IfMatchHeaderParam `json:"If-Match,omitempty"`
 }
@@ -3048,6 +3060,9 @@ type ListPipelineRunsParams struct {
 
 // CreatePipelineRunParams defines parameters for CreatePipelineRun.
 type CreatePipelineRunParams struct {
+	// DryRun Optionally validate the request but do not persist the actual Pipeline Run.
+	DryRun *bool `form:"dry_run,omitempty" json:"dry_run,omitempty"`
+
 	// IdempotencyKey The HTTP Idempotency-Key
 	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
@@ -3289,6 +3304,9 @@ type DeleteOrgsOrgIdResourcesDefsDefIdParams struct {
 	Force *bool `form:"force,omitempty" json:"force,omitempty"`
 }
 
+// PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONBody defines parameters for PutOrgsOrgIdResourcesDefsDefIdCriteria.
+type PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONBody = []MatchingCriteriaRuleRequest
+
 // DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams defines parameters for DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaId.
 type DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams struct {
 	// Force If set to `true`, the Matching Criteria is deleted immediately, even if this action affects existing Active Resources.
@@ -3489,6 +3507,9 @@ type PutOrgsOrgIdResourcesDefsDefIdJSONRequestBody = UpdateResourceDefinitionReq
 
 // PostOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody defines body for PostOrgsOrgIdResourcesDefsDefIdCriteria for application/json ContentType.
 type PostOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody = MatchingCriteriaRuleRequest
+
+// PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody defines body for PutOrgsOrgIdResourcesDefsDefIdCriteria for application/json ContentType.
+type PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody = PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONBody
 
 // PostOrgsOrgIdResourcesDriversJSONRequestBody defines body for PostOrgsOrgIdResourcesDrivers for application/json ContentType.
 type PostOrgsOrgIdResourcesDriversJSONRequestBody = CreateDriverRequestRequest
@@ -4550,7 +4571,7 @@ type ClientInterface interface {
 	ListPipelines(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreatePipelineWithBody request with any body
-	CreatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeletePipeline request
 	DeletePipeline(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *DeletePipelineParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4901,6 +4922,11 @@ type ClientInterface interface {
 
 	PostOrgsOrgIdResourcesDefsDefIdCriteria(ctx context.Context, orgId string, defId string, body PostOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PutOrgsOrgIdResourcesDefsDefIdCriteriaWithBody request with any body
+	PutOrgsOrgIdResourcesDefsDefIdCriteriaWithBody(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutOrgsOrgIdResourcesDefsDefIdCriteria(ctx context.Context, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaId request
 	DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaId(ctx context.Context, orgId string, defId string, criteriaId string, params *DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5006,9 +5032,6 @@ type ClientInterface interface {
 
 	// DeleteTokensTokenId request
 	DeleteTokensTokenId(ctx context.Context, tokenId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetUsersMe request
-	GetUsersMe(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetUsersUserIdTokens request
 	GetUsersUserIdTokens(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5925,8 +5948,8 @@ func (c *Client) ListPipelines(ctx context.Context, orgId OrgIdPathParam, appId 
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreatePipelineRequestWithBody(c.Server, orgId, appId, contentType, body)
+func (c *Client) CreatePipelineWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePipelineRequestWithBody(c.Server, orgId, appId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7449,6 +7472,30 @@ func (c *Client) PostOrgsOrgIdResourcesDefsDefIdCriteria(ctx context.Context, or
 	return c.Client.Do(req)
 }
 
+func (c *Client) PutOrgsOrgIdResourcesDefsDefIdCriteriaWithBody(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutOrgsOrgIdResourcesDefsDefIdCriteriaRequestWithBody(c.Server, orgId, defId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutOrgsOrgIdResourcesDefsDefIdCriteria(ctx context.Context, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutOrgsOrgIdResourcesDefsDefIdCriteriaRequest(c.Server, orgId, defId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaId(ctx context.Context, orgId string, defId string, criteriaId string, params *DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdRequest(c.Server, orgId, defId, criteriaId, params)
 	if err != nil {
@@ -7895,18 +7942,6 @@ func (c *Client) GetTokens(ctx context.Context, reqEditors ...RequestEditorFn) (
 
 func (c *Client) DeleteTokensTokenId(ctx context.Context, tokenId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteTokensTokenIdRequest(c.Server, tokenId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetUsersMe(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetUsersMeRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -10889,6 +10924,28 @@ func NewCreatePipelineRunByTriggerCriteriaRequestWithBody(server string, orgId O
 		return nil, err
 	}
 
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "dry_run", runtime.ParamLocationQuery, *params.DryRun); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
 		return nil, err
@@ -11026,7 +11083,7 @@ func NewListPipelinesRequest(server string, orgId OrgIdPathParam, appId AppIdPat
 }
 
 // NewCreatePipelineRequestWithBody generates requests for CreatePipeline with any type of body
-func NewCreatePipelineRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreatePipelineRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11056,6 +11113,28 @@ func NewCreatePipelineRequestWithBody(server string, orgId OrgIdPathParam, appId
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "dry_run", runtime.ParamLocationQuery, *params.DryRun); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
@@ -11239,6 +11318,28 @@ func NewUpdatePipelineRequestWithBody(server string, orgId OrgIdPathParam, appId
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "dry_run", runtime.ParamLocationQuery, *params.DryRun); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("PATCH", queryURL.String(), body)
@@ -11581,6 +11682,28 @@ func NewCreatePipelineRunRequestWithBody(server string, orgId OrgIdPathParam, ap
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "dry_run", runtime.ParamLocationQuery, *params.DryRun); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
@@ -16816,6 +16939,60 @@ func NewPostOrgsOrgIdResourcesDefsDefIdCriteriaRequestWithBody(server string, or
 	return req, nil
 }
 
+// NewPutOrgsOrgIdResourcesDefsDefIdCriteriaRequest calls the generic PutOrgsOrgIdResourcesDefsDefIdCriteria builder with application/json body
+func NewPutOrgsOrgIdResourcesDefsDefIdCriteriaRequest(server string, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutOrgsOrgIdResourcesDefsDefIdCriteriaRequestWithBody(server, orgId, defId, "application/json", bodyReader)
+}
+
+// NewPutOrgsOrgIdResourcesDefsDefIdCriteriaRequestWithBody generates requests for PutOrgsOrgIdResourcesDefsDefIdCriteria with any type of body
+func NewPutOrgsOrgIdResourcesDefsDefIdCriteriaRequestWithBody(server string, orgId string, defId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "defId", runtime.ParamLocationPath, defId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/defs/%s/criteria", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewDeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdRequest generates requests for DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaId
 func NewDeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdRequest(server string, orgId string, defId string, criteriaId string, params *DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams) (*http.Request, error) {
 	var err error
@@ -18206,33 +18383,6 @@ func NewDeleteTokensTokenIdRequest(server string, tokenId string) (*http.Request
 	return req, nil
 }
 
-// NewGetUsersMeRequest generates requests for GetUsersMe
-func NewGetUsersMeRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/users/me")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewGetUsersUserIdTokensRequest generates requests for GetUsersUserIdTokens
 func NewGetUsersUserIdTokensRequest(server string, userId string) (*http.Request, error) {
 	var err error
@@ -18642,7 +18792,7 @@ type ClientWithResponsesInterface interface {
 	ListPipelinesWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelinesParams, reqEditors ...RequestEditorFn) (*ListPipelinesResponse, error)
 
 	// CreatePipelineWithBodyWithResponse request with any body
-	CreatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineResponse, error)
+	CreatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineResponse, error)
 
 	// DeletePipelineWithResponse request
 	DeletePipelineWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *DeletePipelineParams, reqEditors ...RequestEditorFn) (*DeletePipelineResponse, error)
@@ -18993,6 +19143,11 @@ type ClientWithResponsesInterface interface {
 
 	PostOrgsOrgIdResourcesDefsDefIdCriteriaWithResponse(ctx context.Context, orgId string, defId string, body PostOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdResourcesDefsDefIdCriteriaResponse, error)
 
+	// PutOrgsOrgIdResourcesDefsDefIdCriteriaWithBodyWithResponse request with any body
+	PutOrgsOrgIdResourcesDefsDefIdCriteriaWithBodyWithResponse(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse, error)
+
+	PutOrgsOrgIdResourcesDefsDefIdCriteriaWithResponse(ctx context.Context, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse, error)
+
 	// DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdWithResponse request
 	DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdWithResponse(ctx context.Context, orgId string, defId string, criteriaId string, params *DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdResponse, error)
 
@@ -19098,9 +19253,6 @@ type ClientWithResponsesInterface interface {
 
 	// DeleteTokensTokenIdWithResponse request
 	DeleteTokensTokenIdWithResponse(ctx context.Context, tokenId string, reqEditors ...RequestEditorFn) (*DeleteTokensTokenIdResponse, error)
-
-	// GetUsersMeWithResponse request
-	GetUsersMeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUsersMeResponse, error)
 
 	// GetUsersUserIdTokensWithResponse request
 	GetUsersUserIdTokensWithResponse(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*GetUsersUserIdTokensResponse, error)
@@ -22621,6 +22773,7 @@ type PostOrgsOrgIdResourcesDefsDefIdCriteriaResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *MatchingCriteriaResponse
 	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
@@ -22635,6 +22788,32 @@ func (r PostOrgsOrgIdResourcesDefsDefIdCriteriaResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostOrgsOrgIdResourcesDefsDefIdCriteriaResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]MatchingCriteriaResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+	JSON500      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -23328,28 +23507,6 @@ func (r DeleteTokensTokenIdResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DeleteTokensTokenIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetUsersMeResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *map[string]interface{}
-}
-
-// Status returns HTTPResponse.Status
-func (r GetUsersMeResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetUsersMeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -24097,8 +24254,8 @@ func (c *ClientWithResponses) ListPipelinesWithResponse(ctx context.Context, org
 }
 
 // CreatePipelineWithBodyWithResponse request with arbitrary body returning *CreatePipelineResponse
-func (c *ClientWithResponses) CreatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineResponse, error) {
-	rsp, err := c.CreatePipelineWithBody(ctx, orgId, appId, contentType, body, reqEditors...)
+func (c *ClientWithResponses) CreatePipelineWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *CreatePipelineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePipelineResponse, error) {
+	rsp, err := c.CreatePipelineWithBody(ctx, orgId, appId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -25210,6 +25367,23 @@ func (c *ClientWithResponses) PostOrgsOrgIdResourcesDefsDefIdCriteriaWithRespons
 	return ParsePostOrgsOrgIdResourcesDefsDefIdCriteriaResponse(rsp)
 }
 
+// PutOrgsOrgIdResourcesDefsDefIdCriteriaWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse
+func (c *ClientWithResponses) PutOrgsOrgIdResourcesDefsDefIdCriteriaWithBodyWithResponse(ctx context.Context, orgId string, defId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse, error) {
+	rsp, err := c.PutOrgsOrgIdResourcesDefsDefIdCriteriaWithBody(ctx, orgId, defId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutOrgsOrgIdResourcesDefsDefIdCriteriaResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutOrgsOrgIdResourcesDefsDefIdCriteriaWithResponse(ctx context.Context, orgId string, defId string, body PutOrgsOrgIdResourcesDefsDefIdCriteriaJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse, error) {
+	rsp, err := c.PutOrgsOrgIdResourcesDefsDefIdCriteria(ctx, orgId, defId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutOrgsOrgIdResourcesDefsDefIdCriteriaResponse(rsp)
+}
+
 // DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdWithResponse request returning *DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdResponse
 func (c *ClientWithResponses) DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdWithResponse(ctx context.Context, orgId string, defId string, criteriaId string, params *DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdParams, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaIdResponse, error) {
 	rsp, err := c.DeleteOrgsOrgIdResourcesDefsDefIdCriteriaCriteriaId(ctx, orgId, defId, criteriaId, params, reqEditors...)
@@ -25542,15 +25716,6 @@ func (c *ClientWithResponses) DeleteTokensTokenIdWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseDeleteTokensTokenIdResponse(rsp)
-}
-
-// GetUsersMeWithResponse request returning *GetUsersMeResponse
-func (c *ClientWithResponses) GetUsersMeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUsersMeResponse, error) {
-	rsp, err := c.GetUsersMe(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetUsersMeResponse(rsp)
 }
 
 // GetUsersUserIdTokensWithResponse request returning *GetUsersUserIdTokensResponse
@@ -31010,6 +31175,67 @@ func ParsePostOrgsOrgIdResourcesDefsDefIdCriteriaResponse(rsp *http.Response) (*
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutOrgsOrgIdResourcesDefsDefIdCriteriaResponse parses an HTTP response from a PutOrgsOrgIdResourcesDefsDefIdCriteriaWithResponse call
+func ParsePutOrgsOrgIdResourcesDefsDefIdCriteriaResponse(rsp *http.Response) (*PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutOrgsOrgIdResourcesDefsDefIdCriteriaResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []MatchingCriteriaResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -32032,32 +32258,6 @@ func ParseDeleteTokensTokenIdResponse(rsp *http.Response) (*DeleteTokensTokenIdR
 	response := &DeleteTokensTokenIdResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetUsersMeResponse parses an HTTP response from a GetUsersMeWithResponse call
-func ParseGetUsersMeResponse(rsp *http.Response) (*GetUsersMeResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetUsersMeResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	}
 
 	return response, nil
