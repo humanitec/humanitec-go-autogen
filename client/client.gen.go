@@ -158,6 +158,39 @@ type ActiveResourceResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+// Agent An object containing the details of an Agent.
+type Agent struct {
+	// CreatedAt Time of the Agent being registered.
+	CreatedAt time.Time `json:"created_at"`
+
+	// CreatedBy User ID of user that added the Agent.
+	CreatedBy string `json:"created_by"`
+
+	// Description A pcks8 RSA public key PEM encoded (as the ones produced by openssl), whose module length is greater or equal than 4096 bits.
+	Description *string `json:"description,omitempty"`
+
+	// Id The Agent id.
+	Id string `json:"id"`
+}
+
+// AgentCreateBody An object containing data needed to register an Agent.
+type AgentCreateBody struct {
+	// Description An optional description to show future users.
+	Description *string `json:"description,omitempty"`
+
+	// Id The Agent id. It can't be empty and should contain only url safe characters.
+	Id string `json:"id"`
+
+	// PublicKey A pcks8 RSA public key PEM encoded (as the ones produced by openssl), whose module length is greater or equal than 4096 bits.
+	PublicKey string `json:"public_key"`
+}
+
+// AgentPatchBody An object containing data to update the description field of an Agent.
+type AgentPatchBody struct {
+	// Description A description to show future users. It can be empty.
+	Description string `json:"description"`
+}
+
 // ApplicationCreationRequest defines model for ApplicationCreationRequest.
 type ApplicationCreationRequest struct {
 	Env *EnvironmentBaseRequest `json:"env,omitempty"`
@@ -1140,6 +1173,30 @@ type JSONPatchResponse struct {
 
 // JSONPatchesResponse defines model for JSONPatchesResponse.
 type JSONPatchesResponse = []JSONPatchResponse
+
+// Key An object containing the details of a Key.
+type Key struct {
+	// CreatedAt Time of the Key being registered.
+	CreatedAt time.Time `json:"created_at"`
+
+	// CreatedBy User ID of user that added the Key.
+	CreatedBy string `json:"created_by"`
+
+	// ExpiredAt Time when the Key should be replaced (2 years after its creation).
+	ExpiredAt time.Time `json:"expired_at"`
+
+	// Fingerprint The Key fingerprint (sha256 hash of the DER representation of the key).
+	Fingerprint string `json:"fingerprint"`
+
+	// PublicKey A pcks8 RSA ublic key PEM encoded.
+	PublicKey string `json:"public_key"`
+}
+
+// KeyCreateBody defines model for KeyCreateBody.
+type KeyCreateBody struct {
+	// PublicKey A pcks8 RSA public key PEM encoded (as the ones produced by openssl), whose module length is greater or equal than 4096 bits.
+	PublicKey string `json:"public_key"`
+}
 
 // LogoResponse defines model for LogoResponse.
 type LogoResponse struct {
@@ -2814,6 +2871,9 @@ type WorkloadProfileVersionResponse struct {
 	WorkloadProfileId string `json:"workload_profile_id"`
 }
 
+// AgentIdPathParam defines model for agentIdPathParam.
+type AgentIdPathParam = string
+
 // AppIdPathParam defines model for appIdPathParam.
 type AppIdPathParam = string
 
@@ -2858,6 +2918,12 @@ type DeprecatedQueryParam = bool
 
 // EnvIdPathParam defines model for envIdPathParam.
 type EnvIdPathParam = string
+
+// FingerprintPathParam defines model for fingerprintPathParam.
+type FingerprintPathParam = string
+
+// FingerprintQueryParam defines model for fingerprintQueryParam.
+type FingerprintQueryParam = string
 
 // IdempotencyKey defines model for idempotencyKey.
 type IdempotencyKey = string
@@ -2906,6 +2972,12 @@ type N412PreconditionFailed = ErrorResponse
 
 // N422UnprocessableContent A standard error response
 type N422UnprocessableContent = ErrorResponse
+
+// ListAgentsParams defines parameters for ListAgents.
+type ListAgentsParams struct {
+	// Fingerprint The Key fingerprint (hexadecimal representation of sha256 hash of the DER representation of the key).
+	Fingerprint *FingerprintQueryParam `form:"fingerprint,omitempty" json:"fingerprint,omitempty"`
+}
 
 // ListPipelineApprovalRequestsParams defines parameters for ListPipelineApprovalRequests.
 type ListPipelineApprovalRequestsParams struct {
@@ -3351,6 +3423,15 @@ type ListWorkloadProfileVersionsParams struct {
 
 // PatchCurrentUserJSONRequestBody defines body for PatchCurrentUser for application/json ContentType.
 type PatchCurrentUserJSONRequestBody = UserProfileExtendedRequest
+
+// CreateAgentJSONRequestBody defines body for CreateAgent for application/json ContentType.
+type CreateAgentJSONRequestBody = AgentCreateBody
+
+// PatchAgentJSONRequestBody defines body for PatchAgent for application/json ContentType.
+type PatchAgentJSONRequestBody = AgentPatchBody
+
+// CreateKeyJSONRequestBody defines body for CreateKey for application/json ContentType.
+type CreateKeyJSONRequestBody = KeyCreateBody
 
 // PostOrgsOrgIdAppsJSONRequestBody defines body for PostOrgsOrgIdApps for application/json ContentType.
 type PostOrgsOrgIdAppsJSONRequestBody = ApplicationCreationRequest
@@ -4382,6 +4463,33 @@ type ClientInterface interface {
 	// GetOrganization request
 	GetOrganization(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListAgents request
+	ListAgents(ctx context.Context, orgId OrgIdPathParam, params *ListAgentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateAgentWithBody request with any body
+	CreateAgentWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateAgent(ctx context.Context, orgId OrgIdPathParam, body CreateAgentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAgent request
+	DeleteAgent(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PatchAgentWithBody request with any body
+	PatchAgentWithBody(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchAgent(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, body PatchAgentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListKeysInAgent request
+	ListKeysInAgent(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateKeyWithBody request with any body
+	CreateKeyWithBody(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateKey(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, body CreateKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteKeyInAgent request
+	DeleteKeyInAgent(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, fingerprint FingerprintPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetOrgsOrgIdApps request
 	GetOrgsOrgIdApps(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5098,6 +5206,126 @@ func (c *Client) ListOrganizations(ctx context.Context, reqEditors ...RequestEdi
 
 func (c *Client) GetOrganization(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrganizationRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListAgents(ctx context.Context, orgId OrgIdPathParam, params *ListAgentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAgentsRequest(c.Server, orgId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAgentWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAgentRequestWithBody(c.Server, orgId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAgent(ctx context.Context, orgId OrgIdPathParam, body CreateAgentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAgentRequest(c.Server, orgId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAgent(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAgentRequest(c.Server, orgId, agentId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchAgentWithBody(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchAgentRequestWithBody(c.Server, orgId, agentId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchAgent(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, body PatchAgentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchAgentRequest(c.Server, orgId, agentId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListKeysInAgent(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListKeysInAgentRequest(c.Server, orgId, agentId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateKeyWithBody(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateKeyRequestWithBody(c.Server, orgId, agentId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateKey(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, body CreateKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateKeyRequest(c.Server, orgId, agentId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteKeyInAgent(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, fingerprint FingerprintPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteKeyInAgentRequest(c.Server, orgId, agentId, fingerprint)
 	if err != nil {
 		return nil, err
 	}
@@ -8133,6 +8361,347 @@ func NewGetOrganizationRequest(server string, orgId string) (*http.Request, erro
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListAgentsRequest generates requests for ListAgents
+func NewListAgentsRequest(server string, orgId OrgIdPathParam, params *ListAgentsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/agents", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Fingerprint != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fingerprint", runtime.ParamLocationQuery, *params.Fingerprint); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateAgentRequest calls the generic CreateAgent builder with application/json body
+func NewCreateAgentRequest(server string, orgId OrgIdPathParam, body CreateAgentJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateAgentRequestWithBody(server, orgId, "application/json", bodyReader)
+}
+
+// NewCreateAgentRequestWithBody generates requests for CreateAgent with any type of body
+func NewCreateAgentRequestWithBody(server string, orgId OrgIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/agents", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAgentRequest generates requests for DeleteAgent
+func NewDeleteAgentRequest(server string, orgId OrgIdPathParam, agentId AgentIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agentId", runtime.ParamLocationPath, agentId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/agents/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPatchAgentRequest calls the generic PatchAgent builder with application/json body
+func NewPatchAgentRequest(server string, orgId OrgIdPathParam, agentId AgentIdPathParam, body PatchAgentJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchAgentRequestWithBody(server, orgId, agentId, "application/json", bodyReader)
+}
+
+// NewPatchAgentRequestWithBody generates requests for PatchAgent with any type of body
+func NewPatchAgentRequestWithBody(server string, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agentId", runtime.ParamLocationPath, agentId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/agents/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListKeysInAgentRequest generates requests for ListKeysInAgent
+func NewListKeysInAgentRequest(server string, orgId OrgIdPathParam, agentId AgentIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agentId", runtime.ParamLocationPath, agentId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/agents/%s/keys", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateKeyRequest calls the generic CreateKey builder with application/json body
+func NewCreateKeyRequest(server string, orgId OrgIdPathParam, agentId AgentIdPathParam, body CreateKeyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateKeyRequestWithBody(server, orgId, agentId, "application/json", bodyReader)
+}
+
+// NewCreateKeyRequestWithBody generates requests for CreateKey with any type of body
+func NewCreateKeyRequestWithBody(server string, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agentId", runtime.ParamLocationPath, agentId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/agents/%s/keys", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteKeyInAgentRequest generates requests for DeleteKeyInAgent
+func NewDeleteKeyInAgentRequest(server string, orgId OrgIdPathParam, agentId AgentIdPathParam, fingerprint FingerprintPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agentId", runtime.ParamLocationPath, agentId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "fingerprint", runtime.ParamLocationPath, fingerprint)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/agents/%s/keys/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -18603,6 +19172,33 @@ type ClientWithResponsesInterface interface {
 	// GetOrganizationWithResponse request
 	GetOrganizationWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrganizationResponse, error)
 
+	// ListAgentsWithResponse request
+	ListAgentsWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListAgentsParams, reqEditors ...RequestEditorFn) (*ListAgentsResponse, error)
+
+	// CreateAgentWithBodyWithResponse request with any body
+	CreateAgentWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAgentResponse, error)
+
+	CreateAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, body CreateAgentJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAgentResponse, error)
+
+	// DeleteAgentWithResponse request
+	DeleteAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, reqEditors ...RequestEditorFn) (*DeleteAgentResponse, error)
+
+	// PatchAgentWithBodyWithResponse request with any body
+	PatchAgentWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchAgentResponse, error)
+
+	PatchAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, body PatchAgentJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchAgentResponse, error)
+
+	// ListKeysInAgentWithResponse request
+	ListKeysInAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, reqEditors ...RequestEditorFn) (*ListKeysInAgentResponse, error)
+
+	// CreateKeyWithBodyWithResponse request with any body
+	CreateKeyWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateKeyResponse, error)
+
+	CreateKeyWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, body CreateKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateKeyResponse, error)
+
+	// DeleteKeyInAgentWithResponse request
+	DeleteKeyInAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, fingerprint FingerprintPathParam, reqEditors ...RequestEditorFn) (*DeleteKeyInAgentResponse, error)
+
 	// GetOrgsOrgIdAppsWithResponse request
 	GetOrgsOrgIdAppsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsResponse, error)
 
@@ -19354,6 +19950,168 @@ func (r GetOrganizationResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrganizationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListAgentsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Agent
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAgentsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAgentsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateAgentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Agent
+	JSON400      *N400BadRequest
+	JSON409      *N409Conflict
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateAgentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateAgentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAgentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAgentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAgentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PatchAgentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Agent
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r PatchAgentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PatchAgentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListKeysInAgentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Key
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r ListKeysInAgentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListKeysInAgentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Key
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
+	JSON409      *N409Conflict
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteKeyInAgentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteKeyInAgentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteKeyInAgentResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -23645,6 +24403,93 @@ func (c *ClientWithResponses) GetOrganizationWithResponse(ctx context.Context, o
 	return ParseGetOrganizationResponse(rsp)
 }
 
+// ListAgentsWithResponse request returning *ListAgentsResponse
+func (c *ClientWithResponses) ListAgentsWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListAgentsParams, reqEditors ...RequestEditorFn) (*ListAgentsResponse, error) {
+	rsp, err := c.ListAgents(ctx, orgId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAgentsResponse(rsp)
+}
+
+// CreateAgentWithBodyWithResponse request with arbitrary body returning *CreateAgentResponse
+func (c *ClientWithResponses) CreateAgentWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAgentResponse, error) {
+	rsp, err := c.CreateAgentWithBody(ctx, orgId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAgentResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, body CreateAgentJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAgentResponse, error) {
+	rsp, err := c.CreateAgent(ctx, orgId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAgentResponse(rsp)
+}
+
+// DeleteAgentWithResponse request returning *DeleteAgentResponse
+func (c *ClientWithResponses) DeleteAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, reqEditors ...RequestEditorFn) (*DeleteAgentResponse, error) {
+	rsp, err := c.DeleteAgent(ctx, orgId, agentId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAgentResponse(rsp)
+}
+
+// PatchAgentWithBodyWithResponse request with arbitrary body returning *PatchAgentResponse
+func (c *ClientWithResponses) PatchAgentWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchAgentResponse, error) {
+	rsp, err := c.PatchAgentWithBody(ctx, orgId, agentId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchAgentResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, body PatchAgentJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchAgentResponse, error) {
+	rsp, err := c.PatchAgent(ctx, orgId, agentId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchAgentResponse(rsp)
+}
+
+// ListKeysInAgentWithResponse request returning *ListKeysInAgentResponse
+func (c *ClientWithResponses) ListKeysInAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, reqEditors ...RequestEditorFn) (*ListKeysInAgentResponse, error) {
+	rsp, err := c.ListKeysInAgent(ctx, orgId, agentId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListKeysInAgentResponse(rsp)
+}
+
+// CreateKeyWithBodyWithResponse request with arbitrary body returning *CreateKeyResponse
+func (c *ClientWithResponses) CreateKeyWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateKeyResponse, error) {
+	rsp, err := c.CreateKeyWithBody(ctx, orgId, agentId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateKeyResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateKeyWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, body CreateKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateKeyResponse, error) {
+	rsp, err := c.CreateKey(ctx, orgId, agentId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateKeyResponse(rsp)
+}
+
+// DeleteKeyInAgentWithResponse request returning *DeleteKeyInAgentResponse
+func (c *ClientWithResponses) DeleteKeyInAgentWithResponse(ctx context.Context, orgId OrgIdPathParam, agentId AgentIdPathParam, fingerprint FingerprintPathParam, reqEditors ...RequestEditorFn) (*DeleteKeyInAgentResponse, error) {
+	rsp, err := c.DeleteKeyInAgent(ctx, orgId, agentId, fingerprint, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteKeyInAgentResponse(rsp)
+}
+
 // GetOrgsOrgIdAppsWithResponse request returning *GetOrgsOrgIdAppsResponse
 func (c *ClientWithResponses) GetOrgsOrgIdAppsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsResponse, error) {
 	rsp, err := c.GetOrgsOrgIdApps(ctx, orgId, reqEditors...)
@@ -25881,6 +26726,244 @@ func ParseGetOrganizationResponse(rsp *http.Response) (*GetOrganizationResponse,
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListAgentsResponse parses an HTTP response from a ListAgentsWithResponse call
+func ParseListAgentsResponse(rsp *http.Response) (*ListAgentsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAgentsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Agent
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateAgentResponse parses an HTTP response from a CreateAgentWithResponse call
+func ParseCreateAgentResponse(rsp *http.Response) (*CreateAgentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateAgentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Agent
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest N409Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAgentResponse parses an HTTP response from a DeleteAgentWithResponse call
+func ParseDeleteAgentResponse(rsp *http.Response) (*DeleteAgentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAgentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePatchAgentResponse parses an HTTP response from a PatchAgentWithResponse call
+func ParsePatchAgentResponse(rsp *http.Response) (*PatchAgentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PatchAgentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Agent
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListKeysInAgentResponse parses an HTTP response from a ListKeysInAgentWithResponse call
+func ParseListKeysInAgentResponse(rsp *http.Response) (*ListKeysInAgentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListKeysInAgentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Key
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateKeyResponse parses an HTTP response from a CreateKeyWithResponse call
+func ParseCreateKeyResponse(rsp *http.Response) (*CreateKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Key
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest N409Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteKeyInAgentResponse parses an HTTP response from a DeleteKeyInAgentWithResponse call
+func ParseDeleteKeyInAgentResponse(rsp *http.Response) (*DeleteKeyInAgentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteKeyInAgentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
