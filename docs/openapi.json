@@ -827,7 +827,8 @@
           {
             "name": "pipelineRunId",
             "in": "query",
-            "description": "An optional filter by the Pipeline Run ID.\n\n",
+            "description": "An optional filter by the Pipeline and Pipeline Run ID separated by a comma.\n",
+            "example": "default,01234567-89ab-cdef-0123-456789abcdef",
             "schema": {
               "type": "string"
             }
@@ -5211,6 +5212,53 @@
       }
     },
     "/orgs/{orgId}/apps/{appId}/pipelines/{pipelineId}/criteria/{criteriaId}": {
+      "get": {
+        "tags": [
+          "public",
+          "Pipelines"
+        ],
+        "operationId": "getPipelineCriteria",
+        "summary": "Get the Pipeline Criteria with the given id.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/orgIdPathParam"
+          },
+          {
+            "$ref": "#/components/parameters/appIdPathParam"
+          },
+          {
+            "$ref": "#/components/parameters/pipelineIdPathParam"
+          },
+          {
+            "name": "criteriaId",
+            "in": "path",
+            "description": "The Criteria ID",
+            "example": "01234567-89ab-cdef-0123-456789abcdef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful get response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineCriteria"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/404NotFound"
+          }
+        }
+      },
       "delete": {
         "tags": [
           "public",
@@ -9416,55 +9464,6 @@
           },
           "404": {
             "description": "Object does not exist.\n\n"
-          }
-        }
-      }
-    },
-    "/tokens": {
-      "get": {
-        "tags": [
-          "public",
-          "UserProfile"
-        ],
-        "summary": "DEPRECATED",
-        "operationId": "listTokens",
-        "responses": {
-          "200": {
-            "description": "The token structure.\n\n",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/tokens/{tokenId}": {
-      "delete": {
-        "tags": [
-          "public",
-          "UserProfile"
-        ],
-        "summary": "DEPRECATED",
-        "operationId": "deleteToken",
-        "parameters": [
-          {
-            "name": "tokenId",
-            "in": "path",
-            "description": "The token ID\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Deleted\n\n"
           }
         }
       }
@@ -14714,13 +14713,31 @@
       },
       "PipelineCriteria": {
         "required": [
-          "trigger"
+          "trigger",
+          "id",
+          "pipeline_id",
+          "pipeline_name"
         ],
         "properties": {
           "trigger": {
             "description": "The trigger to call",
             "type": "string",
             "example": "deployment_request"
+          },
+          "id": {
+            "description": "The unique id of the criteria within this Pipeline.",
+            "type": "string",
+            "example": "01234567-89ab-cdef-0123-456789abcdef"
+          },
+          "pipeline_id": {
+            "description": "The id of the Pipeline tied to this deployment request criteria.",
+            "type": "string",
+            "example": "sample-pipeline"
+          },
+          "pipeline_name": {
+            "description": "The current display name of the Pipeline.",
+            "type": "string",
+            "example": "Sample Pipeline"
           }
         },
         "oneOf": [
@@ -14739,11 +14756,22 @@
         "description": "A deployment request matching criteria for a Pipeline.",
         "type": "object",
         "required": [
+          "trigger",
           "id",
           "pipeline_id",
           "pipeline_name"
         ],
         "properties": {
+          "trigger": {
+            "description": "The trigger to call",
+            "type": "string",
+            "example": "deployment_request"
+          },
+          "id": {
+            "description": "The unique id of the criteria within this Pipeline.",
+            "type": "string",
+            "example": "01234567-89ab-cdef-0123-456789abcdef"
+          },
           "pipeline_id": {
             "description": "The id of the Pipeline tied to this deployment request criteria.",
             "type": "string",
@@ -14753,11 +14781,6 @@
             "description": "The current display name of the Pipeline.",
             "type": "string",
             "example": "Sample Pipeline"
-          },
-          "id": {
-            "description": "The unique id of the criteria within this Pipeline.",
-            "type": "string",
-            "example": "01234567-89ab-cdef-0123-456789abcdef"
           },
           "env_type": {
             "description": "The Environment Type that this criteria will match. If defined, this criteria will only apply to Environments that have this type.\n",
