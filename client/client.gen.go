@@ -1480,6 +1480,15 @@ type PipelineApprovalRequestStatus string
 
 // PipelineCriteria defines model for PipelineCriteria.
 type PipelineCriteria struct {
+	// Id The unique id of the criteria within this Pipeline.
+	Id string `json:"id"`
+
+	// PipelineId The id of the Pipeline tied to this deployment request criteria.
+	PipelineId string `json:"pipeline_id"`
+
+	// PipelineName The current display name of the Pipeline.
+	PipelineName string `json:"pipeline_name"`
+
 	// Trigger The trigger to call
 	Trigger string `json:"trigger"`
 	union   json.RawMessage
@@ -1514,6 +1523,9 @@ type PipelineDeploymentRequestCriteria struct {
 
 	// PipelineName The current display name of the Pipeline.
 	PipelineName string `json:"pipeline_name"`
+
+	// Trigger The trigger to call
+	Trigger string `json:"trigger"`
 }
 
 // PipelineDeploymentRequestCriteriaCreateBody The details required to create a new deployment request matching criteria for a Pipeline.
@@ -3173,8 +3185,7 @@ type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONBody = string
 
 // ListDeploymentsParams defines parameters for ListDeployments.
 type ListDeploymentsParams struct {
-	// PipelineRunId An optional filter by the Pipeline Run ID.
-	//
+	// PipelineRunId An optional filter by the Pipeline and Pipeline Run ID separated by a comma.
 	PipelineRunId *string `form:"pipelineRunId,omitempty" json:"pipelineRunId,omitempty"`
 }
 
@@ -4205,6 +4216,21 @@ func (t PipelineCriteria) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	object["id"], err = json.Marshal(t.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	object["pipeline_id"], err = json.Marshal(t.PipelineId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'pipeline_id': %w", err)
+	}
+
+	object["pipeline_name"], err = json.Marshal(t.PipelineName)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'pipeline_name': %w", err)
+	}
+
 	object["trigger"], err = json.Marshal(t.Trigger)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'trigger': %w", err)
@@ -4223,6 +4249,27 @@ func (t *PipelineCriteria) UnmarshalJSON(b []byte) error {
 	err = json.Unmarshal(b, &object)
 	if err != nil {
 		return err
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &t.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+	}
+
+	if raw, found := object["pipeline_id"]; found {
+		err = json.Unmarshal(raw, &t.PipelineId)
+		if err != nil {
+			return fmt.Errorf("error reading 'pipeline_id': %w", err)
+		}
+	}
+
+	if raw, found := object["pipeline_name"]; found {
+		err = json.Unmarshal(raw, &t.PipelineName)
+		if err != nil {
+			return fmt.Errorf("error reading 'pipeline_name': %w", err)
+		}
 	}
 
 	if raw, found := object["trigger"]; found {
@@ -4745,6 +4792,9 @@ type ClientInterface interface {
 	// DeletePipelineCriteria request
 	DeletePipelineCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetPipelineCriteria request
+	GetPipelineCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListPipelineRuns request
 	ListPipelineRuns(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5181,12 +5231,6 @@ type ClientInterface interface {
 
 	// GetLatestWorkloadProfileVersion request
 	GetLatestWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// ListTokens request
-	ListTokens(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteToken request
-	DeleteToken(ctx context.Context, tokenId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListUserTokens request
 	ListUserTokens(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6297,6 +6341,18 @@ func (c *Client) CreatePipelineCriteria(ctx context.Context, orgId OrgIdPathPara
 
 func (c *Client) DeletePipelineCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeletePipelineCriteriaRequest(c.Server, orgId, appId, pipelineId, criteriaId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPipelineCriteria(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPipelineCriteriaRequest(c.Server, orgId, appId, pipelineId, criteriaId)
 	if err != nil {
 		return nil, err
 	}
@@ -8193,30 +8249,6 @@ func (c *Client) ListWorkloadProfileVersions(ctx context.Context, orgId OrgIdPat
 
 func (c *Client) GetLatestWorkloadProfileVersion(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLatestWorkloadProfileVersionRequest(c.Server, orgId, profileQid)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) ListTokens(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListTokensRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteToken(ctx context.Context, tokenId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteTokenRequest(c.Server, tokenId)
 	if err != nil {
 		return nil, err
 	}
@@ -12092,6 +12124,61 @@ func NewDeletePipelineCriteriaRequest(server string, orgId OrgIdPathParam, appId
 	}
 
 	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetPipelineCriteriaRequest generates requests for GetPipelineCriteria
+func NewGetPipelineCriteriaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "pipelineId", runtime.ParamLocationPath, pipelineId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "criteriaId", runtime.ParamLocationPath, criteriaId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/pipelines/%s/criteria/%s", pathParam0, pathParam1, pathParam2, pathParam3)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -18970,67 +19057,6 @@ func NewGetLatestWorkloadProfileVersionRequest(server string, orgId OrgIdPathPar
 	return req, nil
 }
 
-// NewListTokensRequest generates requests for ListTokens
-func NewListTokensRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/tokens")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewDeleteTokenRequest generates requests for DeleteToken
-func NewDeleteTokenRequest(server string, tokenId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "tokenId", runtime.ParamLocationPath, tokenId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/tokens/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewListUserTokensRequest generates requests for ListUserTokens
 func NewListUserTokensRequest(server string, userId string) (*http.Request, error) {
 	var err error
@@ -19486,6 +19512,9 @@ type ClientWithResponsesInterface interface {
 	// DeletePipelineCriteriaWithResponse request
 	DeletePipelineCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*DeletePipelineCriteriaResponse, error)
 
+	// GetPipelineCriteriaWithResponse request
+	GetPipelineCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*GetPipelineCriteriaResponse, error)
+
 	// ListPipelineRunsWithResponse request
 	ListPipelineRunsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, params *ListPipelineRunsParams, reqEditors ...RequestEditorFn) (*ListPipelineRunsResponse, error)
 
@@ -19922,12 +19951,6 @@ type ClientWithResponsesInterface interface {
 
 	// GetLatestWorkloadProfileVersionWithResponse request
 	GetLatestWorkloadProfileVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, profileQid ProfileQidPathParam, reqEditors ...RequestEditorFn) (*GetLatestWorkloadProfileVersionResponse, error)
-
-	// ListTokensWithResponse request
-	ListTokensWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTokensResponse, error)
-
-	// DeleteTokenWithResponse request
-	DeleteTokenWithResponse(ctx context.Context, tokenId string, reqEditors ...RequestEditorFn) (*DeleteTokenResponse, error)
 
 	// ListUserTokensWithResponse request
 	ListUserTokensWithResponse(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*ListUserTokensResponse, error)
@@ -21449,6 +21472,30 @@ func (r DeletePipelineCriteriaResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DeletePipelineCriteriaResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetPipelineCriteriaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PipelineCriteria
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPipelineCriteriaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPipelineCriteriaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -24308,49 +24355,6 @@ func (r GetLatestWorkloadProfileVersionResponse) StatusCode() int {
 	return 0
 }
 
-type ListTokensResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *map[string]interface{}
-}
-
-// Status returns HTTPResponse.Status
-func (r ListTokensResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListTokensResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type DeleteTokenResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteTokenResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteTokenResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type ListUserTokensResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -25238,6 +25242,15 @@ func (c *ClientWithResponses) DeletePipelineCriteriaWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParseDeletePipelineCriteriaResponse(rsp)
+}
+
+// GetPipelineCriteriaWithResponse request returning *GetPipelineCriteriaResponse
+func (c *ClientWithResponses) GetPipelineCriteriaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, pipelineId PipelineIdPathParam, criteriaId string, reqEditors ...RequestEditorFn) (*GetPipelineCriteriaResponse, error) {
+	rsp, err := c.GetPipelineCriteria(ctx, orgId, appId, pipelineId, criteriaId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPipelineCriteriaResponse(rsp)
 }
 
 // ListPipelineRunsWithResponse request returning *ListPipelineRunsResponse
@@ -26623,24 +26636,6 @@ func (c *ClientWithResponses) GetLatestWorkloadProfileVersionWithResponse(ctx co
 		return nil, err
 	}
 	return ParseGetLatestWorkloadProfileVersionResponse(rsp)
-}
-
-// ListTokensWithResponse request returning *ListTokensResponse
-func (c *ClientWithResponses) ListTokensWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTokensResponse, error) {
-	rsp, err := c.ListTokens(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseListTokensResponse(rsp)
-}
-
-// DeleteTokenWithResponse request returning *DeleteTokenResponse
-func (c *ClientWithResponses) DeleteTokenWithResponse(ctx context.Context, tokenId string, reqEditors ...RequestEditorFn) (*DeleteTokenResponse, error) {
-	rsp, err := c.DeleteToken(ctx, tokenId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteTokenResponse(rsp)
 }
 
 // ListUserTokensWithResponse request returning *ListUserTokensResponse
@@ -28901,6 +28896,46 @@ func ParseDeletePipelineCriteriaResponse(rsp *http.Response) (*DeletePipelineCri
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPipelineCriteriaResponse parses an HTTP response from a GetPipelineCriteriaWithResponse call
+func ParseGetPipelineCriteriaResponse(rsp *http.Response) (*GetPipelineCriteriaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPipelineCriteriaResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PipelineCriteria
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -33386,48 +33421,6 @@ func ParseGetLatestWorkloadProfileVersionResponse(rsp *http.Response) (*GetLates
 		}
 		response.JSON404 = &dest
 
-	}
-
-	return response, nil
-}
-
-// ParseListTokensResponse parses an HTTP response from a ListTokensWithResponse call
-func ParseListTokensResponse(rsp *http.Response) (*ListTokensResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ListTokensResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteTokenResponse parses an HTTP response from a DeleteTokenWithResponse call
-func ParseDeleteTokenResponse(rsp *http.Response) (*DeleteTokenResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteTokenResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
 	}
 
 	return response, nil
