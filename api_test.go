@@ -66,7 +66,7 @@ func TestNewHumanitecClientWrite(t *testing.T) {
 	assert.NoError(err)
 
 	name := "changed"
-	_, err = humSvc.PatchCurrentUser(ctx, client.PatchCurrentUserJSONRequestBody{
+	_, err = humSvc.UpdateCurrentUser(ctx, client.UpdateCurrentUserJSONRequestBody{
 		Name: &name,
 	})
 	assert.NoError(err)
