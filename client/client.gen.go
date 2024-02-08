@@ -1961,7 +1961,7 @@ type RegistryResponse struct {
 // Resource Accounts hold credentials that are required to provision and manage resources.
 type ResourceAccountResponse struct {
 	// CreatedAt The timestamp of when the account was created.
-	CreatedAt string `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// CreatedBy The ID of the user who created the account.
 	CreatedBy string `json:"created_by"`
