@@ -214,7 +214,7 @@ type Agent struct {
 	// CreatedBy User ID of user that added the Agent.
 	CreatedBy string `json:"created_by"`
 
-	// Description A pcks8 RSA public key PEM encoded (as the ones produced by openssl), whose module length is greater or equal than 4096 bits.
+	// Description A description to show future users. It can be empty.
 	Description *string `json:"description,omitempty"`
 
 	// Id The Agent id.
@@ -1749,13 +1749,16 @@ type PipelineStep struct {
 	// Name The name of the step or a generated default.
 	Name string `json:"name"`
 
+	// RelatedEntities A map of related object ids that this step created or interacted with.
+	RelatedEntities map[string]string `json:"related_entities"`
+
 	// Status The current status of this Step within the Job.
 	Status string `json:"status"`
 
 	// StatusMessage A human-readable message indicating the reason for the status.
 	StatusMessage string `json:"status_message"`
 
-	// TimeoutSeconds The timeout for this Job.
+	// TimeoutSeconds The timeout for this Step.
 	TimeoutSeconds int `json:"timeout_seconds"`
 
 	// Uses The action used by this step.
@@ -20781,6 +20784,9 @@ func (r QueryResourceGraphResponse) StatusCode() int {
 type DeleteActiveResourceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -27878,6 +27884,30 @@ func ParseDeleteActiveResourceResponse(rsp *http.Response) (*DeleteActiveResourc
 	response := &DeleteActiveResourceResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	}
 
 	return response, nil
