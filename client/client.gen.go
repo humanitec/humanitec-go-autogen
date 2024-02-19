@@ -989,7 +989,7 @@ type EnvironmentDefinitionRequest struct {
 	Name string `json:"name"`
 
 	// Type The Environment Type. This is used for organizing and managing Environments.
-	Type string `json:"type"`
+	Type *string `json:"type,omitempty"`
 }
 
 // EnvironmentID defines model for EnvironmentID.
@@ -3198,6 +3198,15 @@ type RebaseEnvironmentJSONBody = string
 // QueryResourceGraphJSONBody defines parameters for QueryResourceGraph.
 type QueryResourceGraphJSONBody = []ResourceProvisionRequestRequest
 
+// DeleteActiveResourceParams defines parameters for DeleteActiveResource.
+type DeleteActiveResourceParams struct {
+	// Detach If set to `true`, will detach an active resource. The resource continues to exist and is not deleted, but it is no longer connected to the Platform Orchestrator.
+	// Detaching can be done for any active resource. In case that the resource is an active one (i.e. not marked to be deleted), it would stay in use until the next deployment.
+	// Detaching active resources can cause inconsistent status (e.g. detaching a k8s-cluster might make it impossible to retrieve runtime information by or un-pause an environment)
+	// If the resource has been provisioned via the Humanitec Operator, this does not delete the resource CR in the cluster. This must be done manually.
+	Detach *bool `form:"detach,omitempty" json:"detach,omitempty"`
+}
+
 // UpdatePausedJSONBody defines parameters for UpdatePaused.
 type UpdatePausedJSONBody = bool
 
@@ -4682,7 +4691,7 @@ type ClientInterface interface {
 	QueryResourceGraph(ctx context.Context, orgId string, appId string, envId string, body QueryResourceGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteActiveResource request
-	DeleteActiveResource(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteActiveResource(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdEnvsEnvIdRules request
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5850,8 +5859,8 @@ func (c *Client) QueryResourceGraph(ctx context.Context, orgId string, appId str
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteActiveResource(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteActiveResourceRequest(c.Server, orgId, appId, envId, pType, resId)
+func (c *Client) DeleteActiveResource(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteActiveResourceRequest(c.Server, orgId, appId, envId, pType, resId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -10170,7 +10179,7 @@ func NewQueryResourceGraphRequestWithBody(server string, orgId string, appId str
 }
 
 // NewDeleteActiveResourceRequest generates requests for DeleteActiveResource
-func NewDeleteActiveResourceRequest(server string, orgId string, appId string, envId string, pType string, resId string) (*http.Request, error) {
+func NewDeleteActiveResourceRequest(server string, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10221,6 +10230,28 @@ func NewDeleteActiveResourceRequest(server string, orgId string, appId string, e
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Detach != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "detach", runtime.ParamLocationQuery, *params.Detach); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
@@ -19402,7 +19433,7 @@ type ClientWithResponsesInterface interface {
 	QueryResourceGraphWithResponse(ctx context.Context, orgId string, appId string, envId string, body QueryResourceGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryResourceGraphResponse, error)
 
 	// DeleteActiveResourceWithResponse request
-	DeleteActiveResourceWithResponse(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, reqEditors ...RequestEditorFn) (*DeleteActiveResourceResponse, error)
+	DeleteActiveResourceWithResponse(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams, reqEditors ...RequestEditorFn) (*DeleteActiveResourceResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse request
 	GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error)
@@ -24885,8 +24916,8 @@ func (c *ClientWithResponses) QueryResourceGraphWithResponse(ctx context.Context
 }
 
 // DeleteActiveResourceWithResponse request returning *DeleteActiveResourceResponse
-func (c *ClientWithResponses) DeleteActiveResourceWithResponse(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, reqEditors ...RequestEditorFn) (*DeleteActiveResourceResponse, error) {
-	rsp, err := c.DeleteActiveResource(ctx, orgId, appId, envId, pType, resId, reqEditors...)
+func (c *ClientWithResponses) DeleteActiveResourceWithResponse(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams, reqEditors ...RequestEditorFn) (*DeleteActiveResourceResponse, error) {
+	rsp, err := c.DeleteActiveResource(ctx, orgId, appId, envId, pType, resId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
