@@ -1653,6 +1653,9 @@ type PipelineRun struct {
 	// CreatedAt The date and time when this Run was first created.
 	CreatedAt time.Time `json:"created_at"`
 
+	// CreatedBy User id that created or triggered the Run.
+	CreatedBy string `json:"created_by"`
+
 	// EnvIds Environments linked to this Pipeline Run through input parameters or step executions.
 	EnvIds []string `json:"env_ids"`
 
@@ -4999,6 +5002,9 @@ type ClientInterface interface {
 	// GetEnvironmentType request
 	GetEnvironmentType(ctx context.Context, orgId string, envTypeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListUserRolesInEnvType request
+	ListUserRolesInEnvType(ctx context.Context, orgId string, envType string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateUserRoleInEnvTypeWithBody request with any body
 	CreateUserRoleInEnvTypeWithBody(ctx context.Context, orgId string, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -7193,6 +7199,18 @@ func (c *Client) DeleteEnvironmentType(ctx context.Context, orgId string, envTyp
 
 func (c *Client) GetEnvironmentType(ctx context.Context, orgId string, envTypeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetEnvironmentTypeRequest(c.Server, orgId, envTypeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListUserRolesInEnvType(ctx context.Context, orgId string, envType string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUserRolesInEnvTypeRequest(c.Server, orgId, envType)
 	if err != nil {
 		return nil, err
 	}
@@ -15675,6 +15693,47 @@ func NewGetEnvironmentTypeRequest(server string, orgId string, envTypeId string)
 	return req, nil
 }
 
+// NewListUserRolesInEnvTypeRequest generates requests for ListUserRolesInEnvType
+func NewListUserRolesInEnvTypeRequest(server string, orgId string, envType string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "envType", runtime.ParamLocationPath, envType)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/env-types/%s/users", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateUserRoleInEnvTypeRequest calls the generic CreateUserRoleInEnvType builder with application/json body
 func NewCreateUserRoleInEnvTypeRequest(server string, orgId string, envType string, body CreateUserRoleInEnvTypeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -19741,6 +19800,9 @@ type ClientWithResponsesInterface interface {
 	// GetEnvironmentTypeWithResponse request
 	GetEnvironmentTypeWithResponse(ctx context.Context, orgId string, envTypeId string, reqEditors ...RequestEditorFn) (*GetEnvironmentTypeResponse, error)
 
+	// ListUserRolesInEnvTypeWithResponse request
+	ListUserRolesInEnvTypeWithResponse(ctx context.Context, orgId string, envType string, reqEditors ...RequestEditorFn) (*ListUserRolesInEnvTypeResponse, error)
+
 	// CreateUserRoleInEnvTypeWithBodyWithResponse request with any body
 	CreateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId string, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error)
 
@@ -22807,6 +22869,28 @@ func (r GetEnvironmentTypeResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetEnvironmentTypeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListUserRolesInEnvTypeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]UserRoleResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListUserRolesInEnvTypeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListUserRolesInEnvTypeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -25894,6 +25978,15 @@ func (c *ClientWithResponses) GetEnvironmentTypeWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseGetEnvironmentTypeResponse(rsp)
+}
+
+// ListUserRolesInEnvTypeWithResponse request returning *ListUserRolesInEnvTypeResponse
+func (c *ClientWithResponses) ListUserRolesInEnvTypeWithResponse(ctx context.Context, orgId string, envType string, reqEditors ...RequestEditorFn) (*ListUserRolesInEnvTypeResponse, error) {
+	rsp, err := c.ListUserRolesInEnvType(ctx, orgId, envType, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListUserRolesInEnvTypeResponse(rsp)
 }
 
 // CreateUserRoleInEnvTypeWithBodyWithResponse request with arbitrary body returning *CreateUserRoleInEnvTypeResponse
@@ -31004,6 +31097,32 @@ func ParseGetEnvironmentTypeResponse(rsp *http.Response) (*GetEnvironmentTypeRes
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListUserRolesInEnvTypeResponse parses an HTTP response from a ListUserRolesInEnvTypeWithResponse call
+func ParseListUserRolesInEnvTypeResponse(rsp *http.Response) (*ListUserRolesInEnvTypeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListUserRolesInEnvTypeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []UserRoleResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 
