@@ -6,7 +6,7 @@ toolchain go1.21.5
 
 require (
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
