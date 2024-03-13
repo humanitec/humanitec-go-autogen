@@ -3579,6 +3579,12 @@ type ListWorkloadProfileChartVersionsParams struct {
 
 	// Page The page token to request from
 	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+
+	// Id Filter Chart Versions by Chart Version ID.
+	Id *string `form:"id,omitempty" json:"id,omitempty"`
+
+	// Version Filter Chart Versions by Chart Version.
+	Version *string `form:"version,omitempty" json:"version,omitempty"`
 }
 
 // CreateWorkloadProfileChartVersionMultipartBody defines parameters for CreateWorkloadProfileChartVersion.
@@ -18665,6 +18671,38 @@ func NewListWorkloadProfileChartVersionsRequest(server string, orgId OrgIdPathPa
 		if params.Page != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Id != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "id", runtime.ParamLocationQuery, *params.Id); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Version != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "version", runtime.ParamLocationQuery, *params.Version); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
