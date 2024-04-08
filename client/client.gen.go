@@ -24232,7 +24232,7 @@ func (r UpdateResourceDefinitionCriteriaResponse) StatusCode() int {
 type DeleteResourceDefinitionCriteriaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON404      *string
+	JSON404      *HumanitecErrorResponse
 	JSON409      *[]ResourceDefinitionChangeResponse
 	JSON500      *HumanitecErrorResponse
 }
@@ -33214,7 +33214,7 @@ func ParseDeleteResourceDefinitionCriteriaResponse(rsp *http.Response) (*DeleteR
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest string
+		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
