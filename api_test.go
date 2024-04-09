@@ -87,3 +87,17 @@ func TestClient(t *testing.T) {
 
 	assert.Equal(url, humSvc.Client().Server)
 }
+
+func TestNewHumanitecClientMissingToken(t *testing.T) {
+	assert := assert.New(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Fail("Shouldn't be called")
+	}))
+	defer srv.Close()
+
+	_, err := NewClient(&Config{
+		URL: srv.URL,
+	})
+	assert.ErrorIs(err, ErrMissingToken)
+}

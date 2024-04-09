@@ -3,6 +3,7 @@ package humanitec
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,6 +21,7 @@ const (
 
 var (
 	SDKHeader = fmt.Sprintf("%s/%s", SDK, SDKVersion)
+	ErrMissingToken = errors.New("token is required")
 )
 
 type Config struct {
@@ -56,7 +58,7 @@ func (c *Client) Client() *client.Client {
 
 func NewClient(config *Config) (*Client, error) {
 	if config.Token == "" {
-		return nil, fmt.Errorf("empty token")
+		return nil, ErrMissingToken
 	}
 
 	if config.URL == "" {
