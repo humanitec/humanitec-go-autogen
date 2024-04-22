@@ -3445,8 +3445,11 @@ type CreateArtefactVersionParams struct {
 	// Vcs (Optional) Which version control system the version comes from. Default value is "git". If this parameter is not supplied or its value is "git", the provided ref, if not empty, is checked to ensure that it has the prefix "refs/".
 	Vcs *string `form:"vcs,omitempty" json:"vcs,omitempty"`
 
-	// DryRun Optionally validate the request but do not persist the actual artefact.
+	// DryRun Optionally validate the request but do not persist the actual artefact. If the Accept type is set to "application/x.workload-deployment-set+json" or "application/x.workload-deployment-set+x-yaml", the generated deployment set will be returned.
 	DryRun *bool `form:"dry_run,omitempty" json:"dry_run,omitempty"`
+
+	// Accept Indicates which content types the client is able to understand.
+	Accept *string `json:"Accept,omitempty"`
 }
 
 // GetWorkloadArtefactVersionDeploymentSetParams defines parameters for GetWorkloadArtefactVersionDeploymentSet.
@@ -15234,6 +15237,21 @@ func NewCreateArtefactVersionRequestWithBody(server string, orgId string, params
 
 	req.Header.Add("Content-Type", contentType)
 
+	if params != nil {
+
+		if params.Accept != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Accept", runtime.ParamLocationHeader, *params.Accept)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Accept", headerParam0)
+		}
+
+	}
+
 	return req, nil
 }
 
@@ -22225,6 +22243,7 @@ type ListPipelineStepLogsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]PipelineStepLog
+	JSON400      *N400BadRequest
 	JSON404      *N404NotFound
 }
 
@@ -22941,11 +22960,12 @@ func (r ListArtefactVersionsInOrgResponse) StatusCode() int {
 }
 
 type CreateArtefactVersionResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ArtefactVersion
-	JSON400      *HumanitecErrorResponse
-	JSON401      *HumanitecErrorResponse
+	Body                                     []byte
+	HTTPResponse                             *http.Response
+	JSON200                                  *ArtefactVersion
+	ApplicationxWorkloadDeploymentSetJSON200 *WorkloadArtefactVersionDeploymentSet
+	JSON400                                  *HumanitecErrorResponse
+	JSON401                                  *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -30056,6 +30076,13 @@ func ParseListPipelineStepLogsResponse(rsp *http.Response) (*ListPipelineStepLog
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest N404NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -31102,12 +31129,19 @@ func ParseCreateArtefactVersionResponse(rsp *http.Response) (*CreateArtefactVers
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
 		var dest ArtefactVersion
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/x.workload-deployment-set+json" && rsp.StatusCode == 200:
+		var dest WorkloadArtefactVersionDeploymentSet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationxWorkloadDeploymentSetJSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest HumanitecErrorResponse
@@ -31122,6 +31156,9 @@ func ParseCreateArtefactVersionResponse(rsp *http.Response) (*CreateArtefactVers
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case rsp.StatusCode == 200:
+		// Content-type (application/x.workload-deployment-set+x-yaml) unsupported
 
 	}
 
