@@ -101,3 +101,18 @@ func TestNewHumanitecClientMissingToken(t *testing.T) {
 	})
 	assert.ErrorIs(err, ErrMissingToken)
 }
+
+func TestNewHumanitecClientMissingTokenSkipCheck(t *testing.T) {
+	assert := assert.New(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Fail("Shouldn't be called")
+	}))
+	defer srv.Close()
+
+	_, err := NewClient(&Config{
+		URL:                   srv.URL,
+		SkipInitialTokenCheck: true,
+	})
+	assert.NoError(err)
+}

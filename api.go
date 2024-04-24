@@ -20,18 +20,29 @@ const (
 )
 
 var (
-	SDKHeader = fmt.Sprintf("%s/%s", SDK, SDKVersion)
+	SDKHeader       = fmt.Sprintf("%s/%s", SDK, SDKVersion)
 	ErrMissingToken = errors.New("token is required")
 )
 
 type Config struct {
+	// Token used for API requests
 	Token string
-	URL   string
 
-	InternalApp    string
+	// URL is the base URL for the API requests (optional)
+	URL string
+
+	// Callbacks for logging requests and responses (optional)
 	RequestLogger  func(r *RequestDetails)
 	ResponseLogger func(r *ResponseDetails)
-	Client         client.HttpRequestDoer
+
+	// Use a custom HTTP client (optional)
+	Client client.HttpRequestDoer
+
+	// Skip initial token check (optional)
+	SkipInitialTokenCheck bool
+
+	// Internal usage tracking (optional)
+	InternalApp string
 }
 
 type RequestDetails struct {
@@ -57,7 +68,7 @@ func (c *Client) Client() *client.Client {
 }
 
 func NewClient(config *Config) (*Client, error) {
-	if config.Token == "" {
+	if config.Token == "" && !config.SkipInitialTokenCheck {
 		return nil, ErrMissingToken
 	}
 
@@ -75,6 +86,10 @@ func NewClient(config *Config) (*Client, error) {
 	baseClient, err := client.NewClient(config.URL, func(c *client.Client) error {
 		c.Client = &DoWithLog{doer, config.RequestLogger, config.ResponseLogger}
 		c.RequestEditors = append(c.RequestEditors, func(_ context.Context, req *http.Request) error {
+			if config.Token == "" {
+				return ErrMissingToken
+			}
+
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", config.Token))
 			req.Header.Add("Humanitec-User-Agent", humanitecUserAgent(config.InternalApp, SDKHeader))
 			return nil
