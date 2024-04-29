@@ -1611,6 +1611,9 @@ type PipelineJob struct {
 	// TimeoutSeconds The timeout for this Job.
 	TimeoutSeconds int `json:"timeout_seconds"`
 
+	// UpdatedAt The date and time when this Job was updated while executing.
+	UpdatedAt time.Time `json:"updated_at"`
+
 	// WaitingFor An event on which job is waiting
 	WaitingFor *string `json:"waiting_for,omitempty"`
 }
@@ -1655,6 +1658,9 @@ type PipelineJobPartial struct {
 
 	// TimeoutSeconds The timeout for this Job.
 	TimeoutSeconds int `json:"timeout_seconds"`
+
+	// UpdatedAt The date and time when this Job was updated while executing.
+	UpdatedAt time.Time `json:"updated_at"`
 
 	// WaitingFor An event on which job is waiting
 	WaitingFor *string `json:"waiting_for,omitempty"`
