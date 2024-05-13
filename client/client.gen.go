@@ -2075,6 +2075,12 @@ type ResourceDefinitionResponse struct {
 
 	// Type The Resource Type.
 	Type string `json:"type"`
+
+	// UpdatedAt The timestamp of when this record has been updated.
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+
+	// UpdatedBy The user who updated this record.
+	UpdatedBy *string `json:"updated_by,omitempty"`
 }
 
 // ResourceProvisionRequestRequest ResourceProvisionRequest is the payload passed to the resource provisioner, specifying the resources to be provisioned.
