@@ -166,6 +166,9 @@ type ActiveResourceResponse struct {
 	// DefId The Resource Definition that this resource was provisioned from.
 	DefId string `json:"def_id"`
 
+	// DefVersionId The Resource Definition Version that this resource was provisioned from.
+	DefVersionId string `json:"def_version_id"`
+
 	// DeployId The deployment that the resource was last provisioned in.
 	DeployId string `json:"deploy_id"`
 
@@ -1004,7 +1007,7 @@ type EnvironmentBaseUpdateRequest struct {
 // EnvironmentDefinitionRequest defines model for EnvironmentDefinitionRequest.
 type EnvironmentDefinitionRequest struct {
 	// FromDeployId Defines the existing Deployment the new Environment will be based on.
-	FromDeployId string `json:"from_deploy_id"`
+	FromDeployId *string `json:"from_deploy_id,omitempty"`
 
 	// Id The ID the Environment is referenced as.
 	Id string `json:"id"`
@@ -1375,9 +1378,12 @@ type NewServiceUserRequest struct {
 
 // NodeBodyResponse NodeBody represents a node of a Resource Dependency Graph.
 type NodeBodyResponse struct {
-	Class          string                 `json:"class"`
-	CriteriaId     string                 `json:"criteria_id"`
-	DefId          string                 `json:"def_id"`
+	Class      string `json:"class"`
+	CriteriaId string `json:"criteria_id"`
+	DefId      string `json:"def_id"`
+
+	// DefVersionId The Resource Definition Version ID that was used to provision the resource.
+	DefVersionId   string                 `json:"def_version_id"`
 	DependsOn      []string               `json:"depends_on"`
 	Driver         map[string]interface{} `json:"driver"`
 	DriverAccount  *string                `json:"driver_account,omitempty"`
@@ -2045,6 +2051,9 @@ type ResourceDefinitionResponse struct {
 
 	// Criteria (Optional) The criteria to use when looking for a Resource Definition during the deployment.
 	Criteria *[]MatchingCriteriaResponse `json:"criteria,omitempty"`
+
+	// CurrentVersionId The Resource Definition Version ID.
+	CurrentVersionId string `json:"current_version_id"`
 
 	// DriverAccount (Optional) Security account required by the driver.
 	DriverAccount *string `json:"driver_account,omitempty"`

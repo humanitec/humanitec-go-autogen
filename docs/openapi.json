@@ -12838,8 +12838,7 @@
         },
         "required": [
           "id",
-          "name",
-          "from_deploy_id"
+          "name"
         ],
         "type": "object"
       },
@@ -15966,6 +15965,7 @@
           "app_id": "test-app",
           "class": "default",
           "def_id": "gcp-dev-postgres",
+          "def_version_id": "01234567-89ab-cdef-0123-4567890abcdef",
           "deploy_id": "172a1013b",
           "env_id": "gcp-dev",
           "env_type": "development",
@@ -15998,6 +15998,10 @@
           },
           "def_id": {
             "description": "The Resource Definition that this resource was provisioned from.",
+            "type": "string"
+          },
+          "def_version_id": {
+            "description": "The Resource Definition Version that this resource was provisioned from.",
             "type": "string"
           },
           "deploy_id": {
@@ -16072,7 +16076,8 @@
           "resource",
           "updated_at",
           "deploy_id",
-          "gu_res_id"
+          "gu_res_id",
+          "def_version_id"
         ]
       },
       "ActiveResourceResponse": {
@@ -16081,6 +16086,7 @@
           "app_id": "test-app",
           "class": "default",
           "def_id": "gcp-dev-postgres",
+          "def_version_id": "01234567-89ab-cdef-0123-4567890abcdef",
           "deploy_id": "172a1013b",
           "env_id": "gcp-dev",
           "env_type": "development",
@@ -16113,6 +16119,10 @@
           },
           "def_id": {
             "description": "The Resource Definition that this resource was provisioned from.",
+            "type": "string"
+          },
+          "def_version_id": {
+            "description": "The Resource Definition Version that this resource was provisioned from.",
             "type": "string"
           },
           "deploy_id": {
@@ -16179,6 +16189,7 @@
           "env_type",
           "res_id",
           "def_id",
+          "def_version_id",
           "type",
           "driver_type",
           "class",
@@ -16503,6 +16514,7 @@
           "class": "default",
           "criteria_id": "09876545321",
           "def_id": "dns-res-def",
+          "def_version_id": "01234567-89ab-cdef-0123-4567890abcdef",
           "depends_on": [
             "ff09876545321"
           ],
@@ -16534,6 +16546,10 @@
             "type": "string"
           },
           "def_id": {
+            "type": "string"
+          },
+          "def_version_id": {
+            "description": "The Resource Definition Version ID that was used to provision the resource.",
             "type": "string"
           },
           "depends_on": {
@@ -16584,7 +16600,8 @@
           "criteria_id",
           "driver_type",
           "resource_schema",
-          "depends_on"
+          "depends_on",
+          "def_version_id"
         ],
         "type": "object"
       },
@@ -16846,6 +16863,10 @@
             "description": "The Resource Definition ID.",
             "type": "string"
           },
+          "current_version_id": {
+            "description": "The Resource Definition Version ID.",
+            "type": "string"
+          },
           "is_default": {
             "description": "Indicates this definition is a built-in one (provided by Humanitec).",
             "type": "boolean"
@@ -16883,7 +16904,8 @@
           "created_by",
           "is_default",
           "is_deleted",
-          "driver_type"
+          "driver_type",
+          "current_version_id"
         ],
         "type": "object"
       },
