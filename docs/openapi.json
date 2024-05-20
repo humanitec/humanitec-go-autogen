@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Humanitec API",
-    "version": "0.25.14",
+    "version": "0.25.15",
     "description": "# Introduction\nThe *Humanitec API* allows you to automate and integrate Humanitec into your developer and operational workflows.\nThe API is a REST based API. It is based around a set of concepts:\n\n* Core\n* External Resources\n* Sets and Deltas\n\n## Authentication\n\nAlmost all requests made to the Humanitec API require Authentication. See our [Developer Docs on API Authentication](https://developer.humanitec.com/platform-orchestrator/reference/api-references/#authentication) for instructions.\n\n## Content Types\nAll of the Humanitec API unless explicitly only accepts content types of `application/json` and will always return valid `application/json` or an empty response.\n\n## Response Codes\n### Success\nAny response code in the `2xx` range should be regarded as success.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `200` | Success |\n| `201` | Success (In future, `201` will be replaced by `200`) |\n| `204` | Success, but no content in response |\n\n_Note: We plan to simplify the interface by replacing 201 with 200 status codes._\n\n### Failure\nAny response code in the `4xx` should be regarded as an error which can be rectified by the client. `5xx` error codes indicate errors that cannot be corrected by the client.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `400` | General error. (Body will contain details) |\n| `401` | Attempt to access protected resource without `Authorization` Header. |\n| `403` | The `Bearer` or `JWT` does not grant access to the requested resource. |\n| `404` | Resource not found. |\n| `405` | Method not allowed |\n| `409` | Conflict. Usually indicated a resource with that ID already exists. |\n| `422` | Unprocessable Entity. The body was not valid JSON, was empty or contained an object different from what was expected. |\n| `429` | Too many requests - request rate limit has been reached. |\n| `500` | Internal Error. If it occurs repeatedly, contact support. |\n",
     "contact": {
       "name": "API Support",
@@ -2612,39 +2612,22 @@
           "public",
           "AutomationRule"
         ],
+        "operationId": "listAutomationRules",
         "summary": "List all Automation Rules in an Environment.",
         "parameters": [
           {
-            "name": "orgId",
-            "in": "path",
-            "description": "The Organization ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/orgIdPathParam"
           },
           {
-            "name": "appId",
-            "in": "path",
-            "description": "The Application ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/appIdPathParam"
           },
           {
-            "name": "envId",
-            "in": "path",
-            "description": "The Environment ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/envIdPathParam"
           }
         ],
         "responses": {
           "200": {
-            "description": "A possibly empty array of Automation Rules\n\n",
+            "description": "A possibly empty array of Automation Rules",
             "content": {
               "application/json": {
                 "schema": {
@@ -2652,32 +2635,9 @@
                     "$ref": "#/components/schemas/AutomationRuleResponse"
                   },
                   "type": "array"
-                },
-                "example": [
-                  {
-                    "active": true,
-                    "artefacts_filter": [
-                      "http://registry.org/sample-service"
-                    ],
-                    "created_at": "2021-07-22T14:53:27Z",
-                    "created_by": "0dbbdc88-b125-47f1-9a96-6c4c9d6ddc70",
-                    "exclude_artefacts_filter": false,
-                    "exclude_images_filter": false,
-                    "id": "923486d012f20324",
-                    "images_filter": [
-                      "sample-service"
-                    ],
-                    "match": "^pr-[0-9]+-.*$",
-                    "match_ref": "^refs/heads/pr-[0-9]+-.*$",
-                    "type": "update",
-                    "update_to": "branch"
-                  }
-                ]
+                }
               }
             }
-          },
-          "500": {
-            "description": "Internal Server error.\n\n"
           }
         }
       },
@@ -2686,60 +2646,34 @@
           "public",
           "AutomationRule"
         ],
+        "operationId": "createAutomationRule",
         "summary": "Create a new Automation Rule for an Environment.",
         "description": "Items marked as deprecated are still supported (however not recommended) for use and are incompatible with properties of the latest api version. In particular an error is raised if  `images_filter` (deprecated) and `artefacts_filter` are used in the same payload. The same is true for `exclude_images_filter` (deprecated) and `exclude_artefacts_filter`. `match` and `update_to` are still supported but will trigger an error if combined with `match_ref`.",
         "parameters": [
           {
-            "name": "orgId",
-            "in": "path",
-            "description": "The Organization ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/orgIdPathParam"
           },
           {
-            "name": "appId",
-            "in": "path",
-            "description": "The Application ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/appIdPathParam"
           },
           {
-            "name": "envId",
-            "in": "path",
-            "description": "The Environment ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/envIdPathParam"
           }
         ],
         "requestBody": {
-          "description": "The definition of the Automation Rule.\n\n",
+          "description": "The definition of the Automation Rule.",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AutomationRuleRequest"
-              },
-              "example": {
-                "active": true,
-                "artefacts_filter": [
-                  "http://registry.org/sample-service"
-                ],
-                "exclude_artefacts_filter": false,
-                "match_ref": "^refs/heads/pr-[0-9]+-.*$",
-                "type": "update"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "The AutomationRule\n\n",
+            "description": "The Automation Rule that was created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2749,17 +2683,13 @@
             }
           },
           "400": {
-            "description": "The input was not a valid Automation Rule.\n\n",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorInfoResponse"
-                }
-              }
-            }
+            "$ref": "#/components/responses/400BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/409Conflict"
           },
           "422": {
-            "description": "The request body could not be processed.\n\n"
+            "$ref": "#/components/responses/422UnprocessableContent"
           }
         }
       }
@@ -2770,39 +2700,22 @@
           "public",
           "AutomationRule"
         ],
+        "operationId": "getAutomationRule",
         "summary": "Get a specific Automation Rule for an Environment.",
         "parameters": [
           {
-            "name": "orgId",
-            "in": "path",
-            "description": "The Organization ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/orgIdPathParam"
           },
           {
-            "name": "appId",
-            "in": "path",
-            "description": "The Application ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/appIdPathParam"
           },
           {
-            "name": "envId",
-            "in": "path",
-            "description": "The Environment ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/envIdPathParam"
           },
           {
             "name": "ruleId",
             "in": "path",
-            "description": "The Automation Rule ID.\n\n",
+            "description": "The Automation Rule ID.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2811,35 +2724,17 @@
         ],
         "responses": {
           "200": {
-            "description": "The AutomationRule\n\n",
+            "description": "The Automation Rule.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AutomationRuleResponse"
-                },
-                "example": {
-                  "active": true,
-                  "artefacts_filter": [
-                    "http://registry.org/sample-service"
-                  ],
-                  "created_at": "2021-07-22T14:53:27Z",
-                  "created_by": "0dbbdc88-b125-47f1-9a96-6c4c9d6ddc70",
-                  "exclude_artefacts_filter": false,
-                  "exclude_images_filter": false,
-                  "id": "923486d012f20324",
-                  "images_filter": [
-                    "sample-service"
-                  ],
-                  "match": "^pr-[0-9]+-.*$",
-                  "match_ref": "^refs/heads/pr-[0-9]+-.*$",
-                  "type": "update",
-                  "update_to": "branch"
                 }
               }
             }
           },
           "404": {
-            "description": "There is no automation rule with the supplied ID.\n\n"
+            "$ref": "#/components/responses/404NotFound"
           }
         }
       },
@@ -2848,40 +2743,23 @@
           "public",
           "AutomationRule"
         ],
+        "operationId": "updateAutomationRule",
         "summary": "Update an existing Automation Rule for an Environment.",
         "description": "Items marked as deprecated are still supported (however not recommended) for use and are incompatible with properties of the latest api version. In particular an error is raised if  `images_filter` (deprecated) and `artefacts_filter` are used in the same payload. The same is true for `exclude_images_filter` (deprecated) and `exclude_artefacts_filter`. `match` and `update_to` are still supported but will trigger an error if combined with `match_ref`.",
         "parameters": [
           {
-            "name": "orgId",
-            "in": "path",
-            "description": "The Organization ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/orgIdPathParam"
           },
           {
-            "name": "appId",
-            "in": "path",
-            "description": "The Application ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/appIdPathParam"
           },
           {
-            "name": "envId",
-            "in": "path",
-            "description": "The Environment ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/envIdPathParam"
           },
           {
             "name": "ruleId",
             "in": "path",
-            "description": "The Automation Rule ID.\n\n",
+            "description": "The Automation Rule ID.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2889,28 +2767,19 @@
           }
         ],
         "requestBody": {
-          "description": "The definition of the Automation Rule.\n\n",
+          "description": "The definition of the Automation Rule.",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AutomationRuleRequest"
-              },
-              "example": {
-                "active": true,
-                "artefacts_filter": [
-                  "http://registry.org/sample-service"
-                ],
-                "exclude_artefacts_filter": false,
-                "match_ref": "^refs/heads/pr-[0-9]+-.*$",
-                "type": "update"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "The AutomationRule\n\n",
+            "description": "The updated Automation Rule.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2920,20 +2789,13 @@
             }
           },
           "400": {
-            "description": "The input was not a valid Automation Rule.\n\n",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorInfoResponse"
-                }
-              }
-            }
+            "$ref": "#/components/responses/400BadRequest"
           },
           "404": {
-            "description": "There is no automation rule with the supplied ID.\n\n"
+            "$ref": "#/components/responses/404NotFound"
           },
           "422": {
-            "description": "The request body could not be processed.\n\n"
+            "$ref": "#/components/responses/422UnprocessableContent"
           }
         }
       },
@@ -2942,39 +2804,22 @@
           "public",
           "AutomationRule"
         ],
+        "operationId": "deleteAutomationRule",
         "summary": "Delete Automation Rule from an Environment.",
         "parameters": [
           {
-            "name": "orgId",
-            "in": "path",
-            "description": "The Organization ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/orgIdPathParam"
           },
           {
-            "name": "appId",
-            "in": "path",
-            "description": "The Application ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/appIdPathParam"
           },
           {
-            "name": "envId",
-            "in": "path",
-            "description": "The Environment ID.\n\n",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/envIdPathParam"
           },
           {
             "name": "ruleId",
             "in": "path",
-            "description": "The Automation Rule ID.\n\n",
+            "description": "The Automation Rule ID.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2983,10 +2828,10 @@
         ],
         "responses": {
           "204": {
-            "description": "The AutomationRule was deleted.\n\n"
+            "description": "The Automation Rule was deleted."
           },
           "404": {
-            "description": "There is no automation rule with the supplied ID.\n\n"
+            "$ref": "#/components/responses/404NotFound"
           }
         }
       }
@@ -11893,6 +11738,16 @@
           "pattern": "^[a-z0-9](?:-?[a-z0-9]+)+$"
         }
       },
+      "envIdPathParam": {
+        "name": "envId",
+        "in": "path",
+        "description": "The Environment ID",
+        "example": "development",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
       "pipelineIdPathParam": {
         "name": "pipelineId",
         "in": "path",
@@ -12130,16 +11985,6 @@
         "in": "path",
         "required": true,
         "example": "artefact",
-        "schema": {
-          "type": "string"
-        }
-      },
-      "envIdPathParam": {
-        "name": "envId",
-        "in": "path",
-        "description": "The Environment ID",
-        "example": "development",
-        "required": true,
         "schema": {
           "type": "string"
         }
@@ -13126,6 +12971,37 @@
             "description": "A map of additional workload spec fields that will be merged.",
             "type": "object",
             "additionalProperties": true
+          },
+          "deploy": {
+            "description": "An optional deploy condition for the workload.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "when": {
+                "description": "The stage the deployment should occur. \"deploy\", deployed in-parallel with other workloads (the default). \"before\", deployed before other workloads. \"after\", deployed after other workloads.",
+                "type": "string",
+                "enum": [
+                  "before",
+                  "deploy",
+                  "after"
+                ],
+                "example": "before"
+              },
+              "success": {
+                "description": "The success criteria for the deployment. \"deploy\", workload deployed. \"available\", workload available. \"complete\", workload complete (often used with jobs).",
+                "type": "string",
+                "enum": [
+                  "deploy",
+                  "available",
+                  "complete"
+                ],
+                "example": "complete"
+              },
+              "timeout": {
+                "description": "The timeout in seconds for the deployment to reach it's success condition.",
+                "type": "integer"
+              }
+            }
           }
         },
         "example": {
@@ -13681,68 +13557,67 @@
       },
       "AutomationRuleRequest": {
         "description": "An Automation Rule defining how and when artefacts in an environment should be updated.",
-        "example": {
-          "active": true,
-          "artefacts_filter": [
-            "http://registry.org/sample-service"
-          ],
-          "created_at": "2021-07-22T14:53:27Z",
-          "created_by": "0dbbdc88-b125-47f1-9a96-6c4c9d6ddc70",
-          "exclude_artefacts_filter": false,
-          "exclude_images_filter": false,
-          "id": "923486d012f20324",
-          "images_filter": [
-            "sample-service"
-          ],
-          "match": "^pr-[0-9]+-.*$",
-          "match_ref": "^refs/heads/pr-[0-9]+-.*$",
-          "type": "update",
-          "update_to": "branch"
-        },
         "properties": {
           "active": {
             "description": "Whether the rule will be processed or not.",
-            "type": "boolean"
+            "type": "boolean",
+            "example": true
           },
           "artefacts_filter": {
             "description": "A list of artefact names to be processed by the rule. If the array is empty, it implies include all. If `exclude_artefacts_filter` is true, this list describes the artefacts to exclude.",
             "items": {
               "type": "string"
             },
-            "type": "array"
+            "type": "array",
+            "example": [
+              "http://registry.org/sample-service"
+            ]
           },
           "exclude_artefacts_filter": {
             "description": "Whether the artefacts specified in `artefacts_filter` should be excluded (true) or included (false) in the automation rule.",
-            "type": "boolean"
+            "type": "boolean",
+            "example": false
           },
           "exclude_images_filter": {
             "description": "DEPRECATED: Whether the images specified in `images_filter` should be excluded (true) or included (false) in the automation rule.",
-            "type": "boolean"
+            "type": "boolean",
+            "example": false,
+            "deprecated": true
           },
           "images_filter": {
             "description": "DEPRECATED: A list of image IDs to be processed by the rule. If the array is empty, it implies include all. If `exclude_images_filter` is true, this list describes images to exclude.",
             "items": {
               "type": "string"
             },
-            "type": "array"
+            "type": "array",
+            "example": [
+              "sample-service"
+            ],
+            "deprecated": true
           },
           "match": {
             "description": "DEPRECATED: A regular expression applied to the branch or tag name depending on the value of `update_to`. Defaults to match all if omitted or empty.",
-            "type": "string"
+            "type": "string",
+            "example": "^pr-[0-9]+-.*$",
+            "deprecated": true
           },
           "match_ref": {
             "description": "A regular expression applied to the ref of a new artefact version. Defaults to match all if omitted or empty.",
-            "type": "string"
+            "type": "string",
+            "example": "^refs/heads/pr-[0-9]+-.*$"
           },
           "type": {
             "description": "Specifies the type of event. Currently, only updates to either branches or tags are supported. Must be `\"update\"`.",
             "pattern": "^(?:update)$",
-            "type": "string"
+            "type": "string",
+            "example": "update"
           },
           "update_to": {
             "description": "DEPRECATED: Specifies whether the update occurs on commit to branch or creation of tag. Must be one of `\"branch\"` or `\"tag\"`.",
             "pattern": "^(?:branch|tag)$",
-            "type": "string"
+            "type": "string",
+            "example": "branch",
+            "deprecated": true
           }
         },
         "required": [
@@ -13752,86 +13627,86 @@
       },
       "AutomationRuleResponse": {
         "description": "An Automation Rule defining how and when artefacts in an environment should be updated.",
-        "example": {
-          "active": true,
-          "artefacts_filter": [
-            "http://registry.org/sample-service"
-          ],
-          "created_at": "2021-07-22T14:53:27Z",
-          "created_by": "0dbbdc88-b125-47f1-9a96-6c4c9d6ddc70",
-          "exclude_artefacts_filter": false,
-          "exclude_images_filter": false,
-          "id": "923486d012f20324",
-          "images_filter": [
-            "sample-service"
-          ],
-          "match": "^pr-[0-9]+-.*$",
-          "match_ref": "^refs/heads/pr-[0-9]+-.*$",
-          "type": "update",
-          "update_to": "branch"
-        },
         "properties": {
           "active": {
             "description": "Whether the rule will be processed or not.",
-            "type": "boolean"
+            "type": "boolean",
+            "example": true
           },
           "artefacts_filter": {
             "description": "A list of artefact names to be processed by the rule. If the array is empty, it implies include all. If `exclude_artefacts_filter` is true, this list describes the artefacts to exclude.",
             "items": {
               "type": "string"
             },
-            "type": "array"
+            "type": "array",
+            "example": [
+              "http://registry.org/sample-service"
+            ]
           },
           "created_at": {
             "description": "The timestamp in UTC of when the Automation Rule was created.",
             "example": "2020-06-22T09:37:23.523Z",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$",
             "title": "Simplified extended ISO format date/time string.",
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           "exclude_artefacts_filter": {
             "description": "Whether the artefacts specified in `artefacts_filter` should be excluded (true) or included (false) in the automation rule.",
-            "type": "boolean"
+            "type": "boolean",
+            "example": false
           },
           "exclude_images_filter": {
             "description": "DEPRECATED: Whether the images specified in `images_filter` should be excluded (true) or included (false) in the automation rule.",
-            "type": "boolean"
+            "type": "boolean",
+            "example": false,
+            "deprecated": true
           },
           "id": {
             "description": "The unique ID for this rule.",
-            "type": "string"
+            "type": "string",
+            "example": "923486d012f20324"
           },
           "images_filter": {
             "description": "DEPRECATED: A list of image IDs to be processed by the rule. If the array is empty, it implies include all. If `exclude_images_filter` is true, this list describes images to exclude.",
             "items": {
               "type": "string"
             },
-            "type": "array"
+            "type": "array",
+            "example": [
+              "sample-service"
+            ],
+            "deprecated": true
           },
           "match": {
             "description": "DEPRECATED: A regular expression applied to the branch or tag name depending on the value of `update_to`. Defaults to match all if omitted or empty.",
-            "type": "string"
+            "type": "string",
+            "example": "^pr-[0-9]+-.*$",
+            "deprecated": true
           },
           "match_ref": {
             "description": "A regular expression applied to the ref of a new artefact version. Defaults to match all if omitted or empty.",
-            "type": "string"
+            "type": "string",
+            "example": "^refs/heads/pr-[0-9]+-.*$"
           },
           "type": {
             "description": "Specifies the type of event. Currently, only updates to either branches or tags are supported. Must be `\"update\"`.",
             "pattern": "^(?:update)$",
-            "type": "string"
+            "type": "string",
+            "example": "update"
           },
           "update_to": {
             "description": "DEPRECATED: Specifies whether the update occurs on commit to branch or creation of tag. Must be one of `\"branch\"` or `\"tag\"`.",
             "pattern": "^(?:branch|tag)$",
-            "type": "string"
+            "type": "string",
+            "example": "branch",
+            "deprecated": true
           },
           "updated_at": {
             "description": "The timestamp in UTC of when the Automation Rule was updated.",
             "example": "2020-06-22T09:37:23.523Z",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$",
             "title": "Simplified extended ISO format date/time string.",
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
@@ -13847,19 +13722,6 @@
           "match_ref",
           "created_at",
           "updated_at"
-        ],
-        "type": "object"
-      },
-      "ErrorInfoResponse": {
-        "description": "ErrorInfo is returned by a handler in case of an error.",
-        "properties": {
-          "error": {
-            "description": "An error details",
-            "type": "string"
-          }
-        },
-        "required": [
-          "error"
         ],
         "type": "object"
       },
@@ -15693,6 +15555,19 @@
             "secret": "custom-regcred"
           }
         },
+        "type": "object"
+      },
+      "ErrorInfoResponse": {
+        "description": "ErrorInfo is returned by a handler in case of an error.",
+        "properties": {
+          "error": {
+            "description": "An error details",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
         "type": "object"
       },
       "ImagesRegistryCredsRequest": {
