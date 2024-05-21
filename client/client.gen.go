@@ -21,6 +21,20 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for CreateWorkloadArtefactVersionExtensionsDeploySuccess.
+const (
+	CreateWorkloadArtefactVersionExtensionsDeploySuccessAvailable CreateWorkloadArtefactVersionExtensionsDeploySuccess = "available"
+	CreateWorkloadArtefactVersionExtensionsDeploySuccessComplete  CreateWorkloadArtefactVersionExtensionsDeploySuccess = "complete"
+	CreateWorkloadArtefactVersionExtensionsDeploySuccessDeploy    CreateWorkloadArtefactVersionExtensionsDeploySuccess = "deploy"
+)
+
+// Defines values for CreateWorkloadArtefactVersionExtensionsDeployWhen.
+const (
+	CreateWorkloadArtefactVersionExtensionsDeployWhenAfter  CreateWorkloadArtefactVersionExtensionsDeployWhen = "after"
+	CreateWorkloadArtefactVersionExtensionsDeployWhenBefore CreateWorkloadArtefactVersionExtensionsDeployWhen = "before"
+	CreateWorkloadArtefactVersionExtensionsDeployWhenDeploy CreateWorkloadArtefactVersionExtensionsDeployWhen = "deploy"
+)
+
 // Defines values for PipelineApprovalRequestStatus.
 const (
 	Approved  PipelineApprovalRequestStatus = "approved"
@@ -376,12 +390,15 @@ type AutomationRuleRequest struct {
 	ExcludeArtefactsFilter *bool `json:"exclude_artefacts_filter,omitempty"`
 
 	// ExcludeImagesFilter DEPRECATED: Whether the images specified in `images_filter` should be excluded (true) or included (false) in the automation rule.
+	// Deprecated:
 	ExcludeImagesFilter *bool `json:"exclude_images_filter,omitempty"`
 
 	// ImagesFilter DEPRECATED: A list of image IDs to be processed by the rule. If the array is empty, it implies include all. If `exclude_images_filter` is true, this list describes images to exclude.
+	// Deprecated:
 	ImagesFilter *[]string `json:"images_filter,omitempty"`
 
 	// Match DEPRECATED: A regular expression applied to the branch or tag name depending on the value of `update_to`. Defaults to match all if omitted or empty.
+	// Deprecated:
 	Match *string `json:"match,omitempty"`
 
 	// MatchRef A regular expression applied to the ref of a new artefact version. Defaults to match all if omitted or empty.
@@ -391,6 +408,7 @@ type AutomationRuleRequest struct {
 	Type string `json:"type"`
 
 	// UpdateTo DEPRECATED: Specifies whether the update occurs on commit to branch or creation of tag. Must be one of `"branch"` or `"tag"`.
+	// Deprecated:
 	UpdateTo *string `json:"update_to,omitempty"`
 }
 
@@ -403,21 +421,24 @@ type AutomationRuleResponse struct {
 	ArtefactsFilter []string `json:"artefacts_filter"`
 
 	// CreatedAt The timestamp in UTC of when the Automation Rule was created.
-	CreatedAt string `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// ExcludeArtefactsFilter Whether the artefacts specified in `artefacts_filter` should be excluded (true) or included (false) in the automation rule.
 	ExcludeArtefactsFilter bool `json:"exclude_artefacts_filter"`
 
 	// ExcludeImagesFilter DEPRECATED: Whether the images specified in `images_filter` should be excluded (true) or included (false) in the automation rule.
+	// Deprecated:
 	ExcludeImagesFilter bool `json:"exclude_images_filter"`
 
 	// Id The unique ID for this rule.
 	Id string `json:"id"`
 
 	// ImagesFilter DEPRECATED: A list of image IDs to be processed by the rule. If the array is empty, it implies include all. If `exclude_images_filter` is true, this list describes images to exclude.
+	// Deprecated:
 	ImagesFilter []string `json:"images_filter"`
 
 	// Match DEPRECATED: A regular expression applied to the branch or tag name depending on the value of `update_to`. Defaults to match all if omitted or empty.
+	// Deprecated:
 	Match string `json:"match"`
 
 	// MatchRef A regular expression applied to the ref of a new artefact version. Defaults to match all if omitted or empty.
@@ -427,10 +448,11 @@ type AutomationRuleResponse struct {
 	Type string `json:"type"`
 
 	// UpdateTo DEPRECATED: Specifies whether the update occurs on commit to branch or creation of tag. Must be one of `"branch"` or `"tag"`.
+	// Deprecated:
 	UpdateTo string `json:"update_to"`
 
 	// UpdatedAt The timestamp in UTC of when the Automation Rule was updated.
-	UpdatedAt string `json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // AzureAuthRequest Credentials to authenticate Azure Key Vault.
@@ -714,12 +736,30 @@ type CreateWorkloadArtefactVersionExtensions struct {
 	// ApiVersion The api version describing the format of the extensions.
 	ApiVersion string `json:"apiVersion"`
 
+	// Deploy An optional deploy condition for the workload.
+	Deploy *struct {
+		// Success The success criteria for the deployment. "deploy", workload deployed. "available", workload available. "complete", workload complete (often used with jobs).
+		Success *CreateWorkloadArtefactVersionExtensionsDeploySuccess `json:"success,omitempty"`
+
+		// Timeout The timeout in seconds for the deployment to reach it's success condition.
+		Timeout *int `json:"timeout,omitempty"`
+
+		// When The stage the deployment should occur. "deploy", deployed in-parallel with other workloads (the default). "before", deployed before other workloads. "after", deployed after other workloads.
+		When *CreateWorkloadArtefactVersionExtensionsDeployWhen `json:"when,omitempty"`
+	} `json:"deploy,omitempty"`
+
 	// Profile An optional override for the workload profile
 	Profile *string `json:"profile,omitempty"`
 
 	// Spec A map of additional workload spec fields that will be merged.
 	Spec *map[string]interface{} `json:"spec,omitempty"`
 }
+
+// CreateWorkloadArtefactVersionExtensionsDeploySuccess The success criteria for the deployment. "deploy", workload deployed. "available", workload available. "complete", workload complete (often used with jobs).
+type CreateWorkloadArtefactVersionExtensionsDeploySuccess string
+
+// CreateWorkloadArtefactVersionExtensionsDeployWhen The stage the deployment should occur. "deploy", deployed in-parallel with other workloads (the default). "before", deployed before other workloads. "after", deployed after other workloads.
+type CreateWorkloadArtefactVersionExtensionsDeployWhen string
 
 // DeltaMetadataRequest defines model for DeltaMetadataRequest.
 type DeltaMetadataRequest struct {
@@ -3717,11 +3757,11 @@ type RebaseEnvironmentJSONRequestBody = RebaseEnvironmentJSONBody
 // QueryResourceGraphJSONRequestBody defines body for QueryResourceGraph for application/json ContentType.
 type QueryResourceGraphJSONRequestBody = QueryResourceGraphJSONBody
 
-// PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdEnvsEnvIdRules for application/json ContentType.
-type PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody = AutomationRuleRequest
+// CreateAutomationRuleJSONRequestBody defines body for CreateAutomationRule for application/json ContentType.
+type CreateAutomationRuleJSONRequestBody = AutomationRuleRequest
 
-// PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId for application/json ContentType.
-type PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody = AutomationRuleRequest
+// UpdateAutomationRuleJSONRequestBody defines body for UpdateAutomationRule for application/json ContentType.
+type UpdateAutomationRuleJSONRequestBody = AutomationRuleRequest
 
 // UpdatePausedJSONRequestBody defines body for UpdatePaused for application/json ContentType.
 type UpdatePausedJSONRequestBody = UpdatePausedJSONBody
@@ -4769,24 +4809,24 @@ type ClientInterface interface {
 	// DeleteActiveResource request
 	DeleteActiveResource(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdRules request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListAutomationRules request
+	ListAutomationRules(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBody request with any body
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateAutomationRuleWithBody request with any body
+	CreateAutomationRuleWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateAutomationRule(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateAutomationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId request
-	DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, orgId string, appId string, envId string, ruleId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteAutomationRule request
+	DeleteAutomationRule(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, orgId string, appId string, envId string, ruleId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetAutomationRule request
+	GetAutomationRule(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBody request with any body
-	PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBody(ctx context.Context, orgId string, appId string, envId string, ruleId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateAutomationRuleWithBody request with any body
+	UpdateAutomationRuleWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, orgId string, appId string, envId string, ruleId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateAutomationRule(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, body UpdateAutomationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetRuntime request
 	GetRuntime(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5982,8 +6022,8 @@ func (c *Client) DeleteActiveResource(ctx context.Context, orgId string, appId s
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequest(c.Server, orgId, appId, envId)
+func (c *Client) ListAutomationRules(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAutomationRulesRequest(c.Server, orgId, appId, envId)
 	if err != nil {
 		return nil, err
 	}
@@ -5994,8 +6034,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx context.Context, orgId 
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequestWithBody(c.Server, orgId, appId, envId, contentType, body)
+func (c *Client) CreateAutomationRuleWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAutomationRuleRequestWithBody(c.Server, orgId, appId, envId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6006,8 +6046,8 @@ func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBody(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequest(c.Server, orgId, appId, envId, body)
+func (c *Client) CreateAutomationRule(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateAutomationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAutomationRuleRequest(c.Server, orgId, appId, envId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6018,8 +6058,8 @@ func (c *Client) PostOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx context.Context, orgId
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, orgId string, appId string, envId string, ruleId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest(c.Server, orgId, appId, envId, ruleId)
+func (c *Client) DeleteAutomationRule(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAutomationRuleRequest(c.Server, orgId, appId, envId, ruleId)
 	if err != nil {
 		return nil, err
 	}
@@ -6030,8 +6070,8 @@ func (c *Client) DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, orgId string, appId string, envId string, ruleId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest(c.Server, orgId, appId, envId, ruleId)
+func (c *Client) GetAutomationRule(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAutomationRuleRequest(c.Server, orgId, appId, envId, ruleId)
 	if err != nil {
 		return nil, err
 	}
@@ -6042,8 +6082,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBody(ctx context.Context, orgId string, appId string, envId string, ruleId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequestWithBody(c.Server, orgId, appId, envId, ruleId, contentType, body)
+func (c *Client) UpdateAutomationRuleWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAutomationRuleRequestWithBody(c.Server, orgId, appId, envId, ruleId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6054,8 +6094,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBody(ctx context.C
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx context.Context, orgId string, appId string, envId string, ruleId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest(c.Server, orgId, appId, envId, ruleId, body)
+func (c *Client) UpdateAutomationRule(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, body UpdateAutomationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAutomationRuleRequest(c.Server, orgId, appId, envId, ruleId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10482,8 +10522,8 @@ func NewDeleteActiveResourceRequest(server string, orgId string, appId string, e
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequest generates requests for GetOrgsOrgIdAppsAppIdEnvsEnvIdRules
-func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequest(server string, orgId string, appId string, envId string) (*http.Request, error) {
+// NewListAutomationRulesRequest generates requests for ListAutomationRules
+func NewListAutomationRulesRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10530,19 +10570,19 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequest(server string, orgId string, 
 	return req, nil
 }
 
-// NewPostOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequest calls the generic PostOrgsOrgIdAppsAppIdEnvsEnvIdRules builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequest(server string, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody) (*http.Request, error) {
+// NewCreateAutomationRuleRequest calls the generic CreateAutomationRule builder with application/json body
+func NewCreateAutomationRuleRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateAutomationRuleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequestWithBody(server, orgId, appId, envId, "application/json", bodyReader)
+	return NewCreateAutomationRuleRequestWithBody(server, orgId, appId, envId, "application/json", bodyReader)
 }
 
-// NewPostOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdEnvsEnvIdRules with any type of body
-func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequestWithBody(server string, orgId string, appId string, envId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateAutomationRuleRequestWithBody generates requests for CreateAutomationRule with any type of body
+func NewCreateAutomationRuleRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10591,8 +10631,8 @@ func NewPostOrgsOrgIdAppsAppIdEnvsEnvIdRulesRequestWithBody(server string, orgId
 	return req, nil
 }
 
-// NewDeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest generates requests for DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId
-func NewDeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest(server string, orgId string, appId string, envId string, ruleId string) (*http.Request, error) {
+// NewDeleteAutomationRuleRequest generates requests for DeleteAutomationRule
+func NewDeleteAutomationRuleRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10646,8 +10686,8 @@ func NewDeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest(server string, orgId
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest generates requests for GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId
-func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest(server string, orgId string, appId string, envId string, ruleId string) (*http.Request, error) {
+// NewGetAutomationRuleRequest generates requests for GetAutomationRule
+func NewGetAutomationRuleRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10701,19 +10741,19 @@ func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest(server string, orgId st
 	return req, nil
 }
 
-// NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest calls the generic PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId builder with application/json body
-func NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequest(server string, orgId string, appId string, envId string, ruleId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody) (*http.Request, error) {
+// NewUpdateAutomationRuleRequest calls the generic UpdateAutomationRule builder with application/json body
+func NewUpdateAutomationRuleRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, body UpdateAutomationRuleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequestWithBody(server, orgId, appId, envId, ruleId, "application/json", bodyReader)
+	return NewUpdateAutomationRuleRequestWithBody(server, orgId, appId, envId, ruleId, "application/json", bodyReader)
 }
 
-// NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequestWithBody generates requests for PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId with any type of body
-func NewPutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdRequestWithBody(server string, orgId string, appId string, envId string, ruleId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateAutomationRuleRequestWithBody generates requests for UpdateAutomationRule with any type of body
+func NewUpdateAutomationRuleRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -19857,24 +19897,24 @@ type ClientWithResponsesInterface interface {
 	// DeleteActiveResourceWithResponse request
 	DeleteActiveResourceWithResponse(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams, reqEditors ...RequestEditorFn) (*DeleteActiveResourceResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error)
+	// ListAutomationRulesWithResponse request
+	ListAutomationRulesWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*ListAutomationRulesResponse, error)
 
-	// PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBodyWithResponse request with any body
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error)
+	// CreateAutomationRuleWithBodyWithResponse request with any body
+	CreateAutomationRuleWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAutomationRuleResponse, error)
 
-	PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error)
+	CreateAutomationRuleWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateAutomationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAutomationRuleResponse, error)
 
-	// DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse request
-	DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error)
+	// DeleteAutomationRuleWithResponse request
+	DeleteAutomationRuleWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, reqEditors ...RequestEditorFn) (*DeleteAutomationRuleResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse request
-	GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error)
+	// GetAutomationRuleWithResponse request
+	GetAutomationRuleWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, reqEditors ...RequestEditorFn) (*GetAutomationRuleResponse, error)
 
-	// PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBodyWithResponse request with any body
-	PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error)
+	// UpdateAutomationRuleWithBodyWithResponse request with any body
+	UpdateAutomationRuleWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAutomationRuleResponse, error)
 
-	PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error)
+	UpdateAutomationRuleWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, body UpdateAutomationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAutomationRuleResponse, error)
 
 	// GetRuntimeWithResponse request
 	GetRuntimeWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*GetRuntimeResponse, error)
@@ -21292,14 +21332,14 @@ func (r DeleteActiveResourceResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse struct {
+type ListAutomationRulesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]AutomationRuleResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse) Status() string {
+func (r ListAutomationRulesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21307,22 +21347,24 @@ func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse) StatusCode() int {
+func (r ListAutomationRulesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse struct {
+type CreateAutomationRuleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *AutomationRuleResponse
-	JSON400      *ErrorInfoResponse
+	JSON400      *N400BadRequest
+	JSON409      *N409Conflict
+	JSON422      *N422UnprocessableContent
 }
 
 // Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse) Status() string {
+func (r CreateAutomationRuleResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21330,20 +21372,21 @@ func (r PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse) StatusCode() int {
+func (r CreateAutomationRuleResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse struct {
+type DeleteAutomationRuleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
-func (r DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) Status() string {
+func (r DeleteAutomationRuleResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21351,44 +21394,22 @@ func (r DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) StatusCode() int {
+func (r DeleteAutomationRuleResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *AutomationRuleResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse struct {
+type GetAutomationRuleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *AutomationRuleResponse
-	JSON400      *ErrorInfoResponse
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
-func (r PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) Status() string {
+func (r GetAutomationRuleResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21396,7 +21417,32 @@ func (r PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse) StatusCode() int {
+func (r GetAutomationRuleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateAutomationRuleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AutomationRuleResponse
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
+	JSON422      *N422UnprocessableContent
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateAutomationRuleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateAutomationRuleResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -25469,65 +25515,65 @@ func (c *ClientWithResponses) DeleteActiveResourceWithResponse(ctx context.Conte
 	return ParseDeleteActiveResourceResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx, orgId, appId, envId, reqEditors...)
+// ListAutomationRulesWithResponse request returning *ListAutomationRulesResponse
+func (c *ClientWithResponses) ListAutomationRulesWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, reqEditors ...RequestEditorFn) (*ListAutomationRulesResponse, error) {
+	rsp, err := c.ListAutomationRules(ctx, orgId, appId, envId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse(rsp)
+	return ParseListAutomationRulesResponse(rsp)
 }
 
-// PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error) {
-	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithBody(ctx, orgId, appId, envId, contentType, body, reqEditors...)
+// CreateAutomationRuleWithBodyWithResponse request with arbitrary body returning *CreateAutomationRuleResponse
+func (c *ClientWithResponses) CreateAutomationRuleWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAutomationRuleResponse, error) {
+	rsp, err := c.CreateAutomationRuleWithBody(ctx, orgId, appId, envId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse(rsp)
+	return ParseCreateAutomationRuleResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse(ctx context.Context, orgId string, appId string, envId string, body PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error) {
-	rsp, err := c.PostOrgsOrgIdAppsAppIdEnvsEnvIdRules(ctx, orgId, appId, envId, body, reqEditors...)
+func (c *ClientWithResponses) CreateAutomationRuleWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateAutomationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAutomationRuleResponse, error) {
+	rsp, err := c.CreateAutomationRule(ctx, orgId, appId, envId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse(rsp)
+	return ParseCreateAutomationRuleResponse(rsp)
 }
 
-// DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse request returning *DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse
-func (c *ClientWithResponses) DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, reqEditors ...RequestEditorFn) (*DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error) {
-	rsp, err := c.DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx, orgId, appId, envId, ruleId, reqEditors...)
+// DeleteAutomationRuleWithResponse request returning *DeleteAutomationRuleResponse
+func (c *ClientWithResponses) DeleteAutomationRuleWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, reqEditors ...RequestEditorFn) (*DeleteAutomationRuleResponse, error) {
+	rsp, err := c.DeleteAutomationRule(ctx, orgId, appId, envId, ruleId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp)
+	return ParseDeleteAutomationRuleResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx, orgId, appId, envId, ruleId, reqEditors...)
+// GetAutomationRuleWithResponse request returning *GetAutomationRuleResponse
+func (c *ClientWithResponses) GetAutomationRuleWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, reqEditors ...RequestEditorFn) (*GetAutomationRuleResponse, error) {
+	rsp, err := c.GetAutomationRule(ctx, orgId, appId, envId, ruleId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp)
+	return ParseGetAutomationRuleResponse(rsp)
 }
 
-// PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithBody(ctx, orgId, appId, envId, ruleId, contentType, body, reqEditors...)
+// UpdateAutomationRuleWithBodyWithResponse request with arbitrary body returning *UpdateAutomationRuleResponse
+func (c *ClientWithResponses) UpdateAutomationRuleWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAutomationRuleResponse, error) {
+	rsp, err := c.UpdateAutomationRuleWithBody(ctx, orgId, appId, envId, ruleId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp)
+	return ParseUpdateAutomationRuleResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse(ctx context.Context, orgId string, appId string, envId string, ruleId string, body PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleId(ctx, orgId, appId, envId, ruleId, body, reqEditors...)
+func (c *ClientWithResponses) UpdateAutomationRuleWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, ruleId string, body UpdateAutomationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAutomationRuleResponse, error) {
+	rsp, err := c.UpdateAutomationRule(ctx, orgId, appId, envId, ruleId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp)
+	return ParseUpdateAutomationRuleResponse(rsp)
 }
 
 // GetRuntimeWithResponse request returning *GetRuntimeResponse
@@ -28557,15 +28603,15 @@ func ParseDeleteActiveResourceResponse(rsp *http.Response) (*DeleteActiveResourc
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error) {
+// ParseListAutomationRulesResponse parses an HTTP response from a ListAutomationRulesWithResponse call
+func ParseListAutomationRulesResponse(rsp *http.Response) (*ListAutomationRulesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse{
+	response := &ListAutomationRulesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -28583,15 +28629,15 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse(rsp *http.Response) (*GetO
 	return response, nil
 }
 
-// ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse parses an HTTP response from a PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesWithResponse call
-func ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse(rsp *http.Response) (*PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse, error) {
+// ParseCreateAutomationRuleResponse parses an HTTP response from a CreateAutomationRuleWithResponse call
+func ParseCreateAutomationRuleResponse(rsp *http.Response) (*CreateAutomationRuleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse{
+	response := &CreateAutomationRuleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -28605,42 +28651,66 @@ func ParsePostOrgsOrgIdAppsAppIdEnvsEnvIdRulesResponse(rsp *http.Response) (*Pos
 		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest ErrorInfoResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest N409Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest N422UnprocessableContent
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
 	}
 
 	return response, nil
 }
 
-// ParseDeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse parses an HTTP response from a DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse call
-func ParseDeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp *http.Response) (*DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error) {
+// ParseDeleteAutomationRuleResponse parses an HTTP response from a DeleteAutomationRuleWithResponse call
+func ParseDeleteAutomationRuleResponse(rsp *http.Response) (*DeleteAutomationRuleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse{
+	response := &DeleteAutomationRuleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error) {
+// ParseGetAutomationRuleResponse parses an HTTP response from a GetAutomationRuleWithResponse call
+func ParseGetAutomationRuleResponse(rsp *http.Response) (*GetAutomationRuleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse{
+	response := &GetAutomationRuleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -28653,20 +28723,27 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp *http.Response) 
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
 }
 
-// ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse parses an HTTP response from a PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdWithResponse call
-func ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp *http.Response) (*PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse, error) {
+// ParseUpdateAutomationRuleResponse parses an HTTP response from a UpdateAutomationRuleWithResponse call
+func ParseUpdateAutomationRuleResponse(rsp *http.Response) (*UpdateAutomationRuleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse{
+	response := &UpdateAutomationRuleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -28680,11 +28757,25 @@ func ParsePutOrgsOrgIdAppsAppIdEnvsEnvIdRulesRuleIdResponse(rsp *http.Response) 
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest ErrorInfoResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest N422UnprocessableContent
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
 
 	}
 
