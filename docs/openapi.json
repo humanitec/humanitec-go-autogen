@@ -7362,6 +7362,116 @@
         }
       }
     },
+    "/orgs/{orgId}/resources/defs/{defId}/versions": {
+      "get": {
+        "tags": [
+          "public",
+          "ResourceDefinitionVersion"
+        ],
+        "summary": "Get Resource Definition Versions of a specific Resource Definition. First 50 Versions are kept along with all the Versions referenced by an Active Resource.\nTo obtain Versions of a deleted Resource Definition, the `deleted` parameter needs to be used.\n",
+        "operationId": "listResourceDefinitionVersions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/orgIdPathParam"
+          },
+          {
+            "$ref": "#/components/parameters/defIdPathParam"
+          },
+          {
+            "$ref": "#/components/parameters/deletedQueryParam"
+          },
+          {
+            "$ref": "#/components/parameters/perPageQueryParam"
+          },
+          {
+            "$ref": "#/components/parameters/pageTokenQueryParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list or Resource Definition Version.\n",
+            "headers": {
+              "Link": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "A list of request links, optionally including a \"next\" page link for pagination."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceDefinitionVersion"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The Resource Definition is not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/{orgId}/resources/defs/versions/{defVersionId}": {
+      "get": {
+        "tags": [
+          "public",
+          "ResourceDefinitionVersion"
+        ],
+        "summary": "Get a Specific Resource Definition Version.",
+        "operationId": "getResourceDefinitionVersion",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/orgIdPathParam"
+          },
+          {
+            "$ref": "#/components/parameters/defVersionIdPathParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Resource Definition Version with the specified ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDefinitionVersion"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The Resource Definition Version is not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orgs/{orgId}/resources/defs/{defId}/criteria": {
       "put": {
         "tags": [
@@ -8046,6 +8156,308 @@
           },
           "500": {
             "description": "Internal application error.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/{orgId}/resources/classes": {
+      "get": {
+        "tags": [
+          "public",
+          "ResourceClass"
+        ],
+        "summary": "List resource classes.",
+        "operationId": "listResourceClasses",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "description": "The organization ID.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A possibly empty list of resources classes.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceClassResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/{orgId}/resources/types/{typeId}/classes": {
+      "post": {
+        "tags": [
+          "public",
+          "ResourceClass"
+        ],
+        "summary": "Creates a new resources class.",
+        "operationId": "createResourceClass",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "description": "The organization ID.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "path",
+            "description": "The resource type.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceClassRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The newly created resources class details.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceClassResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more request parameters is missing or invalid.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A resources class of this ID already exists in this resource type.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/{orgId}/resources/types/{typeId}/classes/{classId}": {
+      "get": {
+        "tags": [
+          "public",
+          "ResourceClass"
+        ],
+        "summary": "Get resource class by ID.",
+        "operationId": "getResourceClass",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "description": "The organization ID.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "path",
+            "description": "The resource type.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "path",
+            "description": "The resource class ID.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requested resource class details\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceClassResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A resource class with the 'classId' id is not found in resource type typeId.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "public",
+          "ResourceClass"
+        ],
+        "summary": "Update a resource class description.",
+        "operationId": "updateResourceClass",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "description": "The organization ID.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "path",
+            "description": "The resource type ID.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "path",
+            "description": "The resource class ID.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResourceClassRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated resource class.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceClassResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A resource class with the 'classId' id is not found in resource type 'typeId'.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "public",
+          "ResourceClass"
+        ],
+        "summary": "Delete a resource class.",
+        "operationId": "deleteResourceClass",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "description": "The organization ID.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "path",
+            "description": "The resource type.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "path",
+            "description": "The resource class id.\n",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Resource class deleted successfully.\n"
+          },
+          "404": {
+            "description": "A resource class with the 'classId' id is not found in resource type 'typeId'.\n",
             "content": {
               "application/json": {
                 "schema": {
@@ -11987,6 +12399,37 @@
         "example": "artefact",
         "schema": {
           "type": "string"
+        }
+      },
+      "defVersionIdPathParam": {
+        "name": "defVersionId",
+        "in": "path",
+        "description": "The Resource Definition Version ID.",
+        "example": "01234567-89ab-cdef-0123-4567890abcdef",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "defIdPathParam": {
+        "name": "defId",
+        "in": "path",
+        "description": "The Resource Definition ID.",
+        "example": "sample-def",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "deletedQueryParam": {
+        "name": "deleted",
+        "in": "query",
+        "description": "If to show also deleted records in the response.",
+        "required": false,
+        "example": true,
+        "schema": {
+          "type": "boolean",
+          "default": false
         }
       },
       "profileQidPathParam": {
@@ -16784,6 +17227,116 @@
         ],
         "type": "object"
       },
+      "ResourceDefinitionVersion": {
+        "description": "A Resource Definition Version represents a version of a Resource Definition.",
+        "example": {
+          "id": "01234567-89ab-cdef-0123-4567890abcdef",
+          "org_id": "test-org",
+          "def_id": "dev-postgres",
+          "name": "Dev Postgres Instance",
+          "type": "postgres",
+          "driver_type": "humanitec/postgres-cloudsql",
+          "driver_account": "gcp-dev-cloudsql",
+          "driver_inputs": {
+            "secret_refs": {
+              "credentials": {
+                "password": {
+                  "value": "<secret>"
+                },
+                "user": {
+                  "ref": "vault/path/to/data/secrets/user",
+                  "store": "my-external-vault",
+                  "version": "1"
+                }
+              }
+            },
+            "values": {
+              "instance": "my-dev-project:my-region:dev-db"
+            }
+          },
+          "provision": {
+            "aws-policy": {
+              "is_dependent": false,
+              "match_dependents": false
+            },
+            "dns#my-dns": {}
+          },
+          "created_at": "2020-05-23T12:32:16Z",
+          "created_by": "a.user@example.com",
+          "action": "created"
+        },
+        "properties": {
+          "id": {
+            "description": "The Resource Definition Version ID.",
+            "type": "string"
+          },
+          "org_id": {
+            "description": "The Organization ID.",
+            "type": "string"
+          },
+          "def_id": {
+            "description": "The Resource Definition ID.",
+            "type": "string"
+          },
+          "name": {
+            "description": "The display name.",
+            "type": "string"
+          },
+          "type": {
+            "description": "The Resource Type.",
+            "type": "string"
+          },
+          "driver_type": {
+            "description": "The driver to be used to create the resource.",
+            "type": "string"
+          },
+          "driver_account": {
+            "description": "(Optional) Security account required by the driver.",
+            "type": "string"
+          },
+          "driver_inputs": {
+            "$ref": "#/components/schemas/ValuesSecretsRefsResponse",
+            "description": "(Optional) Additional input data to be passed to the driver."
+          },
+          "provision": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ProvisionDependenciesResponse"
+            },
+            "description": "(Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource.",
+            "type": "object"
+          },
+          "action": {
+            "type": "string",
+            "description": "The action that generated the Resource Definition Version. Might be one of `created`, `updated` or `deleted`."
+          },
+          "created_at": {
+            "description": "The timestamp of when this record has been created.",
+            "example": "2020-06-22T09:37:23.523Z",
+            "title": "Simplified extended ISO format date/time string.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "description": "The user who created this record.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org_id",
+          "id",
+          "name",
+          "def_id",
+          "type",
+          "driver_type",
+          "driver_account",
+          "driver_inputs",
+          "provision",
+          "action",
+          "created_at",
+          "created_by"
+        ],
+        "type": "object"
+      },
       "ResourceProvisionRequestRequest": {
         "description": "ResourceProvisionRequest is the payload passed to the resource provisioner, specifying the resources to be provisioned.",
         "example": {
@@ -17069,6 +17622,78 @@
           "account_types"
         ],
         "type": "object"
+      },
+      "ResourceClassRequest": {
+        "description": "Resource Classes provide a way of specializing Resource Types.\nDevelopers can set the class of a Resource alongside the type in their Score File.\nPlatform teams can match the class of a Resource via Matching Criteria.",
+        "type": "object",
+        "required": [
+          "id",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID of the resource class.",
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+            "minLength": 2,
+            "maxLength": 63
+          },
+          "description": {
+            "description": "A human readable description when this class should be used.",
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 1024
+          }
+        }
+      },
+      "ResourceClassResponse": {
+        "description": "Resource Classes provide a way of specializing Resource Types.\nDevelopers can set the class of a Resource alongside the type in their Score File.\nPlatform teams can match the class of a Resource via Matching Criteria.",
+        "type": "object",
+        "required": [
+          "id",
+          "resource_type",
+          "description",
+          "created_by",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID of the resource class.",
+            "type": "string"
+          },
+          "resource_type": {
+            "description": "Defines the resource type this class is applicable for.",
+            "type": "string"
+          },
+          "description": {
+            "description": "A human readable description when this class should be used.",
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string",
+            "description": "usedID of the user who created the resource class"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "UTC timestamp at which the resource class was created",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateResourceClassRequest": {
+        "description": "UpdateResourceClassRequest describes the update class description request.",
+        "type": "object",
+        "required": [
+          "description"
+        ],
+        "properties": {
+          "description": {
+            "description": "New description for the resource class.",
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 1024
+          }
+        }
       },
       "UpdateResourceAccountRequestRequest": {
         "description": "UpdateResourceAccountRequest describes the request to update the security account details.",

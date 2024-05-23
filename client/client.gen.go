@@ -2061,6 +2061,37 @@ type ResourceAccountResponse struct {
 	Type string `json:"type"`
 }
 
+// ResourceClassRequest Resource Classes provide a way of specializing Resource Types.
+// Developers can set the class of a Resource alongside the type in their Score File.
+// Platform teams can match the class of a Resource via Matching Criteria.
+type ResourceClassRequest struct {
+	// Description A human readable description when this class should be used.
+	Description string `json:"description"`
+
+	// Id ID of the resource class.
+	Id string `json:"id"`
+}
+
+// ResourceClassResponse Resource Classes provide a way of specializing Resource Types.
+// Developers can set the class of a Resource alongside the type in their Score File.
+// Platform teams can match the class of a Resource via Matching Criteria.
+type ResourceClassResponse struct {
+	// CreatedAt UTC timestamp at which the resource class was created
+	CreatedAt time.Time `json:"created_at"`
+
+	// CreatedBy usedID of the user who created the resource class
+	CreatedBy string `json:"created_by"`
+
+	// Description A human readable description when this class should be used.
+	Description string `json:"description"`
+
+	// Id ID of the resource class.
+	Id string `json:"id"`
+
+	// ResourceType Defines the resource type this class is applicable for.
+	ResourceType string `json:"resource_type"`
+}
+
 // ResourceDefinitionChangeResponse ResourceDefinitionChange describes the effects of a Resource Definition or Matching Criteria update/deletion.
 type ResourceDefinitionChangeResponse struct {
 	// AppId The ID of the App the resource is associated with.
@@ -2130,6 +2161,45 @@ type ResourceDefinitionResponse struct {
 
 	// UpdatedBy The user who updated this record.
 	UpdatedBy *string `json:"updated_by,omitempty"`
+}
+
+// ResourceDefinitionVersion A Resource Definition Version represents a version of a Resource Definition.
+type ResourceDefinitionVersion struct {
+	// Action The action that generated the Resource Definition Version. Might be one of `created`, `updated` or `deleted`.
+	Action string `json:"action"`
+
+	// CreatedAt The timestamp of when this record has been created.
+	CreatedAt time.Time `json:"created_at"`
+
+	// CreatedBy The user who created this record.
+	CreatedBy string `json:"created_by"`
+
+	// DefId The Resource Definition ID.
+	DefId string `json:"def_id"`
+
+	// DriverAccount (Optional) Security account required by the driver.
+	DriverAccount string `json:"driver_account"`
+
+	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
+	DriverInputs ValuesSecretsRefsResponse `json:"driver_inputs"`
+
+	// DriverType The driver to be used to create the resource.
+	DriverType string `json:"driver_type"`
+
+	// Id The Resource Definition Version ID.
+	Id string `json:"id"`
+
+	// Name The display name.
+	Name string `json:"name"`
+
+	// OrgId The Organization ID.
+	OrgId string `json:"org_id"`
+
+	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource.
+	Provision map[string]ProvisionDependenciesResponse `json:"provision"`
+
+	// Type The Resource Type.
+	Type string `json:"type"`
 }
 
 // ResourceProvisionRequestRequest ResourceProvisionRequest is the payload passed to the resource provisioner, specifying the resources to be provisioned.
@@ -2501,6 +2571,12 @@ type UpdateResourceAccountRequestRequest struct {
 
 	// Name Display name.
 	Name *string `json:"name,omitempty"`
+}
+
+// UpdateResourceClassRequest UpdateResourceClassRequest describes the update class description request.
+type UpdateResourceClassRequest struct {
+	// Description New description for the resource class.
+	Description string `json:"description"`
 }
 
 // UpdateResourceDefinitionRequestRequest UpdateResourceDefinitionRequest describes a ResourceDefinition change request.
@@ -3178,6 +3254,15 @@ type ByTriggerTypeQueryParam = string
 // ByVersionQueryParam defines model for byVersionQueryParam.
 type ByVersionQueryParam = string
 
+// DefIdPathParam defines model for defIdPathParam.
+type DefIdPathParam = string
+
+// DefVersionIdPathParam defines model for defVersionIdPathParam.
+type DefVersionIdPathParam = string
+
+// DeletedQueryParam defines model for deletedQueryParam.
+type DeletedQueryParam = bool
+
 // DeprecatedQueryParam defines model for deprecatedQueryParam.
 type DeprecatedQueryParam = bool
 
@@ -3668,6 +3753,18 @@ type DeleteResourceDefinitionCriteriaParams struct {
 	Force *bool `form:"force,omitempty" json:"force,omitempty"`
 }
 
+// ListResourceDefinitionVersionsParams defines parameters for ListResourceDefinitionVersions.
+type ListResourceDefinitionVersionsParams struct {
+	// Deleted If to show also deleted records in the response.
+	Deleted *DeletedQueryParam `form:"deleted,omitempty" json:"deleted,omitempty"`
+
+	// PerPage The maximum number of items to return in a page of results
+	PerPage *PerPageQueryParam `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Page The page token to request from
+	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
+}
+
 // ListWorkloadProfileChartVersionsParams defines parameters for ListWorkloadProfileChartVersions.
 type ListWorkloadProfileChartVersionsParams struct {
 	// PerPage The maximum number of items to return in a page of results
@@ -3891,6 +3988,12 @@ type CreateResourceDriverJSONRequestBody = CreateDriverRequestRequest
 
 // UpdateResourceDriverJSONRequestBody defines body for UpdateResourceDriver for application/json ContentType.
 type UpdateResourceDriverJSONRequestBody = UpdateDriverRequestRequest
+
+// CreateResourceClassJSONRequestBody defines body for CreateResourceClass for application/json ContentType.
+type CreateResourceClassJSONRequestBody = ResourceClassRequest
+
+// UpdateResourceClassJSONRequestBody defines body for UpdateResourceClass for application/json ContentType.
+type UpdateResourceClassJSONRequestBody = UpdateResourceClassRequest
 
 // PostOrgsOrgIdSecretstoresJSONRequestBody defines body for PostOrgsOrgIdSecretstores for application/json ContentType.
 type PostOrgsOrgIdSecretstoresJSONRequestBody = CreateSecretStorePayloadRequest
@@ -5237,6 +5340,9 @@ type ClientInterface interface {
 
 	PatchResourceAccount(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListResourceClasses request
+	ListResourceClasses(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListResourceDefinitions request
 	ListResourceDefinitions(ctx context.Context, orgId string, params *ListResourceDefinitionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5244,6 +5350,9 @@ type ClientInterface interface {
 	CreateResourceDefinitionWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	CreateResourceDefinition(ctx context.Context, orgId string, body CreateResourceDefinitionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetResourceDefinitionVersion request
+	GetResourceDefinitionVersion(ctx context.Context, orgId OrgIdPathParam, defVersionId DefVersionIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteResourceDefinition request
 	DeleteResourceDefinition(ctx context.Context, orgId string, defId string, params *DeleteResourceDefinitionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5277,6 +5386,9 @@ type ClientInterface interface {
 	// ListActiveResourceByDefinition request
 	ListActiveResourceByDefinition(ctx context.Context, orgId string, defId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListResourceDefinitionVersions request
+	ListResourceDefinitionVersions(ctx context.Context, orgId OrgIdPathParam, defId DefIdPathParam, params *ListResourceDefinitionVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListResourceDrivers request
 	ListResourceDrivers(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5298,6 +5410,22 @@ type ClientInterface interface {
 
 	// ListResourceTypes request
 	ListResourceTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateResourceClassWithBody request with any body
+	CreateResourceClassWithBody(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateResourceClass(ctx context.Context, orgId string, typeId string, body CreateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteResourceClass request
+	DeleteResourceClass(ctx context.Context, orgId string, typeId string, classId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetResourceClass request
+	GetResourceClass(ctx context.Context, orgId string, typeId string, classId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateResourceClassWithBody request with any body
+	UpdateResourceClassWithBody(ctx context.Context, orgId string, typeId string, classId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateResourceClass(ctx context.Context, orgId string, typeId string, classId string, body UpdateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdSecretstores request
 	GetOrgsOrgIdSecretstores(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7882,6 +8010,18 @@ func (c *Client) PatchResourceAccount(ctx context.Context, orgId string, accId s
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListResourceClasses(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListResourceClassesRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListResourceDefinitions(ctx context.Context, orgId string, params *ListResourceDefinitionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListResourceDefinitionsRequest(c.Server, orgId, params)
 	if err != nil {
@@ -7908,6 +8048,18 @@ func (c *Client) CreateResourceDefinitionWithBody(ctx context.Context, orgId str
 
 func (c *Client) CreateResourceDefinition(ctx context.Context, orgId string, body CreateResourceDefinitionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateResourceDefinitionRequest(c.Server, orgId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetResourceDefinitionVersion(ctx context.Context, orgId OrgIdPathParam, defVersionId DefVersionIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetResourceDefinitionVersionRequest(c.Server, orgId, defVersionId)
 	if err != nil {
 		return nil, err
 	}
@@ -8062,6 +8214,18 @@ func (c *Client) ListActiveResourceByDefinition(ctx context.Context, orgId strin
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListResourceDefinitionVersions(ctx context.Context, orgId OrgIdPathParam, defId DefIdPathParam, params *ListResourceDefinitionVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListResourceDefinitionVersionsRequest(c.Server, orgId, defId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListResourceDrivers(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListResourceDriversRequest(c.Server, orgId)
 	if err != nil {
@@ -8148,6 +8312,78 @@ func (c *Client) UpdateResourceDriver(ctx context.Context, orgId string, driverI
 
 func (c *Client) ListResourceTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListResourceTypesRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateResourceClassWithBody(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateResourceClassRequestWithBody(c.Server, orgId, typeId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateResourceClass(ctx context.Context, orgId string, typeId string, body CreateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateResourceClassRequest(c.Server, orgId, typeId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteResourceClass(ctx context.Context, orgId string, typeId string, classId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteResourceClassRequest(c.Server, orgId, typeId, classId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetResourceClass(ctx context.Context, orgId string, typeId string, classId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetResourceClassRequest(c.Server, orgId, typeId, classId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateResourceClassWithBody(ctx context.Context, orgId string, typeId string, classId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateResourceClassRequestWithBody(c.Server, orgId, typeId, classId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateResourceClass(ctx context.Context, orgId string, typeId string, classId string, body UpdateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateResourceClassRequest(c.Server, orgId, typeId, classId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -17684,6 +17920,40 @@ func NewPatchResourceAccountRequestWithBody(server string, orgId string, accId s
 	return req, nil
 }
 
+// NewListResourceClassesRequest generates requests for ListResourceClasses
+func NewListResourceClassesRequest(server string, orgId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/classes", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListResourceDefinitionsRequest generates requests for ListResourceDefinitions
 func NewListResourceDefinitionsRequest(server string, orgId string, params *ListResourceDefinitionsParams) (*http.Request, error) {
 	var err error
@@ -17863,6 +18133,47 @@ func NewCreateResourceDefinitionRequestWithBody(server string, orgId string, con
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetResourceDefinitionVersionRequest generates requests for GetResourceDefinitionVersion
+func NewGetResourceDefinitionVersionRequest(server string, orgId OrgIdPathParam, defVersionId DefVersionIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "defVersionId", runtime.ParamLocationPath, defVersionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/defs/versions/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -18298,6 +18609,101 @@ func NewListActiveResourceByDefinitionRequest(server string, orgId string, defId
 	return req, nil
 }
 
+// NewListResourceDefinitionVersionsRequest generates requests for ListResourceDefinitionVersions
+func NewListResourceDefinitionVersionsRequest(server string, orgId OrgIdPathParam, defId DefIdPathParam, params *ListResourceDefinitionVersionsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "defId", runtime.ParamLocationPath, defId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/defs/%s/versions", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Deleted != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "deleted", runtime.ParamLocationQuery, *params.Deleted); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListResourceDriversRequest generates requests for ListResourceDrivers
 func NewListResourceDriversRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -18545,6 +18951,217 @@ func NewListResourceTypesRequest(server string, orgId string) (*http.Request, er
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewCreateResourceClassRequest calls the generic CreateResourceClass builder with application/json body
+func NewCreateResourceClassRequest(server string, orgId string, typeId string, body CreateResourceClassJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateResourceClassRequestWithBody(server, orgId, typeId, "application/json", bodyReader)
+}
+
+// NewCreateResourceClassRequestWithBody generates requests for CreateResourceClass with any type of body
+func NewCreateResourceClassRequestWithBody(server string, orgId string, typeId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "typeId", runtime.ParamLocationPath, typeId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/types/%s/classes", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteResourceClassRequest generates requests for DeleteResourceClass
+func NewDeleteResourceClassRequest(server string, orgId string, typeId string, classId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "typeId", runtime.ParamLocationPath, typeId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "classId", runtime.ParamLocationPath, classId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/types/%s/classes/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetResourceClassRequest generates requests for GetResourceClass
+func NewGetResourceClassRequest(server string, orgId string, typeId string, classId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "typeId", runtime.ParamLocationPath, typeId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "classId", runtime.ParamLocationPath, classId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/types/%s/classes/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateResourceClassRequest calls the generic UpdateResourceClass builder with application/json body
+func NewUpdateResourceClassRequest(server string, orgId string, typeId string, classId string, body UpdateResourceClassJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateResourceClassRequestWithBody(server, orgId, typeId, classId, "application/json", bodyReader)
+}
+
+// NewUpdateResourceClassRequestWithBody generates requests for UpdateResourceClass with any type of body
+func NewUpdateResourceClassRequestWithBody(server string, orgId string, typeId string, classId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "typeId", runtime.ParamLocationPath, typeId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "classId", runtime.ParamLocationPath, classId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/types/%s/classes/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -20325,6 +20942,9 @@ type ClientWithResponsesInterface interface {
 
 	PatchResourceAccountWithResponse(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error)
 
+	// ListResourceClassesWithResponse request
+	ListResourceClassesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceClassesResponse, error)
+
 	// ListResourceDefinitionsWithResponse request
 	ListResourceDefinitionsWithResponse(ctx context.Context, orgId string, params *ListResourceDefinitionsParams, reqEditors ...RequestEditorFn) (*ListResourceDefinitionsResponse, error)
 
@@ -20332,6 +20952,9 @@ type ClientWithResponsesInterface interface {
 	CreateResourceDefinitionWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceDefinitionResponse, error)
 
 	CreateResourceDefinitionWithResponse(ctx context.Context, orgId string, body CreateResourceDefinitionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceDefinitionResponse, error)
+
+	// GetResourceDefinitionVersionWithResponse request
+	GetResourceDefinitionVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, defVersionId DefVersionIdPathParam, reqEditors ...RequestEditorFn) (*GetResourceDefinitionVersionResponse, error)
 
 	// DeleteResourceDefinitionWithResponse request
 	DeleteResourceDefinitionWithResponse(ctx context.Context, orgId string, defId string, params *DeleteResourceDefinitionParams, reqEditors ...RequestEditorFn) (*DeleteResourceDefinitionResponse, error)
@@ -20365,6 +20988,9 @@ type ClientWithResponsesInterface interface {
 	// ListActiveResourceByDefinitionWithResponse request
 	ListActiveResourceByDefinitionWithResponse(ctx context.Context, orgId string, defId string, reqEditors ...RequestEditorFn) (*ListActiveResourceByDefinitionResponse, error)
 
+	// ListResourceDefinitionVersionsWithResponse request
+	ListResourceDefinitionVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, defId DefIdPathParam, params *ListResourceDefinitionVersionsParams, reqEditors ...RequestEditorFn) (*ListResourceDefinitionVersionsResponse, error)
+
 	// ListResourceDriversWithResponse request
 	ListResourceDriversWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceDriversResponse, error)
 
@@ -20386,6 +21012,22 @@ type ClientWithResponsesInterface interface {
 
 	// ListResourceTypesWithResponse request
 	ListResourceTypesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceTypesResponse, error)
+
+	// CreateResourceClassWithBodyWithResponse request with any body
+	CreateResourceClassWithBodyWithResponse(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceClassResponse, error)
+
+	CreateResourceClassWithResponse(ctx context.Context, orgId string, typeId string, body CreateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceClassResponse, error)
+
+	// DeleteResourceClassWithResponse request
+	DeleteResourceClassWithResponse(ctx context.Context, orgId string, typeId string, classId string, reqEditors ...RequestEditorFn) (*DeleteResourceClassResponse, error)
+
+	// GetResourceClassWithResponse request
+	GetResourceClassWithResponse(ctx context.Context, orgId string, typeId string, classId string, reqEditors ...RequestEditorFn) (*GetResourceClassResponse, error)
+
+	// UpdateResourceClassWithBodyWithResponse request with any body
+	UpdateResourceClassWithBodyWithResponse(ctx context.Context, orgId string, typeId string, classId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateResourceClassResponse, error)
+
+	UpdateResourceClassWithResponse(ctx context.Context, orgId string, typeId string, classId string, body UpdateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateResourceClassResponse, error)
 
 	// GetOrgsOrgIdSecretstoresWithResponse request
 	GetOrgsOrgIdSecretstoresWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdSecretstoresResponse, error)
@@ -24118,6 +24760,28 @@ func (r PatchResourceAccountResponse) StatusCode() int {
 	return 0
 }
 
+type ListResourceClassesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]ResourceClassResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListResourceClassesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListResourceClassesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListResourceDefinitionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -24160,6 +24824,29 @@ func (r CreateResourceDefinitionResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r CreateResourceDefinitionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetResourceDefinitionVersionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResourceDefinitionVersion
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetResourceDefinitionVersionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetResourceDefinitionVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -24363,6 +25050,30 @@ func (r ListActiveResourceByDefinitionResponse) StatusCode() int {
 	return 0
 }
 
+type ListResourceDefinitionVersionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]ResourceDefinitionVersion
+	JSON400      *HumanitecErrorResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListResourceDefinitionVersionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListResourceDefinitionVersionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListResourceDriversResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -24499,6 +25210,98 @@ func (r ListResourceTypesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListResourceTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateResourceClassResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResourceClassResponse
+	JSON400      *HumanitecErrorResponse
+	JSON409      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateResourceClassResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateResourceClassResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteResourceClassResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteResourceClassResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteResourceClassResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetResourceClassResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResourceClassResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetResourceClassResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetResourceClassResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateResourceClassResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResourceClassResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateResourceClassResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateResourceClassResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -26873,6 +27676,15 @@ func (c *ClientWithResponses) PatchResourceAccountWithResponse(ctx context.Conte
 	return ParsePatchResourceAccountResponse(rsp)
 }
 
+// ListResourceClassesWithResponse request returning *ListResourceClassesResponse
+func (c *ClientWithResponses) ListResourceClassesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceClassesResponse, error) {
+	rsp, err := c.ListResourceClasses(ctx, orgId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListResourceClassesResponse(rsp)
+}
+
 // ListResourceDefinitionsWithResponse request returning *ListResourceDefinitionsResponse
 func (c *ClientWithResponses) ListResourceDefinitionsWithResponse(ctx context.Context, orgId string, params *ListResourceDefinitionsParams, reqEditors ...RequestEditorFn) (*ListResourceDefinitionsResponse, error) {
 	rsp, err := c.ListResourceDefinitions(ctx, orgId, params, reqEditors...)
@@ -26897,6 +27709,15 @@ func (c *ClientWithResponses) CreateResourceDefinitionWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParseCreateResourceDefinitionResponse(rsp)
+}
+
+// GetResourceDefinitionVersionWithResponse request returning *GetResourceDefinitionVersionResponse
+func (c *ClientWithResponses) GetResourceDefinitionVersionWithResponse(ctx context.Context, orgId OrgIdPathParam, defVersionId DefVersionIdPathParam, reqEditors ...RequestEditorFn) (*GetResourceDefinitionVersionResponse, error) {
+	rsp, err := c.GetResourceDefinitionVersion(ctx, orgId, defVersionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetResourceDefinitionVersionResponse(rsp)
 }
 
 // DeleteResourceDefinitionWithResponse request returning *DeleteResourceDefinitionResponse
@@ -27003,6 +27824,15 @@ func (c *ClientWithResponses) ListActiveResourceByDefinitionWithResponse(ctx con
 	return ParseListActiveResourceByDefinitionResponse(rsp)
 }
 
+// ListResourceDefinitionVersionsWithResponse request returning *ListResourceDefinitionVersionsResponse
+func (c *ClientWithResponses) ListResourceDefinitionVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, defId DefIdPathParam, params *ListResourceDefinitionVersionsParams, reqEditors ...RequestEditorFn) (*ListResourceDefinitionVersionsResponse, error) {
+	rsp, err := c.ListResourceDefinitionVersions(ctx, orgId, defId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListResourceDefinitionVersionsResponse(rsp)
+}
+
 // ListResourceDriversWithResponse request returning *ListResourceDriversResponse
 func (c *ClientWithResponses) ListResourceDriversWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceDriversResponse, error) {
 	rsp, err := c.ListResourceDrivers(ctx, orgId, reqEditors...)
@@ -27071,6 +27901,58 @@ func (c *ClientWithResponses) ListResourceTypesWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseListResourceTypesResponse(rsp)
+}
+
+// CreateResourceClassWithBodyWithResponse request with arbitrary body returning *CreateResourceClassResponse
+func (c *ClientWithResponses) CreateResourceClassWithBodyWithResponse(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceClassResponse, error) {
+	rsp, err := c.CreateResourceClassWithBody(ctx, orgId, typeId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateResourceClassResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateResourceClassWithResponse(ctx context.Context, orgId string, typeId string, body CreateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceClassResponse, error) {
+	rsp, err := c.CreateResourceClass(ctx, orgId, typeId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateResourceClassResponse(rsp)
+}
+
+// DeleteResourceClassWithResponse request returning *DeleteResourceClassResponse
+func (c *ClientWithResponses) DeleteResourceClassWithResponse(ctx context.Context, orgId string, typeId string, classId string, reqEditors ...RequestEditorFn) (*DeleteResourceClassResponse, error) {
+	rsp, err := c.DeleteResourceClass(ctx, orgId, typeId, classId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteResourceClassResponse(rsp)
+}
+
+// GetResourceClassWithResponse request returning *GetResourceClassResponse
+func (c *ClientWithResponses) GetResourceClassWithResponse(ctx context.Context, orgId string, typeId string, classId string, reqEditors ...RequestEditorFn) (*GetResourceClassResponse, error) {
+	rsp, err := c.GetResourceClass(ctx, orgId, typeId, classId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetResourceClassResponse(rsp)
+}
+
+// UpdateResourceClassWithBodyWithResponse request with arbitrary body returning *UpdateResourceClassResponse
+func (c *ClientWithResponses) UpdateResourceClassWithBodyWithResponse(ctx context.Context, orgId string, typeId string, classId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateResourceClassResponse, error) {
+	rsp, err := c.UpdateResourceClassWithBody(ctx, orgId, typeId, classId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateResourceClassResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateResourceClassWithResponse(ctx context.Context, orgId string, typeId string, classId string, body UpdateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateResourceClassResponse, error) {
+	rsp, err := c.UpdateResourceClass(ctx, orgId, typeId, classId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateResourceClassResponse(rsp)
 }
 
 // GetOrgsOrgIdSecretstoresWithResponse request returning *GetOrgsOrgIdSecretstoresResponse
@@ -32986,6 +33868,32 @@ func ParsePatchResourceAccountResponse(rsp *http.Response) (*PatchResourceAccoun
 	return response, nil
 }
 
+// ParseListResourceClassesResponse parses an HTTP response from a ListResourceClassesWithResponse call
+func ParseListResourceClassesResponse(rsp *http.Response) (*ListResourceClassesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListResourceClassesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ResourceClassResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListResourceDefinitionsResponse parses an HTTP response from a ListResourceDefinitionsWithResponse call
 func ParseListResourceDefinitionsResponse(rsp *http.Response) (*ListResourceDefinitionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -33060,6 +33968,39 @@ func ParseCreateResourceDefinitionResponse(rsp *http.Response) (*CreateResourceD
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetResourceDefinitionVersionResponse parses an HTTP response from a GetResourceDefinitionVersionWithResponse call
+func ParseGetResourceDefinitionVersionResponse(rsp *http.Response) (*GetResourceDefinitionVersionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetResourceDefinitionVersionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResourceDefinitionVersion
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -33421,6 +34362,46 @@ func ParseListActiveResourceByDefinitionResponse(rsp *http.Response) (*ListActiv
 	return response, nil
 }
 
+// ParseListResourceDefinitionVersionsResponse parses an HTTP response from a ListResourceDefinitionVersionsWithResponse call
+func ParseListResourceDefinitionVersionsResponse(rsp *http.Response) (*ListResourceDefinitionVersionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListResourceDefinitionVersionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ResourceDefinitionVersion
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListResourceDriversResponse parses an HTTP response from a ListResourceDriversWithResponse call
 func ParseListResourceDriversResponse(rsp *http.Response) (*ListResourceDriversResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -33641,6 +34622,138 @@ func ParseListResourceTypesResponse(rsp *http.Response) (*ListResourceTypesRespo
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateResourceClassResponse parses an HTTP response from a CreateResourceClassWithResponse call
+func ParseCreateResourceClassResponse(rsp *http.Response) (*CreateResourceClassResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateResourceClassResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResourceClassResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteResourceClassResponse parses an HTTP response from a DeleteResourceClassWithResponse call
+func ParseDeleteResourceClassResponse(rsp *http.Response) (*DeleteResourceClassResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteResourceClassResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetResourceClassResponse parses an HTTP response from a GetResourceClassWithResponse call
+func ParseGetResourceClassResponse(rsp *http.Response) (*GetResourceClassResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetResourceClassResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResourceClassResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateResourceClassResponse parses an HTTP response from a UpdateResourceClassWithResponse call
+func ParseUpdateResourceClassResponse(rsp *http.Response) (*UpdateResourceClassResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateResourceClassResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResourceClassResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
