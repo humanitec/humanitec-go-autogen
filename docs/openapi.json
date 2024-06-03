@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Humanitec API",
-    "version": "0.25.15",
+    "version": "0.26.1",
     "description": "# Introduction\nThe *Humanitec API* allows you to automate and integrate Humanitec into your developer and operational workflows.\nThe API is a REST based API. It is based around a set of concepts:\n\n* Core\n* External Resources\n* Sets and Deltas\n\n## Authentication\n\nAlmost all requests made to the Humanitec API require Authentication. See our [Developer Docs on API Authentication](https://developer.humanitec.com/platform-orchestrator/reference/api-references/#authentication) for instructions.\n\n## Content Types\nAll of the Humanitec API unless explicitly only accepts content types of `application/json` and will always return valid `application/json` or an empty response.\n\n## Response Codes\n### Success\nAny response code in the `2xx` range should be regarded as success.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `200` | Success |\n| `201` | Success (In future, `201` will be replaced by `200`) |\n| `204` | Success, but no content in response |\n\n_Note: We plan to simplify the interface by replacing 201 with 200 status codes._\n\n### Failure\nAny response code in the `4xx` should be regarded as an error which can be rectified by the client. `5xx` error codes indicate errors that cannot be corrected by the client.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `400` | General error. (Body will contain details) |\n| `401` | Attempt to access protected resource without `Authorization` Header. |\n| `403` | The `Bearer` or `JWT` does not grant access to the requested resource. |\n| `404` | Resource not found. |\n| `405` | Method not allowed |\n| `409` | Conflict. Usually indicated a resource with that ID already exists. |\n| `422` | Unprocessable Entity. The body was not valid JSON, was empty or contained an object different from what was expected. |\n| `429` | Too many requests - request rate limit has been reached. |\n| `500` | Internal Error. If it occurs repeatedly, contact support. |\n",
     "contact": {
       "name": "API Support",
@@ -6904,7 +6904,7 @@
         ],
         "summary": "List Resource Definitions.",
         "operationId": "listResourceDefinitions",
-        "description": "Filter criteria can be applied to obtain all the resource definitions that could match the filters, grouped by type and sorted by matching rank.",
+        "description": "Filter criteria can be applied to obtain all the resource definitions that could match the filters, grouped by type and sorted by matching rank. Resources marked as deleted are not listed in the response, unless specified via `deleted` query parameter.",
         "parameters": [
           {
             "name": "orgId",
@@ -6961,6 +6961,15 @@
             "description": "(Optional) Filter Resource Definitions that may match a specific Class.\n\n",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "description": "If returns also resource definitions which has been deleted.",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -7069,7 +7078,8 @@
           "public",
           "ResourceDefinition"
         ],
-        "summary": "Get a specific Resource Definition.",
+        "summary": "Get a Resource Definition.",
+        "description": "If the resource is marked as deleted it is not shown in the response, unless specified via `deleted` query parameter.",
         "operationId": "getResourceDefinition",
         "parameters": [
           {
@@ -7088,6 +7098,15 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "description": "If returns the resource definition even if it has been deleted.",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -7152,7 +7171,7 @@
           }
         ],
         "requestBody": {
-          "description": "The Resource Definition record details.\n\nThe PUT operation updates a resource definition using the provided payload. An empty driver_account or driver_inputs property will unset the existing values.\n\nCurrently the resource and driver types can't be changed.",
+          "description": "The Resource Definition record details.\n\nThe PUT operation updates a resource definition using the provided payload. An empty driver_account or driver_inputs property will unset the existing values.\n\nIf driver_type changes and an Active Resource which uses this Resource Definition exists, the resource provisioned with the previous used driver_type will be deleted.\nAs driver_type can't be empty, an empty driver_type means existing value will be used.\n\nCurrently the resource can't be changed.",
           "required": true,
           "content": {
             "application/json": {
@@ -7212,7 +7231,7 @@
         ],
         "summary": "Delete a Resource Definition.",
         "operationId": "deleteResourceDefinition",
-        "description": "If there **are no** Active Resources provisioned via the current definition, the Resource Definition is deleted immediately.\n\nIf there **are** Active Resources provisioned via the current definition, the request fails. The response will describe the changes to the affected Active Resources if operation is forced.\n\nThe request can take an optional `force` query parameter. If set to `true`, the current Resource Definition is **marked as** pending deletion and will be deleted (purged) as soon as no existing Active Resources reference it. With the next deployment matching criteria for Resources will be re-evaluated, and current Active Resources for the target environment would be either linked to another matching Resource Definition or decommissioned and created using the new or default Resource Definition (when available).\n\nThe Resource Definition that has been marked for deletion cannot be used to provision new resources.",
+        "description": "If there **are no** Active Resources provisioned via the current definition, the Resource Definition is deleted immediately.\n\nIf there **are** Active Resources provisioned via the current definition, the request fails. The response will describe the changes to the affected Active Resources if operation is forced.\n\nThe request can take an optional `force` query parameter. If set to `true`, the current Resource Definition is deleted immediately even if there are Active Resources linked to it.  \nThe Resource Definition that has been marked for deletion cannot be used to provision new resources.\n\nWith the next deployment, matching criteria for Resources will be re-evaluated, and current Active Resources for the target environment would be either linked to another matching Resource Definition or decommissioned and created using the new or default Resource Definition (when available).",
         "parameters": [
           {
             "name": "orgId",
@@ -7243,7 +7262,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Resource Definition has been marked for deletion.\n\n"
+            "description": "Resource Definition has been marked as deleted.\n\n"
           },
           "404": {
             "description": "A Resource Driver with the 'driverId' ID is not found or is not accessible by the organization.\n\n",
@@ -7308,7 +7327,7 @@
           }
         ],
         "requestBody": {
-          "description": "The Resource Definition record details.\n\nThe PATCH operation would change the value of the property if it is included in the request payload JSON, and not `null`. Missing and `null` properties are ignored.\n\nFor the map properties, such as PatchResourceDefinitionRequest.DriverInputs, the merge operation is applied.\n\nMerge rules are as follows:\n\n- If a map property has a value, it is replaced (or added).\n\n- If a map property is set to `null`, it is removed.\n\n- If a map property is not included (missing in JSON), it remains unchanged.",
+          "description": "The Resource Definition record details.\n\nThe PATCH operation would change the value of the property if it is included in the request payload JSON, and not `null`. Missing and `null` properties are ignored.\n\nFor the map properties, such as PatchResourceDefinitionRequest.DriverInputs, the merge operation is applied.\n\nMerge rules are as follows:\n\n- If a map property has a value, it is replaced (or added).\n\n- If a map property is set to `null`, it is removed.\n\n- If a map property is not included (missing in JSON), it remains unchanged.\n\nIf driver_type changes and an Active Resource which uses this Resource Definition exists, the resource provisioned with the previous used driver_type will be deleted.",
           "required": true,
           "content": {
             "application/json": {
@@ -7368,7 +7387,8 @@
           "public",
           "ResourceDefinitionVersion"
         ],
-        "summary": "Get Resource Definition Versions of a specific Resource Definition. First 50 Versions are kept along with all the Versions referenced by an Active Resource.\nTo obtain Versions of a deleted Resource Definition, the `deleted` parameter needs to be used.\n",
+        "summary": "Get Versions of a Resource Definition.",
+        "description": "First 50 Versions are kept along with all the Versions referenced by an Active Resource.\n\n To obtain Versions of a deleted Resource Definition, the `deleted` parameter needs to be used.",
         "operationId": "listResourceDefinitionVersions",
         "parameters": [
           {
@@ -7432,17 +7452,20 @@
         }
       }
     },
-    "/orgs/{orgId}/resources/defs/versions/{defVersionId}": {
+    "/orgs/{orgId}/resources/defs/{defId}/versions/{defVersionId}": {
       "get": {
         "tags": [
           "public",
           "ResourceDefinitionVersion"
         ],
-        "summary": "Get a Specific Resource Definition Version.",
+        "summary": "Get a Resource Definition Version.",
         "operationId": "getResourceDefinitionVersion",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
+          },
+          {
+            "$ref": "#/components/parameters/defIdPathParam"
           },
           {
             "$ref": "#/components/parameters/defVersionIdPathParam"
@@ -16927,6 +16950,7 @@
         "description": "PatchResourceDefinitionRequest describes a ResourceDefinition change request.",
         "example": {
           "driver_account": "gcp-dev-cloudsql",
+          "driver_type": "humanitec/terraform",
           "driver_inputs": {
             "secret_refs": {
               "dbcredentials": {
@@ -16961,6 +16985,10 @@
           "driver_inputs": {
             "$ref": "#/components/schemas/ValuesSecretsRefsRequest",
             "description": "(Optional) Additional input data to be passed to the driver."
+          },
+          "driver_type": {
+            "description": "The driver to be used to create the resource.",
+            "type": "string"
           },
           "name": {
             "description": "(Optional) Resource display name",
@@ -17720,6 +17748,7 @@
       "UpdateResourceDefinitionRequestRequest": {
         "description": "UpdateResourceDefinitionRequest describes a ResourceDefinition change request.",
         "example": {
+          "driver_type": "humanitec/terraform",
           "driver_account": "gcp-dev-cloudsql",
           "driver_inputs": {
             "secret_refs": {
@@ -17747,6 +17776,10 @@
           }
         },
         "properties": {
+          "driver_type": {
+            "description": "The driver to be used to create the resource.",
+            "type": "string"
+          },
           "driver_account": {
             "description": "(Optional) Security account required by the driver.",
             "nullable": true,
@@ -19695,9 +19728,11 @@
         "DriverDefinition",
         "MatchingCriteria",
         "ResourceDefinition",
+        "ResourceDefinitionVersion",
         "ResourceProvision",
         "ResourceAccount",
-        "ResourceType"
+        "ResourceType",
+        "ResourceClass"
       ]
     },
     {
@@ -19749,6 +19784,11 @@
       "name": "ResourceDefinition",
       "x-displayName": "Definitions",
       "description": "A Resource Definitions describes how and when a resource should be provisioned. It links a driver (the how) along with a Matching Criteria (the when) to a Resource Type. This allows Humanitec to invoke a particular driver for the required Resource Type in the context of a particular Application and Environment.\n\nThe schema for the `driver_inputs` is defined by the `input_schema` property on the DriverDefinition identified by the `driver_type` property.\n<SchemaDefinition schemaRef=\"#/components/schemas/ResourceDefinitionResponse\" />\n"
+    },
+    {
+      "name": "ResourceDefinitionVersion",
+      "x-displayName": "Definition Versions",
+      "description": "A Resource Definition Version represents a version of a Resource Definition.\n<SchemaDefinition schemaRef=\"#/components/schemas/ResourceDefinitionVersion\" />\n"
     },
     {
       "name": "ResourceProvision",
