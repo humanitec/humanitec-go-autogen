@@ -157,8 +157,14 @@ type AccountCredsRequest struct {
 
 // AccountTypeResponse Resource Account Types define cloud providers or protocols to which a resource account can belong.
 type AccountTypeResponse struct {
+	// InputsSchema A JSON Schema specifying the type-specific parameters for the account credentials (input).
+	InputsSchema *map[string]interface{} `json:"inputs_schema,omitempty"`
+
 	// Name Display Name.
 	Name string `json:"name"`
+
+	// OutputsSchema A JSON Schema specifying the type-specific data of returned account credentials (output).
+	OutputsSchema *map[string]interface{} `json:"outputs_schema,omitempty"`
 
 	// Type Unique account type identifier (system-wide, across all organizations).
 	Type string `json:"type"`
@@ -867,6 +873,24 @@ type DeltaResponse struct {
 	Shared  []UpdateActionResponse `json:"shared"`
 }
 
+// DependencyGraphResponse The Dependency Graph which holds the list of objects which contain information to provision resources, sorted according to resources provisioning order.
+type DependencyGraphResponse struct {
+	// CreatedAt The timestamp of when the graph was generated for.
+	CreatedAt time.Time `json:"created_at"`
+
+	// Hash The sha256 hash of the graph list of nodes. Two graphs with same hash cannot exist, unless they are exactly the same graph, so they contain the same sorted list of nodes.
+	Hash string `json:"hash"`
+
+	// Id The ID of the Dependency Graph.
+	Id string `json:"id"`
+
+	// Nodes A list of objects which hold information to provision resources, sorted according to resources provisioning order.
+	Nodes []NodeBodyResponse `json:"nodes"`
+
+	// UsedAt The timestamp of when the graph was generated for the last time.
+	UsedAt time.Time `json:"used_at"`
+}
+
 // DeployConditionRequest A deploy condition for the workload
 //
 // Possible values for "when" are: - "before", deployed before other workloads - "deploy", deployed in-parallel with other workloads (default) - "after", deployed after other workloads
@@ -962,6 +986,10 @@ type DeploymentResponse struct {
 
 	// DeltaId ID of the Deployment Delta describing the changes to the current Environment for this Deployment.
 	DeltaId *string `json:"delta_id,omitempty"`
+
+	// DependencyGraphId The ID of the Dependency Graph which holds the sorted list of the resources provisioned with this deployment.
+	// The referenced Graph does not include resources of type k8s-cluster and k8s-namespace (and logging in case of deployments executed in Operator mode).
+	DependencyGraphId *string `json:"dependency_graph_id,omitempty"`
 
 	// EnvId The Environment where the Deployment occurred.
 	EnvId        string `json:"env_id"`
@@ -1466,7 +1494,7 @@ type PatchResourceDefinitionRequestRequest struct {
 	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
 	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
 
-	// DriverType The driver to be used to create the resource.
+	// DriverType (Optional) The driver to be used to create the resource.
 	DriverType *string `json:"driver_type,omitempty"`
 
 	// Name (Optional) Resource display name
@@ -2590,7 +2618,7 @@ type UpdateResourceDefinitionRequestRequest struct {
 	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
 	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
 
-	// DriverType The driver to be used to create the resource.
+	// DriverType (Optional) The driver to be used to create the resource.
 	DriverType *string `json:"driver_type,omitempty"`
 
 	// Name The display name.
@@ -3281,6 +3309,9 @@ type FingerprintPathParam = string
 // FingerprintQueryParam defines model for fingerprintQueryParam.
 type FingerprintQueryParam = string
 
+// GraphIdPathParam defines model for graphIdPathParam.
+type GraphIdPathParam = string
+
 // IdempotencyKey defines model for idempotencyKey.
 type IdempotencyKey = string
 
@@ -3384,6 +3415,9 @@ type RebaseEnvironmentJSONBody = string
 
 // QueryResourceGraphJSONBody defines parameters for QueryResourceGraph.
 type QueryResourceGraphJSONBody = []ResourceProvisionRequestRequest
+
+// CreateDependencyGraphJSONBody defines parameters for CreateDependencyGraph.
+type CreateDependencyGraphJSONBody = []ResourceProvisionRequestRequest
 
 // DeleteActiveResourceParams defines parameters for DeleteActiveResource.
 type DeleteActiveResourceParams struct {
@@ -3868,6 +3902,9 @@ type RebaseEnvironmentJSONRequestBody = RebaseEnvironmentJSONBody
 
 // QueryResourceGraphJSONRequestBody defines body for QueryResourceGraph for application/json ContentType.
 type QueryResourceGraphJSONRequestBody = QueryResourceGraphJSONBody
+
+// CreateDependencyGraphJSONRequestBody defines body for CreateDependencyGraph for application/json ContentType.
+type CreateDependencyGraphJSONRequestBody = CreateDependencyGraphJSONBody
 
 // CreateAutomationRuleJSONRequestBody defines body for CreateAutomationRule for application/json ContentType.
 type CreateAutomationRuleJSONRequestBody = AutomationRuleRequest
@@ -4923,6 +4960,14 @@ type ClientInterface interface {
 	QueryResourceGraphWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	QueryResourceGraph(ctx context.Context, orgId string, appId string, envId string, body QueryResourceGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateDependencyGraphWithBody request with any body
+	CreateDependencyGraphWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateDependencyGraph(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateDependencyGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDependencyGraph request
+	GetDependencyGraph(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, graphId GraphIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteActiveResource request
 	DeleteActiveResource(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6143,6 +6188,42 @@ func (c *Client) QueryResourceGraphWithBody(ctx context.Context, orgId string, a
 
 func (c *Client) QueryResourceGraph(ctx context.Context, orgId string, appId string, envId string, body QueryResourceGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewQueryResourceGraphRequest(c.Server, orgId, appId, envId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateDependencyGraphWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDependencyGraphRequestWithBody(c.Server, orgId, appId, envId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateDependencyGraph(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateDependencyGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDependencyGraphRequest(c.Server, orgId, appId, envId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDependencyGraph(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, graphId GraphIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDependencyGraphRequest(c.Server, orgId, appId, envId, graphId)
 	if err != nil {
 		return nil, err
 	}
@@ -10685,6 +10766,122 @@ func NewQueryResourceGraphRequestWithBody(server string, orgId string, appId str
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCreateDependencyGraphRequest calls the generic CreateDependencyGraph builder with application/json body
+func NewCreateDependencyGraphRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateDependencyGraphJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateDependencyGraphRequestWithBody(server, orgId, appId, envId, "application/json", bodyReader)
+}
+
+// NewCreateDependencyGraphRequestWithBody generates requests for CreateDependencyGraph with any type of body
+func NewCreateDependencyGraphRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "envId", runtime.ParamLocationPath, envId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/envs/%s/resources/graphs", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetDependencyGraphRequest generates requests for GetDependencyGraph
+func NewGetDependencyGraphRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, graphId GraphIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "envId", runtime.ParamLocationPath, envId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "graphId", runtime.ParamLocationPath, graphId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/envs/%s/resources/graphs/%s", pathParam0, pathParam1, pathParam2, pathParam3)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -20571,6 +20768,14 @@ type ClientWithResponsesInterface interface {
 
 	QueryResourceGraphWithResponse(ctx context.Context, orgId string, appId string, envId string, body QueryResourceGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryResourceGraphResponse, error)
 
+	// CreateDependencyGraphWithBodyWithResponse request with any body
+	CreateDependencyGraphWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDependencyGraphResponse, error)
+
+	CreateDependencyGraphWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateDependencyGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDependencyGraphResponse, error)
+
+	// GetDependencyGraphWithResponse request
+	GetDependencyGraphWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, graphId GraphIdPathParam, reqEditors ...RequestEditorFn) (*GetDependencyGraphResponse, error)
+
 	// DeleteActiveResourceWithResponse request
 	DeleteActiveResourceWithResponse(ctx context.Context, orgId string, appId string, envId string, pType string, resId string, params *DeleteActiveResourceParams, reqEditors ...RequestEditorFn) (*DeleteActiveResourceResponse, error)
 
@@ -22004,6 +22209,52 @@ func (r QueryResourceGraphResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r QueryResourceGraphResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateDependencyGraphResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DependencyGraphResponse
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateDependencyGraphResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateDependencyGraphResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetDependencyGraphResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DependencyGraphResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDependencyGraphResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDependencyGraphResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -24679,7 +24930,6 @@ type ListResourceAccountTypesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]AccountTypeResponse
-	JSON500      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -26367,6 +26617,32 @@ func (c *ClientWithResponses) QueryResourceGraphWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseQueryResourceGraphResponse(rsp)
+}
+
+// CreateDependencyGraphWithBodyWithResponse request with arbitrary body returning *CreateDependencyGraphResponse
+func (c *ClientWithResponses) CreateDependencyGraphWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDependencyGraphResponse, error) {
+	rsp, err := c.CreateDependencyGraphWithBody(ctx, orgId, appId, envId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateDependencyGraphResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateDependencyGraphWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, body CreateDependencyGraphJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDependencyGraphResponse, error) {
+	rsp, err := c.CreateDependencyGraph(ctx, orgId, appId, envId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateDependencyGraphResponse(rsp)
+}
+
+// GetDependencyGraphWithResponse request returning *GetDependencyGraphResponse
+func (c *ClientWithResponses) GetDependencyGraphWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, envId EnvIdPathParam, graphId GraphIdPathParam, reqEditors ...RequestEditorFn) (*GetDependencyGraphResponse, error) {
+	rsp, err := c.GetDependencyGraph(ctx, orgId, appId, envId, graphId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDependencyGraphResponse(rsp)
 }
 
 // DeleteActiveResourceWithResponse request returning *DeleteActiveResourceResponse
@@ -29499,6 +29775,72 @@ func ParseQueryResourceGraphResponse(rsp *http.Response) (*QueryResourceGraphRes
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateDependencyGraphResponse parses an HTTP response from a CreateDependencyGraphWithResponse call
+func ParseCreateDependencyGraphResponse(rsp *http.Response) (*CreateDependencyGraphResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateDependencyGraphResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DependencyGraphResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDependencyGraphResponse parses an HTTP response from a GetDependencyGraphWithResponse call
+func ParseGetDependencyGraphResponse(rsp *http.Response) (*GetDependencyGraphResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDependencyGraphResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DependencyGraphResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -33701,13 +34043,6 @@ func ParseListResourceAccountTypesResponse(rsp *http.Response) (*ListResourceAcc
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
 
 	}
 
