@@ -21,20 +21,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// Defines values for CreateWorkloadArtefactVersionExtensionsDeploySuccess.
-const (
-	CreateWorkloadArtefactVersionExtensionsDeploySuccessAvailable CreateWorkloadArtefactVersionExtensionsDeploySuccess = "available"
-	CreateWorkloadArtefactVersionExtensionsDeploySuccessComplete  CreateWorkloadArtefactVersionExtensionsDeploySuccess = "complete"
-	CreateWorkloadArtefactVersionExtensionsDeploySuccessDeploy    CreateWorkloadArtefactVersionExtensionsDeploySuccess = "deploy"
-)
-
-// Defines values for CreateWorkloadArtefactVersionExtensionsDeployWhen.
-const (
-	CreateWorkloadArtefactVersionExtensionsDeployWhenAfter  CreateWorkloadArtefactVersionExtensionsDeployWhen = "after"
-	CreateWorkloadArtefactVersionExtensionsDeployWhenBefore CreateWorkloadArtefactVersionExtensionsDeployWhen = "before"
-	CreateWorkloadArtefactVersionExtensionsDeployWhenDeploy CreateWorkloadArtefactVersionExtensionsDeployWhen = "deploy"
-)
-
 // Defines values for PipelineApprovalRequestStatus.
 const (
 	Approved  PipelineApprovalRequestStatus = "approved"
@@ -86,6 +72,20 @@ const (
 	Success RuntimeInfoStatusClass = "Success"
 	Unknown RuntimeInfoStatusClass = "Unknown"
 	Warning RuntimeInfoStatusClass = "Warning"
+)
+
+// Defines values for ScoreHumanitecExtensionsDeploySuccess.
+const (
+	ScoreHumanitecExtensionsDeploySuccessAvailable ScoreHumanitecExtensionsDeploySuccess = "available"
+	ScoreHumanitecExtensionsDeploySuccessComplete  ScoreHumanitecExtensionsDeploySuccess = "complete"
+	ScoreHumanitecExtensionsDeploySuccessDeploy    ScoreHumanitecExtensionsDeploySuccess = "deploy"
+)
+
+// Defines values for ScoreHumanitecExtensionsDeployWhen.
+const (
+	ScoreHumanitecExtensionsDeployWhenAfter  ScoreHumanitecExtensionsDeployWhen = "after"
+	ScoreHumanitecExtensionsDeployWhenBefore ScoreHumanitecExtensionsDeployWhen = "before"
+	ScoreHumanitecExtensionsDeployWhenDeploy ScoreHumanitecExtensionsDeployWhen = "deploy"
 )
 
 // Defines values for ValueSetVersionResultOf.
@@ -523,6 +523,28 @@ type ClusterSecretsMapRequest map[string]ClusterSecretRequest
 // ClusterSecretsMapResponse ClusterSecretsMap stores a list of Kuberenetes secret references for the target deployment clusters.
 type ClusterSecretsMapResponse map[string]ClusterSecretResponse
 
+// ConflictingResourcesErrorResponse Represents a standard Humanitec Error with additional details which describe why an action on a specific resource cannot be performed due to some other entities linked to it.
+type ConflictingResourcesErrorResponse struct {
+	// Details Object composed by the list of resources which prevent the deletion of the specified entity. The resources are indexed by their kind.
+	Details ConflictingResourcesErrorResponseDetails `json:"details"`
+	Error   string                                   `json:"error"`
+	Message string                                   `json:"message"`
+}
+
+// ConflictingResourcesErrorResponseDetails Object composed by the list of resources which prevent the deletion of the specified entity. The resources are indexed by their kind.
+type ConflictingResourcesErrorResponseDetails struct {
+	ReferencingResources ConflictingResourcesErrorResponseDetailsResources `json:"referencing_resources"`
+}
+
+// ConflictingResourcesErrorResponseDetailsResources defines model for ConflictingResourcesErrorResponseDetailsResources.
+type ConflictingResourcesErrorResponseDetailsResources struct {
+	// ActiveResources List of Active Resources referencing the specified Resource Account.
+	ActiveResources *[]ActiveResourceResponse `json:"active_resources,omitempty"`
+
+	// ResourceDefinitions List of non-deleted Resource Definitions referencing the specified Resource Account.
+	ResourceDefinitions *[]ResourceDefinitionResponse `json:"resource_definitions,omitempty"`
+}
+
 // ContainerArtefactVersion defines model for ContainerArtefactVersion.
 type ContainerArtefactVersion struct {
 	// Archived If the Artefact Version is archived.
@@ -570,6 +592,24 @@ type ControllerResponse struct {
 	Replicas int                `json:"replicas"`
 	Revision int                `json:"revision"`
 	Status   string             `json:"status"`
+}
+
+// ConvertScoreToSetBody Request body for converting a Score manifest to Humanitec deployment set.
+type ConvertScoreToSetBody struct {
+	// Extensions Humanitec workload extensions for the Workload Artefact Version. These can be used to override the profile, or workload module spec and resource attributes.
+	Extensions *ScoreHumanitecExtensions `json:"extensions,omitempty"`
+
+	// Image An optional default image to assign to any containers in the workload that do not have an image set or whose image is '.'
+	Image *string `json:"image,omitempty"`
+
+	// Overrides An optional Json object containing the workload overrides. Score v1b1 is expected.
+	Overrides *map[string]interface{} `json:"overrides,omitempty"`
+
+	// PropertyOverrides An optional set of path overrides that will be applied to the workload.
+	PropertyOverrides *map[string]interface{} `json:"property_overrides,omitempty"`
+
+	// Spec A Json object containing the workload specification. Score v1b1 is expected.
+	Spec map[string]interface{} `json:"spec"`
 }
 
 // CreateArtefactVersion The details of a new Artefact Version to register. The type field is required and dictates the type of Artefact to register.
@@ -710,7 +750,7 @@ type CreateWorkloadArtefactVersion struct {
 	Commit *string `json:"commit,omitempty"`
 
 	// Extensions Humanitec workload extensions for the Workload Artefact Version. These can be used to override the profile, or workload module spec and resource attributes.
-	Extensions *CreateWorkloadArtefactVersionExtensions `json:"extensions,omitempty"`
+	Extensions *ScoreHumanitecExtensions `json:"extensions,omitempty"`
 
 	// Image An optional default image to assign to any containers in the workload that do not have an image set or whose image is '.'
 	Image *string `json:"image,omitempty"`
@@ -736,36 +776,6 @@ type CreateWorkloadArtefactVersion struct {
 	// Version (Optional) The Artefact Version.
 	Version *string `json:"version,omitempty"`
 }
-
-// CreateWorkloadArtefactVersionExtensions Humanitec workload extensions for the Workload Artefact Version. These can be used to override the profile, or workload module spec and resource attributes.
-type CreateWorkloadArtefactVersionExtensions struct {
-	// ApiVersion The api version describing the format of the extensions.
-	ApiVersion string `json:"apiVersion"`
-
-	// Deploy An optional deploy condition for the workload.
-	Deploy *struct {
-		// Success The success criteria for the deployment. "deploy", workload deployed. "available", workload available. "complete", workload complete (often used with jobs).
-		Success *CreateWorkloadArtefactVersionExtensionsDeploySuccess `json:"success,omitempty"`
-
-		// Timeout The timeout in seconds for the deployment to reach it's success condition.
-		Timeout *int `json:"timeout,omitempty"`
-
-		// When The stage the deployment should occur. "deploy", deployed in-parallel with other workloads (the default). "before", deployed before other workloads. "after", deployed after other workloads.
-		When *CreateWorkloadArtefactVersionExtensionsDeployWhen `json:"when,omitempty"`
-	} `json:"deploy,omitempty"`
-
-	// Profile An optional override for the workload profile
-	Profile *string `json:"profile,omitempty"`
-
-	// Spec A map of additional workload spec fields that will be merged.
-	Spec *map[string]interface{} `json:"spec,omitempty"`
-}
-
-// CreateWorkloadArtefactVersionExtensionsDeploySuccess The success criteria for the deployment. "deploy", workload deployed. "available", workload available. "complete", workload complete (often used with jobs).
-type CreateWorkloadArtefactVersionExtensionsDeploySuccess string
-
-// CreateWorkloadArtefactVersionExtensionsDeployWhen The stage the deployment should occur. "deploy", deployed in-parallel with other workloads (the default). "before", deployed before other workloads. "after", deployed after other workloads.
-type CreateWorkloadArtefactVersionExtensionsDeployWhen string
 
 // DeltaMetadataRequest defines model for DeltaMetadataRequest.
 type DeltaMetadataRequest struct {
@@ -1494,9 +1504,6 @@ type PatchResourceDefinitionRequestRequest struct {
 	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
 	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
 
-	// DriverType (Optional) The driver to be used to create the resource.
-	DriverType *string `json:"driver_type,omitempty"`
-
 	// Name (Optional) Resource display name
 	Name *string `json:"name"`
 
@@ -1984,16 +1991,16 @@ type RegistryCredsResponse struct {
 	Expires *string `json:"expires"`
 
 	// Password Account password or token secret.
-	Password string `json:"password"`
+	Password *string `json:"password,omitempty"`
 
 	// Registry Registry name, usually in a "{domain}" or "{domain}/{project}" format.
 	Registry string `json:"registry"`
 
 	// Secrets ClusterSecretsMap stores a list of Kuberenetes secret references for the target deployment clusters.
-	Secrets ClusterSecretsMapResponse `json:"secrets"`
+	Secrets *ClusterSecretsMapResponse `json:"secrets,omitempty"`
 
 	// Username Security account login or token.
-	Username string `json:"username"`
+	Username *string `json:"username,omitempty"`
 }
 
 // RegistryRequest Humanitec can be used to manage registry credentials. The Registry object represents how to match credentials to a particular registry.
@@ -2082,7 +2089,7 @@ type ResourceAccountResponse struct {
 	// Id Unique identifier for the account (in scope of the organization it belongs to).
 	Id string `json:"id"`
 
-	// IsUsed Indicates if this account is being used (referenced) by any resource definition.
+	// IsUsed Indicates if this account is being used (referenced) by any resource definition or active resource.
 	IsUsed bool `json:"is_used"`
 
 	// Name Display name.
@@ -2422,6 +2429,36 @@ type RuntimeInfoStatus string
 
 // RuntimeInfoStatusClass Status class, statuses are aggregated into classes
 type RuntimeInfoStatusClass string
+
+// ScoreHumanitecExtensions Humanitec workload extensions for the Workload Artefact Version. These can be used to override the profile, or workload module spec and resource attributes.
+type ScoreHumanitecExtensions struct {
+	// ApiVersion The api version describing the format of the extensions.
+	ApiVersion string `json:"apiVersion"`
+
+	// Deploy An optional deploy condition for the workload.
+	Deploy *struct {
+		// Success The success criteria for the deployment. "deploy", workload deployed. "available", workload available. "complete", workload complete (often used with jobs).
+		Success *ScoreHumanitecExtensionsDeploySuccess `json:"success,omitempty"`
+
+		// Timeout The timeout in seconds for the deployment to reach it's success condition.
+		Timeout *int `json:"timeout,omitempty"`
+
+		// When The stage the deployment should occur. "deploy", deployed in-parallel with other workloads (the default). "before", deployed before other workloads. "after", deployed after other workloads.
+		When *ScoreHumanitecExtensionsDeployWhen `json:"when,omitempty"`
+	} `json:"deploy,omitempty"`
+
+	// Profile An optional override for the workload profile
+	Profile *string `json:"profile,omitempty"`
+
+	// Spec A map of additional workload spec fields that will be merged.
+	Spec *map[string]interface{} `json:"spec,omitempty"`
+}
+
+// ScoreHumanitecExtensionsDeploySuccess The success criteria for the deployment. "deploy", workload deployed. "available", workload available. "complete", workload complete (often used with jobs).
+type ScoreHumanitecExtensionsDeploySuccess string
+
+// ScoreHumanitecExtensionsDeployWhen The stage the deployment should occur. "deploy", deployed in-parallel with other workloads (the default). "before", deployed before other workloads. "after", deployed after other workloads.
+type ScoreHumanitecExtensionsDeployWhen string
 
 // SecretReference It stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
 type SecretReference struct {
@@ -3984,6 +4021,9 @@ type CreateArtefactVersionJSONRequestBody = CreateArtefactVersion
 // CreateArtefactVersionMultipartRequestBody defines body for CreateArtefactVersion for multipart/form-data ContentType.
 type CreateArtefactVersionMultipartRequestBody = CreateArtefactVersion
 
+// ConvertScoreToSetJSONRequestBody defines body for ConvertScoreToSet for application/json ContentType.
+type ConvertScoreToSetJSONRequestBody = ConvertScoreToSetBody
+
 // PatchArtefactVersionJSONRequestBody defines body for PatchArtefactVersion for application/json ContentType.
 type PatchArtefactVersionJSONRequestBody = UpdateArtefactVersionPayloadRequest
 
@@ -5240,6 +5280,11 @@ type ClientInterface interface {
 	CreateArtefactVersionWithBody(ctx context.Context, orgId string, params *CreateArtefactVersionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	CreateArtefactVersion(ctx context.Context, orgId string, params *CreateArtefactVersionParams, body CreateArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ConvertScoreToSetWithBody request with any body
+	ConvertScoreToSetWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ConvertScoreToSet(ctx context.Context, orgId string, body ConvertScoreToSetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetArtefactVersion request
 	GetArtefactVersion(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7412,6 +7457,30 @@ func (c *Client) CreateArtefactVersionWithBody(ctx context.Context, orgId string
 
 func (c *Client) CreateArtefactVersion(ctx context.Context, orgId string, params *CreateArtefactVersionParams, body CreateArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateArtefactVersionRequest(c.Server, orgId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ConvertScoreToSetWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewConvertScoreToSetRequestWithBody(c.Server, orgId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ConvertScoreToSet(ctx context.Context, orgId string, body ConvertScoreToSetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewConvertScoreToSetRequest(c.Server, orgId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -15764,6 +15833,53 @@ func NewCreateArtefactVersionRequestWithBody(server string, orgId string, params
 	return req, nil
 }
 
+// NewConvertScoreToSetRequest calls the generic ConvertScoreToSet builder with application/json body
+func NewConvertScoreToSetRequest(server string, orgId string, body ConvertScoreToSetJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewConvertScoreToSetRequestWithBody(server, orgId, "application/json", bodyReader)
+}
+
+// NewConvertScoreToSetRequestWithBody generates requests for ConvertScoreToSet with any type of body
+func NewConvertScoreToSetRequestWithBody(server string, orgId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/artefact-versions/convert-score", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetArtefactVersionRequest generates requests for GetArtefactVersion
 func NewGetArtefactVersionRequest(server string, orgId string, artefactVersionId string) (*http.Request, error) {
 	var err error
@@ -21048,6 +21164,11 @@ type ClientWithResponsesInterface interface {
 
 	CreateArtefactVersionWithResponse(ctx context.Context, orgId string, params *CreateArtefactVersionParams, body CreateArtefactVersionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateArtefactVersionResponse, error)
 
+	// ConvertScoreToSetWithBodyWithResponse request with any body
+	ConvertScoreToSetWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConvertScoreToSetResponse, error)
+
+	ConvertScoreToSetWithResponse(ctx context.Context, orgId string, body ConvertScoreToSetJSONRequestBody, reqEditors ...RequestEditorFn) (*ConvertScoreToSetResponse, error)
+
 	// GetArtefactVersionWithResponse request
 	GetArtefactVersionWithResponse(ctx context.Context, orgId string, artefactVersionId string, reqEditors ...RequestEditorFn) (*GetArtefactVersionResponse, error)
 
@@ -24004,6 +24125,29 @@ func (r CreateArtefactVersionResponse) StatusCode() int {
 	return 0
 }
 
+type ConvertScoreToSetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadArtefactVersionDeploymentSet
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ConvertScoreToSetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ConvertScoreToSetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetArtefactVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -25000,7 +25144,7 @@ func (r CreateResourceAccountResponse) StatusCode() int {
 type DeleteResourceAccountResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *HumanitecErrorResponse
+	JSON400      *ConflictingResourcesErrorResponse
 	JSON404      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
@@ -27509,6 +27653,23 @@ func (c *ClientWithResponses) CreateArtefactVersionWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseCreateArtefactVersionResponse(rsp)
+}
+
+// ConvertScoreToSetWithBodyWithResponse request with arbitrary body returning *ConvertScoreToSetResponse
+func (c *ClientWithResponses) ConvertScoreToSetWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConvertScoreToSetResponse, error) {
+	rsp, err := c.ConvertScoreToSetWithBody(ctx, orgId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConvertScoreToSetResponse(rsp)
+}
+
+func (c *ClientWithResponses) ConvertScoreToSetWithResponse(ctx context.Context, orgId string, body ConvertScoreToSetJSONRequestBody, reqEditors ...RequestEditorFn) (*ConvertScoreToSetResponse, error) {
+	rsp, err := c.ConvertScoreToSet(ctx, orgId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConvertScoreToSetResponse(rsp)
 }
 
 // GetArtefactVersionWithResponse request returning *GetArtefactVersionResponse
@@ -32561,6 +32722,39 @@ func ParseCreateArtefactVersionResponse(rsp *http.Response) (*CreateArtefactVers
 	return response, nil
 }
 
+// ParseConvertScoreToSetResponse parses an HTTP response from a ConvertScoreToSetWithResponse call
+func ParseConvertScoreToSetResponse(rsp *http.Response) (*ConvertScoreToSetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ConvertScoreToSetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadArtefactVersionDeploymentSet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetArtefactVersionResponse parses an HTTP response from a GetArtefactVersionWithResponse call
 func ParseGetArtefactVersionResponse(rsp *http.Response) (*GetArtefactVersionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -34151,7 +34345,7 @@ func ParseDeleteResourceAccountResponse(rsp *http.Response) (*DeleteResourceAcco
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest ConflictingResourcesErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
