@@ -222,6 +222,9 @@ type ActiveResourceResponse struct {
 	// Status Current resource status: 'pending', 'active', or 'deleting'.
 	Status string `json:"status"`
 
+	// TargetDefVersionId The Resource Definition Version pinned to this resource to be provisioned from.
+	TargetDefVersionId *string `json:"target_def_version_id,omitempty"`
+
 	// Type The Resource Type of the resource
 	Type string `json:"type"`
 
@@ -497,6 +500,22 @@ type BatchItem struct {
 
 	// Type The type of item in the batch
 	Type string `json:"type"`
+}
+
+// CheckResourceAccountData The successful check response details.
+type CheckResourceAccountData struct {
+	// IdentityFields A set of identity fields and properties resulting from the account check.
+	IdentityFields []CheckResourceAccountField `json:"identity_fields"`
+
+	// Warnings A list of warnings related to this account.
+	Warnings *[]string `json:"warnings,omitempty"`
+}
+
+// CheckResourceAccountField An identity field or property resulting from the account check.
+type CheckResourceAccountField struct {
+	Description string `json:"description"`
+	Id          string `json:"id"`
+	Value       string `json:"value"`
 }
 
 // ClusterSecretRequest ClusterSecret represents Kubernetes secret reference.
@@ -1490,7 +1509,7 @@ type OrganizationResponse struct {
 	Name string `json:"name"`
 
 	// ScaffoldingUrl URL of the scaffolding service.
-	ScaffoldingUrl *string `json:"scaffolding_url,omitempty"`
+	ScaffoldingUrl *string `json:"scaffolding_url"`
 
 	// TrialExpiresAt Timestamp the trial expires at.
 	TrialExpiresAt *time.Time `json:"trial_expires_at"`
@@ -5445,6 +5464,9 @@ type ClientInterface interface {
 
 	PatchResourceAccount(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CheckResourceAccount request
+	CheckResourceAccount(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListResourceClasses request
 	ListResourceClasses(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -8165,6 +8187,18 @@ func (c *Client) PatchResourceAccountWithBody(ctx context.Context, orgId string,
 
 func (c *Client) PatchResourceAccount(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchResourceAccountRequest(c.Server, orgId, accId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CheckResourceAccount(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCheckResourceAccountRequest(c.Server, orgId, accId)
 	if err != nil {
 		return nil, err
 	}
@@ -18248,6 +18282,47 @@ func NewPatchResourceAccountRequestWithBody(server string, orgId string, accId s
 	return req, nil
 }
 
+// NewCheckResourceAccountRequest generates requests for CheckResourceAccount
+func NewCheckResourceAccountRequest(server string, orgId string, accId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "accId", runtime.ParamLocationPath, accId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/accounts/%s/actions/check", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListResourceClassesRequest generates requests for ListResourceClasses
 func NewListResourceClassesRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -21327,6 +21402,9 @@ type ClientWithResponsesInterface interface {
 	PatchResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, accId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error)
 
 	PatchResourceAccountWithResponse(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error)
+
+	// CheckResourceAccountWithResponse request
+	CheckResourceAccountWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*CheckResourceAccountResponse, error)
 
 	// ListResourceClassesWithResponse request
 	ListResourceClassesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceClassesResponse, error)
@@ -25214,6 +25292,29 @@ func (r PatchResourceAccountResponse) StatusCode() int {
 	return 0
 }
 
+type CheckResourceAccountResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CheckResourceAccountData
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CheckResourceAccountResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CheckResourceAccountResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListResourceClassesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -28171,6 +28272,15 @@ func (c *ClientWithResponses) PatchResourceAccountWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParsePatchResourceAccountResponse(rsp)
+}
+
+// CheckResourceAccountWithResponse request returning *CheckResourceAccountResponse
+func (c *ClientWithResponses) CheckResourceAccountWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*CheckResourceAccountResponse, error) {
+	rsp, err := c.CheckResourceAccount(ctx, orgId, accId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCheckResourceAccountResponse(rsp)
 }
 
 // ListResourceClassesWithResponse request returning *ListResourceClassesResponse
@@ -34451,6 +34561,39 @@ func ParsePatchResourceAccountResponse(rsp *http.Response) (*PatchResourceAccoun
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCheckResourceAccountResponse parses an HTTP response from a CheckResourceAccountWithResponse call
+func ParseCheckResourceAccountResponse(rsp *http.Response) (*CheckResourceAccountResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CheckResourceAccountResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CheckResourceAccountData
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
