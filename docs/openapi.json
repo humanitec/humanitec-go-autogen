@@ -2,11 +2,11 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Humanitec API",
-    "version": "0.26.11",
-    "description": "# Introduction\nThe *Humanitec API* allows you to automate and integrate Humanitec into your developer and operational workflows.\nThe API is a REST based API. It is based around a set of concepts:\n\n* Core\n* External Resources\n* Sets and Deltas\n\n## Authentication\n\nAlmost all requests made to the Humanitec API require Authentication. See our [Developer Docs on API Authentication](https://developer.humanitec.com/platform-orchestrator/reference/api-references/#authentication) for instructions.\n\n## Content Types\nAll of the Humanitec API unless explicitly only accepts content types of `application/json` and will always return valid `application/json` or an empty response.\n\n## Response Codes\n### Success\nAny response code in the `2xx` range should be regarded as success.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `200` | Success |\n| `201` | Success (In future, `201` will be replaced by `200`) |\n| `204` | Success, but no content in response |\n\n_Note: We plan to simplify the interface by replacing 201 with 200 status codes._\n\n### Failure\nAny response code in the `4xx` should be regarded as an error which can be rectified by the client. `5xx` error codes indicate errors that cannot be corrected by the client.\n\n| **Code** | **Meaning** |\n| --- | --- |\n| `400` | General error. (Body will contain details) |\n| `401` | Attempt to access protected resource without `Authorization` Header. |\n| `403` | The `Bearer` or `JWT` does not grant access to the requested resource. |\n| `404` | Resource not found. |\n| `405` | Method not allowed |\n| `409` | Conflict. Usually indicated a resource with that ID already exists. |\n| `422` | Unprocessable Entity. The body was not valid JSON, was empty or contained an object different from what was expected. |\n| `429` | Too many requests - request rate limit has been reached. |\n| `500` | Internal Error. If it occurs repeatedly, contact support. |\n",
+    "version": "0.26.14",
+    "description": "# Introduction\nThe *Humanitec API* allows you to automate and integrate Humanitec into your developer and operational workflows.\nThe API is a REST based API. It is based around a set of concepts:\n\n* Core\n* External Resources\n* Sets and Deltas\n\n## Authentication\n\nAlmost all requests made to the Humanitec API require Authentication. See our [Developer Docs on API Authentication](https://developer.humanitec.com/platform-orchestrator/reference/api-references/#authentication) for instructions.\n\n## Content Types\nThe Humanitec API, unless explicitly specified, only accepts content types of `application/json` and will always return valid `application/json` or an empty response.\n\n## Response Codes\n### Success\nAny response code in the `2xx` range should be regarded as success.\n\n| **Code** | **Meaning**                         |\n|----------|-------------------------------------|\n| `200`    | Success                             |\n| `201`    | Success, a new resource was created |\n| `204`    | Success, but no content in response |\n\n_Note: We plan to simplify the interface by replacing 201 with 200 status codes._\n\n### Failure\nAny response code in the `4xx` range should be regarded as an error that can be rectified by the client. `5xx` error codes indicate errors that cannot be corrected by the client.\n\n| **Code** | **Meaning**                                                                                                           |\n|----------|-----------------------------------------------------------------------------------------------------------------------|\n| `400`    | General error. (Body will contain details)                                                                            |\n| `401`    | Attempt to access protected resource without `Authorization` Header.                                                  |\n| `403`    | The `Bearer` or `JWT` does not grant access to the requested resource.                                                |\n| `404`    | Resource not found.                                                                                                   |\n| `405`    | Method not allowed                                                                                                    |\n| `409`    | Conflict. Usually indicated a resource with that ID already exists.                                                   |\n| `422`    | Unprocessable Entity. The body was not valid JSON, was empty or contained an object different from what was expected. |\n| `429`    | Too many requests - request rate limit has been reached.                                                              |\n| `500`    | Internal Error. If it occurs repeatedly, contact support.                                                             |\n",
     "contact": {
-      "name": "API Support",
-      "email": "apiteam@humanitec.com"
+      "name": "Humanitec Support",
+      "email": "support@humanitec.com"
     },
     "x-logo": {
       "url": "humanitec-logo.png",
@@ -6581,7 +6581,7 @@
           "public",
           "ActiveResource"
         ],
-        "summary": "Delete Active Resources.",
+        "summary": "Delete Active Resource.",
         "operationId": "deleteActiveResource",
         "parameters": [
           {
@@ -6770,10 +6770,28 @@
           {
             "name": "orgId",
             "in": "path",
-            "description": "The Organization ID.\n\n",
+            "description": "The Organization ID.",
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "dry_run",
+            "in": "query",
+            "description": "Validate the request but do not persist the change.",
+            "example": true,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "check_credential",
+            "in": "query",
+            "description": "Validate that the Account credential authenticates successfully.",
+            "example": true,
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -6797,6 +6815,9 @@
                 }
               }
             }
+          },
+          "204": {
+            "description": "The Resource Account details are valid but were not persisted because dry-run is enabled."
           },
           "400": {
             "description": "One or more request parameters is missing or invalid.\n\n",
@@ -6991,6 +7012,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "dry_run",
+            "in": "query",
+            "description": "Validate the request but do not persist the change.",
+            "example": true,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "check_credential",
+            "in": "query",
+            "description": "Validate that the Account credential authenticates successfully.",
+            "example": true,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -7014,6 +7053,9 @@
               }
             }
           },
+          "204": {
+            "description": "The Resource Account details are valid but were not persisted because dry-run is enabled."
+          },
           "400": {
             "description": "One or more request parameters is missing or invalid.\n\n",
             "content": {
@@ -7036,6 +7078,59 @@
           },
           "500": {
             "description": "Internal application error.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/{orgId}/resources/accounts/{accId}/actions/check": {
+      "post": {
+        "tags": [
+          "public",
+          "ResourceAccount"
+        ],
+        "summary": "Check the credentials of an existing Resource Account",
+        "description": "Check the validity of a Resource Account and return any problems that may cause it to not work as expected.",
+        "operationId": "checkResourceAccount",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "description": "The Organization ID.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accId",
+            "in": "path",
+            "description": "The Resource Account ID.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The updated Account Type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckResourceAccountData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The Resource Account is not valid or could not be validated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12605,6 +12700,24 @@
           "type": "string"
         }
       },
+      "resourceTypePathParam": {
+        "name": "type",
+        "in": "path",
+        "description": "The Resource Type, may include a resource class: {type}.{class}.\n",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "resourceIdPathParam": {
+        "name": "resId",
+        "in": "path",
+        "description": "The Resource ID.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
       "deletedQueryParam": {
         "name": "deleted",
         "in": "query",
@@ -15310,6 +15423,7 @@
           },
           "scaffolding_url": {
             "description": "URL of the scaffolding service.",
+            "nullable": true,
             "type": "string"
           }
         },
@@ -16703,6 +16817,10 @@
             "description": "The Resource Definition Version that this resource was provisioned from.",
             "type": "string"
           },
+          "target_def_version_id": {
+            "description": "The Resource Definition Version pinned to this resource to be provisioned from.",
+            "type": "string"
+          },
           "deploy_id": {
             "description": "The deployment that the resource was last provisioned in.",
             "type": "string"
@@ -17310,7 +17428,6 @@
         "properties": {
           "driver_account": {
             "description": "(Optional) Security account required by the driver.",
-            "nullable": true,
             "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$",
             "type": "string"
           },
@@ -17320,7 +17437,6 @@
           },
           "name": {
             "description": "(Optional) Resource display name",
-            "nullable": true,
             "type": "string"
           },
           "provision": {
@@ -17789,7 +17905,7 @@
               "type": "object"
             }
           },
-          "type": "postgres",
+          "type": "my-org/postgres",
           "use": "direct"
         },
         "properties": {
@@ -17812,8 +17928,9 @@
             "type": "object"
           },
           "type": {
-            "description": "Unique resource type identifier (system-wide, across all organizations).",
-            "type": "string"
+            "description": "Unique resource type identifier (system-wide, across all organizations). It should start with the Humanitec Organization ID followed by \"/\".",
+            "type": "string",
+            "example": "my-org/my-private-type"
           },
           "use": {
             "description": "Kind of dependency between resource of this type and a workload. It should be one of: `direct`, `indirect`, `implicit`.",
@@ -18110,7 +18227,6 @@
           },
           "driver_account": {
             "description": "(Optional) Security account required by the driver.",
-            "nullable": true,
             "pattern": "^[a-z0-9][a-z0-9-]+[a-z0-9]$",
             "type": "string"
           },
@@ -18220,6 +18336,51 @@
           }
         },
         "type": "object"
+      },
+      "CheckResourceAccountField": {
+        "description": "An identity field or property resulting from the account check.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "description",
+          "value"
+        ]
+      },
+      "CheckResourceAccountData": {
+        "description": "The successful check response details.",
+        "type": "object",
+        "properties": {
+          "identity_fields": {
+            "description": "A set of identity fields and properties resulting from the account check.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckResourceAccountField"
+            }
+          },
+          "warnings": {
+            "description": "A list of warnings related to this account.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "identity_fields"
+        ]
       },
       "ControllerResponse": {
         "description": "Controller represents deployment, stateful set etc",
@@ -20017,7 +20178,7 @@
   ],
   "externalDocs": {
     "description": "Find out more about how to use Humanitec in your every-day development work.",
-    "url": "https://docs.humanitec.com"
+    "url": "https://developer.humanitec.com/"
   },
   "x-tagGroups": [
     {

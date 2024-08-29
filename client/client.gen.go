@@ -222,6 +222,9 @@ type ActiveResourceResponse struct {
 	// Status Current resource status: 'pending', 'active', or 'deleting'.
 	Status string `json:"status"`
 
+	// TargetDefVersionId The Resource Definition Version pinned to this resource to be provisioned from.
+	TargetDefVersionId *string `json:"target_def_version_id,omitempty"`
+
 	// Type The Resource Type of the resource
 	Type string `json:"type"`
 
@@ -497,6 +500,22 @@ type BatchItem struct {
 
 	// Type The type of item in the batch
 	Type string `json:"type"`
+}
+
+// CheckResourceAccountData The successful check response details.
+type CheckResourceAccountData struct {
+	// IdentityFields A set of identity fields and properties resulting from the account check.
+	IdentityFields []CheckResourceAccountField `json:"identity_fields"`
+
+	// Warnings A list of warnings related to this account.
+	Warnings *[]string `json:"warnings,omitempty"`
+}
+
+// CheckResourceAccountField An identity field or property resulting from the account check.
+type CheckResourceAccountField struct {
+	Description string `json:"description"`
+	Id          string `json:"id"`
+	Value       string `json:"value"`
 }
 
 // ClusterSecretRequest ClusterSecret represents Kubernetes secret reference.
@@ -1490,7 +1509,7 @@ type OrganizationResponse struct {
 	Name string `json:"name"`
 
 	// ScaffoldingUrl URL of the scaffolding service.
-	ScaffoldingUrl *string `json:"scaffolding_url,omitempty"`
+	ScaffoldingUrl *string `json:"scaffolding_url"`
 
 	// TrialExpiresAt Timestamp the trial expires at.
 	TrialExpiresAt *time.Time `json:"trial_expires_at"`
@@ -1499,13 +1518,13 @@ type OrganizationResponse struct {
 // PatchResourceDefinitionRequestRequest PatchResourceDefinitionRequest describes a ResourceDefinition change request.
 type PatchResourceDefinitionRequestRequest struct {
 	// DriverAccount (Optional) Security account required by the driver.
-	DriverAccount *string `json:"driver_account"`
+	DriverAccount *string `json:"driver_account,omitempty"`
 
 	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
 	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
 
 	// Name (Optional) Resource display name
-	Name *string `json:"name"`
+	Name *string `json:"name,omitempty"`
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
@@ -2650,7 +2669,7 @@ type UpdateResourceClassRequest struct {
 // UpdateResourceDefinitionRequestRequest UpdateResourceDefinitionRequest describes a ResourceDefinition change request.
 type UpdateResourceDefinitionRequestRequest struct {
 	// DriverAccount (Optional) Security account required by the driver.
-	DriverAccount *string `json:"driver_account"`
+	DriverAccount *string `json:"driver_account,omitempty"`
 
 	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
 	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
@@ -3784,6 +3803,24 @@ type ListPipelinesInOrgParams struct {
 
 	// Metadata Optional filter by pipeline metadata
 	Metadata *ByMetadata `json:"metadata,omitempty"`
+}
+
+// CreateResourceAccountParams defines parameters for CreateResourceAccount.
+type CreateResourceAccountParams struct {
+	// DryRun Validate the request but do not persist the change.
+	DryRun *bool `form:"dry_run,omitempty" json:"dry_run,omitempty"`
+
+	// CheckCredential Validate that the Account credential authenticates successfully.
+	CheckCredential *bool `form:"check_credential,omitempty" json:"check_credential,omitempty"`
+}
+
+// PatchResourceAccountParams defines parameters for PatchResourceAccount.
+type PatchResourceAccountParams struct {
+	// DryRun Validate the request but do not persist the change.
+	DryRun *bool `form:"dry_run,omitempty" json:"dry_run,omitempty"`
+
+	// CheckCredential Validate that the Account credential authenticates successfully.
+	CheckCredential *bool `form:"check_credential,omitempty" json:"check_credential,omitempty"`
 }
 
 // ListResourceDefinitionsParams defines parameters for ListResourceDefinitions.
@@ -5430,9 +5467,9 @@ type ClientInterface interface {
 	ListResourceAccounts(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateResourceAccountWithBody request with any body
-	CreateResourceAccountWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateResourceAccountWithBody(ctx context.Context, orgId string, params *CreateResourceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateResourceAccount(ctx context.Context, orgId string, body CreateResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateResourceAccount(ctx context.Context, orgId string, params *CreateResourceAccountParams, body CreateResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteResourceAccount request
 	DeleteResourceAccount(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5441,9 +5478,12 @@ type ClientInterface interface {
 	GetResourceAccount(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PatchResourceAccountWithBody request with any body
-	PatchResourceAccountWithBody(ctx context.Context, orgId string, accId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchResourceAccountWithBody(ctx context.Context, orgId string, accId string, params *PatchResourceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PatchResourceAccount(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchResourceAccount(ctx context.Context, orgId string, accId string, params *PatchResourceAccountParams, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CheckResourceAccount request
+	CheckResourceAccount(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListResourceClasses request
 	ListResourceClasses(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -8103,8 +8143,8 @@ func (c *Client) ListResourceAccounts(ctx context.Context, orgId string, reqEdit
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateResourceAccountWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateResourceAccountRequestWithBody(c.Server, orgId, contentType, body)
+func (c *Client) CreateResourceAccountWithBody(ctx context.Context, orgId string, params *CreateResourceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateResourceAccountRequestWithBody(c.Server, orgId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -8115,8 +8155,8 @@ func (c *Client) CreateResourceAccountWithBody(ctx context.Context, orgId string
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateResourceAccount(ctx context.Context, orgId string, body CreateResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateResourceAccountRequest(c.Server, orgId, body)
+func (c *Client) CreateResourceAccount(ctx context.Context, orgId string, params *CreateResourceAccountParams, body CreateResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateResourceAccountRequest(c.Server, orgId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -8151,8 +8191,8 @@ func (c *Client) GetResourceAccount(ctx context.Context, orgId string, accId str
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchResourceAccountWithBody(ctx context.Context, orgId string, accId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchResourceAccountRequestWithBody(c.Server, orgId, accId, contentType, body)
+func (c *Client) PatchResourceAccountWithBody(ctx context.Context, orgId string, accId string, params *PatchResourceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchResourceAccountRequestWithBody(c.Server, orgId, accId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -8163,8 +8203,20 @@ func (c *Client) PatchResourceAccountWithBody(ctx context.Context, orgId string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchResourceAccount(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchResourceAccountRequest(c.Server, orgId, accId, body)
+func (c *Client) PatchResourceAccount(ctx context.Context, orgId string, accId string, params *PatchResourceAccountParams, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchResourceAccountRequest(c.Server, orgId, accId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CheckResourceAccount(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCheckResourceAccountRequest(c.Server, orgId, accId)
 	if err != nil {
 		return nil, err
 	}
@@ -18066,18 +18118,18 @@ func NewListResourceAccountsRequest(server string, orgId string) (*http.Request,
 }
 
 // NewCreateResourceAccountRequest calls the generic CreateResourceAccount builder with application/json body
-func NewCreateResourceAccountRequest(server string, orgId string, body CreateResourceAccountJSONRequestBody) (*http.Request, error) {
+func NewCreateResourceAccountRequest(server string, orgId string, params *CreateResourceAccountParams, body CreateResourceAccountJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateResourceAccountRequestWithBody(server, orgId, "application/json", bodyReader)
+	return NewCreateResourceAccountRequestWithBody(server, orgId, params, "application/json", bodyReader)
 }
 
 // NewCreateResourceAccountRequestWithBody generates requests for CreateResourceAccount with any type of body
-func NewCreateResourceAccountRequestWithBody(server string, orgId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateResourceAccountRequestWithBody(server string, orgId string, params *CreateResourceAccountParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18100,6 +18152,44 @@ func NewCreateResourceAccountRequestWithBody(server string, orgId string, conten
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "dry_run", runtime.ParamLocationQuery, *params.DryRun); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.CheckCredential != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "check_credential", runtime.ParamLocationQuery, *params.CheckCredential); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
@@ -18195,18 +18285,18 @@ func NewGetResourceAccountRequest(server string, orgId string, accId string) (*h
 }
 
 // NewPatchResourceAccountRequest calls the generic PatchResourceAccount builder with application/json body
-func NewPatchResourceAccountRequest(server string, orgId string, accId string, body PatchResourceAccountJSONRequestBody) (*http.Request, error) {
+func NewPatchResourceAccountRequest(server string, orgId string, accId string, params *PatchResourceAccountParams, body PatchResourceAccountJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPatchResourceAccountRequestWithBody(server, orgId, accId, "application/json", bodyReader)
+	return NewPatchResourceAccountRequestWithBody(server, orgId, accId, params, "application/json", bodyReader)
 }
 
 // NewPatchResourceAccountRequestWithBody generates requests for PatchResourceAccount with any type of body
-func NewPatchResourceAccountRequestWithBody(server string, orgId string, accId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPatchResourceAccountRequestWithBody(server string, orgId string, accId string, params *PatchResourceAccountParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18238,12 +18328,91 @@ func NewPatchResourceAccountRequestWithBody(server string, orgId string, accId s
 		return nil, err
 	}
 
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "dry_run", runtime.ParamLocationQuery, *params.DryRun); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.CheckCredential != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "check_credential", runtime.ParamLocationQuery, *params.CheckCredential); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
 	req, err := http.NewRequest("PATCH", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCheckResourceAccountRequest generates requests for CheckResourceAccount
+func NewCheckResourceAccountRequest(server string, orgId string, accId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "accId", runtime.ParamLocationPath, accId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/resources/accounts/%s/actions/check", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -21313,9 +21482,9 @@ type ClientWithResponsesInterface interface {
 	ListResourceAccountsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceAccountsResponse, error)
 
 	// CreateResourceAccountWithBodyWithResponse request with any body
-	CreateResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceAccountResponse, error)
+	CreateResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, params *CreateResourceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceAccountResponse, error)
 
-	CreateResourceAccountWithResponse(ctx context.Context, orgId string, body CreateResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceAccountResponse, error)
+	CreateResourceAccountWithResponse(ctx context.Context, orgId string, params *CreateResourceAccountParams, body CreateResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceAccountResponse, error)
 
 	// DeleteResourceAccountWithResponse request
 	DeleteResourceAccountWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*DeleteResourceAccountResponse, error)
@@ -21324,9 +21493,12 @@ type ClientWithResponsesInterface interface {
 	GetResourceAccountWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*GetResourceAccountResponse, error)
 
 	// PatchResourceAccountWithBodyWithResponse request with any body
-	PatchResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, accId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error)
+	PatchResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, accId string, params *PatchResourceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error)
 
-	PatchResourceAccountWithResponse(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error)
+	PatchResourceAccountWithResponse(ctx context.Context, orgId string, accId string, params *PatchResourceAccountParams, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error)
+
+	// CheckResourceAccountWithResponse request
+	CheckResourceAccountWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*CheckResourceAccountResponse, error)
 
 	// ListResourceClassesWithResponse request
 	ListResourceClassesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceClassesResponse, error)
@@ -25214,6 +25386,29 @@ func (r PatchResourceAccountResponse) StatusCode() int {
 	return 0
 }
 
+type CheckResourceAccountResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CheckResourceAccountData
+	JSON400      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CheckResourceAccountResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CheckResourceAccountResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListResourceClassesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -28122,16 +28317,16 @@ func (c *ClientWithResponses) ListResourceAccountsWithResponse(ctx context.Conte
 }
 
 // CreateResourceAccountWithBodyWithResponse request with arbitrary body returning *CreateResourceAccountResponse
-func (c *ClientWithResponses) CreateResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceAccountResponse, error) {
-	rsp, err := c.CreateResourceAccountWithBody(ctx, orgId, contentType, body, reqEditors...)
+func (c *ClientWithResponses) CreateResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, params *CreateResourceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceAccountResponse, error) {
+	rsp, err := c.CreateResourceAccountWithBody(ctx, orgId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseCreateResourceAccountResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateResourceAccountWithResponse(ctx context.Context, orgId string, body CreateResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceAccountResponse, error) {
-	rsp, err := c.CreateResourceAccount(ctx, orgId, body, reqEditors...)
+func (c *ClientWithResponses) CreateResourceAccountWithResponse(ctx context.Context, orgId string, params *CreateResourceAccountParams, body CreateResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceAccountResponse, error) {
+	rsp, err := c.CreateResourceAccount(ctx, orgId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -28157,20 +28352,29 @@ func (c *ClientWithResponses) GetResourceAccountWithResponse(ctx context.Context
 }
 
 // PatchResourceAccountWithBodyWithResponse request with arbitrary body returning *PatchResourceAccountResponse
-func (c *ClientWithResponses) PatchResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, accId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error) {
-	rsp, err := c.PatchResourceAccountWithBody(ctx, orgId, accId, contentType, body, reqEditors...)
+func (c *ClientWithResponses) PatchResourceAccountWithBodyWithResponse(ctx context.Context, orgId string, accId string, params *PatchResourceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error) {
+	rsp, err := c.PatchResourceAccountWithBody(ctx, orgId, accId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParsePatchResourceAccountResponse(rsp)
 }
 
-func (c *ClientWithResponses) PatchResourceAccountWithResponse(ctx context.Context, orgId string, accId string, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error) {
-	rsp, err := c.PatchResourceAccount(ctx, orgId, accId, body, reqEditors...)
+func (c *ClientWithResponses) PatchResourceAccountWithResponse(ctx context.Context, orgId string, accId string, params *PatchResourceAccountParams, body PatchResourceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceAccountResponse, error) {
+	rsp, err := c.PatchResourceAccount(ctx, orgId, accId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParsePatchResourceAccountResponse(rsp)
+}
+
+// CheckResourceAccountWithResponse request returning *CheckResourceAccountResponse
+func (c *ClientWithResponses) CheckResourceAccountWithResponse(ctx context.Context, orgId string, accId string, reqEditors ...RequestEditorFn) (*CheckResourceAccountResponse, error) {
+	rsp, err := c.CheckResourceAccount(ctx, orgId, accId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCheckResourceAccountResponse(rsp)
 }
 
 // ListResourceClassesWithResponse request returning *ListResourceClassesResponse
@@ -34451,6 +34655,39 @@ func ParsePatchResourceAccountResponse(rsp *http.Response) (*PatchResourceAccoun
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCheckResourceAccountResponse parses an HTTP response from a CheckResourceAccountWithResponse call
+func ParseCheckResourceAccountResponse(rsp *http.Response) (*CheckResourceAccountResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CheckResourceAccountResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CheckResourceAccountData
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
