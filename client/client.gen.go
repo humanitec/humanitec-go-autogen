@@ -21,6 +21,13 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for ClusterConnectionCheckResultConditionStatus.
+const (
+	ClusterConnectionCheckResultConditionStatusFalse   ClusterConnectionCheckResultConditionStatus = "False"
+	ClusterConnectionCheckResultConditionStatusTrue    ClusterConnectionCheckResultConditionStatus = "True"
+	ClusterConnectionCheckResultConditionStatusUnknown ClusterConnectionCheckResultConditionStatus = "Unknown"
+)
+
 // Defines values for PipelineApprovalRequestStatus.
 const (
 	Approved  PipelineApprovalRequestStatus = "approved"
@@ -67,11 +74,11 @@ const (
 
 // Defines values for RuntimeInfoStatusClass.
 const (
-	Failure RuntimeInfoStatusClass = "Failure"
-	Stopped RuntimeInfoStatusClass = "Stopped"
-	Success RuntimeInfoStatusClass = "Success"
-	Unknown RuntimeInfoStatusClass = "Unknown"
-	Warning RuntimeInfoStatusClass = "Warning"
+	RuntimeInfoStatusClassFailure RuntimeInfoStatusClass = "Failure"
+	RuntimeInfoStatusClassStopped RuntimeInfoStatusClass = "Stopped"
+	RuntimeInfoStatusClassSuccess RuntimeInfoStatusClass = "Success"
+	RuntimeInfoStatusClassUnknown RuntimeInfoStatusClass = "Unknown"
+	RuntimeInfoStatusClassWarning RuntimeInfoStatusClass = "Warning"
 )
 
 // Defines values for ScoreHumanitecExtensionsDeploySuccess.
@@ -517,6 +524,72 @@ type CheckResourceAccountField struct {
 	Id          string `json:"id"`
 	Value       string `json:"value"`
 }
+
+// ClusterConnectionCheckRequest Detailed needed to test a Kubernetes cluster connection
+type ClusterConnectionCheckRequest struct {
+	// AppId The application Id to test
+	AppId string `json:"app_id"`
+
+	// EnvId The environment Id to test
+	EnvId string `json:"env_id"`
+
+	// EnvType The environment type to test
+	EnvType string `json:"env_type"`
+}
+
+// ClusterConnectionCheckResourceSummary defines model for ClusterConnectionCheckResourceSummary.
+type ClusterConnectionCheckResourceSummary struct {
+	// Class The resource class that was provisioned
+	Class string `json:"class"`
+
+	// DefId The resource definition that was used to provision the resource
+	DefId string `json:"def_id"`
+
+	// DefVersionId The resource definition version that was used to provision the resource
+	DefVersionId string `json:"def_version_id"`
+
+	// DependsOn The list of globally unique resource identifiers that must be provisioned before this resource
+	DependsOn []string `json:"depends_on"`
+
+	// DriverType The driver type used by the resource definition, some driver types cannot be checked.
+	DriverType string `json:"driver_type"`
+
+	// GuResId The globally unique resource identifier for the resource
+	GuResId string `json:"gu_res_id"`
+
+	// ResId The resource id that was provisioned
+	ResId string `json:"res_id"`
+
+	// Type The resource type that was provisioned
+	Type string `json:"type"`
+}
+
+// ClusterConnectionCheckResult The result of testing the Kubernetes cluster connection
+type ClusterConnectionCheckResult struct {
+	// Conditions A list of success or failure conditions contributing to the result
+	Conditions []ClusterConnectionCheckResultCondition `json:"conditions"`
+
+	// ResourceSummaries A list of resources provisioned for the test
+	ResourceSummaries []ClusterConnectionCheckResourceSummary `json:"resource_summaries"`
+
+	// Success Whether the test completed successfully
+	Success bool `json:"success"`
+}
+
+// ClusterConnectionCheckResultCondition A condition associated with a test result. The condition
+type ClusterConnectionCheckResultCondition struct {
+	// Message A message explaining the cause of this condition.
+	Message string `json:"message"`
+
+	// Status The status of the condition. True is the nominal value, False contributes to a failed result, Unknown is  rare but indicates that a retry may be necessary or the condition could not be checked.
+	Status ClusterConnectionCheckResultConditionStatus `json:"status"`
+
+	// Type The enum-name for the condition.
+	Type string `json:"type"`
+}
+
+// ClusterConnectionCheckResultConditionStatus The status of the condition. True is the nominal value, False contributes to a failed result, Unknown is  rare but indicates that a retry may be necessary or the condition could not be checked.
+type ClusterConnectionCheckResultConditionStatus string
 
 // ClusterSecretRequest ClusterSecret represents Kubernetes secret reference.
 type ClusterSecretRequest struct {
@@ -1526,6 +1599,9 @@ type PatchResourceDefinitionRequestRequest struct {
 	// Name (Optional) Resource display name
 	Name *string `json:"name,omitempty"`
 
+	// Proposed (Optional) If true, the new definition version should be created as "proposed" version (not active).
+	Proposed *bool `json:"proposed,omitempty"`
+
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
 }
@@ -2225,6 +2301,12 @@ type ResourceDefinitionVersion struct {
 	// Action The action that generated the Resource Definition Version. Might be one of `created`, `updated` or `deleted`.
 	Action string `json:"action"`
 
+	// Active Specifies if the version is active (i.e. is being used if target version is not specified for a resource or a context).
+	Active bool `json:"active"`
+
+	// Archived Specifies if the version is archived (i.e. can't be used for a new resource).
+	Archived bool `json:"archived"`
+
 	// CreatedAt The timestamp of when this record has been created.
 	CreatedAt time.Time `json:"created_at"`
 
@@ -2251,6 +2333,9 @@ type ResourceDefinitionVersion struct {
 
 	// OrgId The Organization ID.
 	OrgId string `json:"org_id"`
+
+	// Proposed Specifies if the version is proposed (i.e. is newer than the active version).
+	Proposed bool `json:"proposed"`
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource.
 	Provision map[string]ProvisionDependenciesResponse `json:"provision"`
@@ -2679,6 +2764,9 @@ type UpdateResourceDefinitionRequestRequest struct {
 
 	// Name The display name.
 	Name string `json:"name"`
+
+	// Proposed (Optional) If true, the new definition version should be created as "proposed" version (not active).
+	Proposed *bool `json:"proposed,omitempty"`
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
@@ -4123,6 +4211,9 @@ type CreateResourceClassJSONRequestBody = ResourceClassRequest
 
 // UpdateResourceClassJSONRequestBody defines body for UpdateResourceClass for application/json ContentType.
 type UpdateResourceClassJSONRequestBody = UpdateResourceClassRequest
+
+// CheckClusterConnectivityJSONRequestBody defines body for CheckClusterConnectivity for application/json ContentType.
+type CheckClusterConnectivityJSONRequestBody = ClusterConnectionCheckRequest
 
 // PostOrgsOrgIdSecretstoresJSONRequestBody defines body for PostOrgsOrgIdSecretstores for application/json ContentType.
 type PostOrgsOrgIdSecretstoresJSONRequestBody = CreateSecretStorePayloadRequest
@@ -5571,6 +5662,11 @@ type ClientInterface interface {
 	UpdateResourceClassWithBody(ctx context.Context, orgId string, typeId string, classId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UpdateResourceClass(ctx context.Context, orgId string, typeId string, classId string, body UpdateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CheckClusterConnectivityWithBody request with any body
+	CheckClusterConnectivityWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CheckClusterConnectivity(ctx context.Context, orgId OrgIdPathParam, body CheckClusterConnectivityJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdSecretstores request
 	GetOrgsOrgIdSecretstores(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -8601,6 +8697,30 @@ func (c *Client) UpdateResourceClassWithBody(ctx context.Context, orgId string, 
 
 func (c *Client) UpdateResourceClass(ctx context.Context, orgId string, typeId string, classId string, body UpdateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateResourceClassRequest(c.Server, orgId, typeId, classId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CheckClusterConnectivityWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCheckClusterConnectivityRequestWithBody(c.Server, orgId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CheckClusterConnectivity(ctx context.Context, orgId OrgIdPathParam, body CheckClusterConnectivityJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCheckClusterConnectivityRequest(c.Server, orgId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -19708,6 +19828,53 @@ func NewUpdateResourceClassRequestWithBody(server string, orgId string, typeId s
 	return req, nil
 }
 
+// NewCheckClusterConnectivityRequest calls the generic CheckClusterConnectivity builder with application/json body
+func NewCheckClusterConnectivityRequest(server string, orgId OrgIdPathParam, body CheckClusterConnectivityJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCheckClusterConnectivityRequestWithBody(server, orgId, "application/json", bodyReader)
+}
+
+// NewCheckClusterConnectivityRequestWithBody generates requests for CheckClusterConnectivity with any type of body
+func NewCheckClusterConnectivityRequestWithBody(server string, orgId OrgIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/runtime/actions/check-connectivity", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetOrgsOrgIdSecretstoresRequest generates requests for GetOrgsOrgIdSecretstores
 func NewGetOrgsOrgIdSecretstoresRequest(server string, orgId string) (*http.Request, error) {
 	var err error
@@ -21586,6 +21753,11 @@ type ClientWithResponsesInterface interface {
 	UpdateResourceClassWithBodyWithResponse(ctx context.Context, orgId string, typeId string, classId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateResourceClassResponse, error)
 
 	UpdateResourceClassWithResponse(ctx context.Context, orgId string, typeId string, classId string, body UpdateResourceClassJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateResourceClassResponse, error)
+
+	// CheckClusterConnectivityWithBodyWithResponse request with any body
+	CheckClusterConnectivityWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CheckClusterConnectivityResponse, error)
+
+	CheckClusterConnectivityWithResponse(ctx context.Context, orgId OrgIdPathParam, body CheckClusterConnectivityJSONRequestBody, reqEditors ...RequestEditorFn) (*CheckClusterConnectivityResponse, error)
 
 	// GetOrgsOrgIdSecretstoresWithResponse request
 	GetOrgsOrgIdSecretstoresWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdSecretstoresResponse, error)
@@ -25957,6 +26129,28 @@ func (r UpdateResourceClassResponse) StatusCode() int {
 	return 0
 }
 
+type CheckClusterConnectivityResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ClusterConnectionCheckResult
+}
+
+// Status returns HTTPResponse.Status
+func (r CheckClusterConnectivityResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CheckClusterConnectivityResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetOrgsOrgIdSecretstoresResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -28654,6 +28848,23 @@ func (c *ClientWithResponses) UpdateResourceClassWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseUpdateResourceClassResponse(rsp)
+}
+
+// CheckClusterConnectivityWithBodyWithResponse request with arbitrary body returning *CheckClusterConnectivityResponse
+func (c *ClientWithResponses) CheckClusterConnectivityWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CheckClusterConnectivityResponse, error) {
+	rsp, err := c.CheckClusterConnectivityWithBody(ctx, orgId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCheckClusterConnectivityResponse(rsp)
+}
+
+func (c *ClientWithResponses) CheckClusterConnectivityWithResponse(ctx context.Context, orgId OrgIdPathParam, body CheckClusterConnectivityJSONRequestBody, reqEditors ...RequestEditorFn) (*CheckClusterConnectivityResponse, error) {
+	rsp, err := c.CheckClusterConnectivity(ctx, orgId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCheckClusterConnectivityResponse(rsp)
 }
 
 // GetOrgsOrgIdSecretstoresWithResponse request returning *GetOrgsOrgIdSecretstoresResponse
@@ -35580,6 +35791,32 @@ func ParseUpdateResourceClassResponse(rsp *http.Response) (*UpdateResourceClassR
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCheckClusterConnectivityResponse parses an HTTP response from a CheckClusterConnectivityWithResponse call
+func ParseCheckClusterConnectivityResponse(rsp *http.Response) (*CheckClusterConnectivityResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CheckClusterConnectivityResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ClusterConnectionCheckResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 
