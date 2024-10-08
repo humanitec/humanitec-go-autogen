@@ -2247,6 +2247,9 @@ type ResourceDefinitionChangeResponse struct {
 //
 // The schema for the `driver_inputs` is defined by the `input_schema` property on the DriverDefinition identified by the `driver_type` property.
 type ResourceDefinitionResponse struct {
+	// ActiveVersionId The active Resource Definition Version ID.
+	ActiveVersionId string `json:"active_version_id"`
+
 	// CreatedAt The timestamp of when this record has been created.
 	CreatedAt time.Time `json:"created_at"`
 
@@ -2255,9 +2258,6 @@ type ResourceDefinitionResponse struct {
 
 	// Criteria (Optional) The criteria to use when looking for a Resource Definition during the deployment.
 	Criteria *[]MatchingCriteriaResponse `json:"criteria,omitempty"`
-
-	// CurrentVersionId The Resource Definition Version ID.
-	CurrentVersionId string `json:"current_version_id"`
 
 	// DriverAccount (Optional) Security account required by the driver.
 	DriverAccount *string `json:"driver_account,omitempty"`
