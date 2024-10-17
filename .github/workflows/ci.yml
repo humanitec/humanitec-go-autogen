@@ -7,15 +7,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: [ '1.21' ]
     steps:
       - uses: actions/checkout@v4
       - name: Setup go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version-file: go.mod
+          check-latest: true
+          cache: true
       - name: Run tests
         run: |
           make test
