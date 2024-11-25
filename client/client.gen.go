@@ -1434,6 +1434,9 @@ type Key struct {
 	// Fingerprint The Key fingerprint (sha256 hash of the DER representation of the key).
 	Fingerprint string `json:"fingerprint"`
 
+	// IsAuthorized If this key has been authorized to be used to validate requests coming from an Agent.
+	IsAuthorized bool `json:"is_authorized"`
+
 	// PublicKey A pcks8 RSA ublic key PEM encoded.
 	PublicKey string `json:"public_key"`
 }
