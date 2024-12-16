@@ -1434,6 +1434,9 @@ type Key struct {
 	// Fingerprint The Key fingerprint (sha256 hash of the DER representation of the key).
 	Fingerprint string `json:"fingerprint"`
 
+	// IsAuthorized If this key has been authorized to be used to validate requests coming from an Agent.
+	IsAuthorized bool `json:"is_authorized"`
+
 	// PublicKey A pcks8 RSA ublic key PEM encoded.
 	PublicKey string `json:"public_key"`
 }
@@ -2353,6 +2356,21 @@ type ResourceDefinitionVersion struct {
 	Provision map[string]ProvisionDependenciesResponse `json:"provision"`
 
 	// Type The Resource Type.
+	Type string `json:"type"`
+}
+
+// ResourceInputsResponse A payload needed to generate a resource graph.
+type ResourceInputsResponse struct {
+	// Class The Resource class.
+	Class *string `json:"class,omitempty"`
+
+	// Id The Resource ID in the Deployment Set.
+	Id string `json:"id"`
+
+	// Resource The Resource input parameters specified in the deployment set.
+	Resource *map[string]interface{} `json:"resource,omitempty"`
+
+	// Type The Resource type.
 	Type string `json:"type"`
 }
 
@@ -5347,6 +5365,9 @@ type ClientInterface interface {
 	// GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId request
 	GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetSetResourceInputs request
+	GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListUserRolesInApp request
 	ListUserRolesInApp(ctx context.Context, orgId OrgIdPathParam, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -7246,6 +7267,18 @@ func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgI
 
 func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest(c.Server, orgId, appId, setId, sourceSetId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSetResourceInputsRequest(c.Server, orgId, appId, setId)
 	if err != nil {
 		return nil, err
 	}
@@ -14855,6 +14888,54 @@ func NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest(server string, orgI
 	return req, nil
 }
 
+// NewGetSetResourceInputsRequest generates requests for GetSetResourceInputs
+func NewGetSetResourceInputsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "setId", runtime.ParamLocationPath, setId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/sets/%s/resources", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListUserRolesInAppRequest generates requests for ListUserRolesInApp
 func NewListUserRolesInAppRequest(server string, orgId OrgIdPathParam, appId string) (*http.Request, error) {
 	var err error
@@ -21695,6 +21776,9 @@ type ClientWithResponsesInterface interface {
 	// GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse request
 	GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse, error)
 
+	// GetSetResourceInputsWithResponse request
+	GetSetResourceInputsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, reqEditors ...RequestEditorFn) (*GetSetResourceInputsResponse, error)
+
 	// ListUserRolesInAppWithResponse request
 	ListUserRolesInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, reqEditors ...RequestEditorFn) (*ListUserRolesInAppResponse, error)
 
@@ -24253,6 +24337,30 @@ func (r GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSetResourceInputsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]ResourceInputsResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *string
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSetResourceInputsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSetResourceInputsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -28129,6 +28237,15 @@ func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithR
 		return nil, err
 	}
 	return ParseGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse(rsp)
+}
+
+// GetSetResourceInputsWithResponse request returning *GetSetResourceInputsResponse
+func (c *ClientWithResponses) GetSetResourceInputsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, reqEditors ...RequestEditorFn) (*GetSetResourceInputsResponse, error) {
+	rsp, err := c.GetSetResourceInputs(ctx, orgId, appId, setId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSetResourceInputsResponse(rsp)
 }
 
 // ListUserRolesInAppWithResponse request returning *ListUserRolesInAppResponse
@@ -32813,6 +32930,46 @@ func ParseGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse(rsp *http.Respon
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSetResourceInputsResponse parses an HTTP response from a GetSetResourceInputsWithResponse call
+func ParseGetSetResourceInputsResponse(rsp *http.Response) (*GetSetResourceInputsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSetResourceInputsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ResourceInputsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest string
