@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Humanitec API",
-    "version": "0.26.23",
+    "version": "0.27.3",
     "description": "# Introduction\nThe *Humanitec API* allows you to automate and integrate Humanitec into your developer and operational workflows.\nThe API is a REST based API. It is based around a set of concepts:\n\n* Core\n* External Resources\n* Sets and Deltas\n\n## Authentication\n\nAlmost all requests made to the Humanitec API require Authentication. See our [Developer Docs on API Authentication](https://developer.humanitec.com/platform-orchestrator/reference/api-references/#authentication) for instructions.\n\n## Content Types\nThe Humanitec API, unless explicitly specified, only accepts content types of `application/json` and will always return valid `application/json` or an empty response.\n\n## Response Codes\n### Success\nAny response code in the `2xx` range should be regarded as success.\n\n| **Code** | **Meaning**                         |\n|----------|-------------------------------------|\n| `200`    | Success                             |\n| `201`    | Success, a new resource was created |\n| `204`    | Success, but no content in response |\n\n_Note: We plan to simplify the interface by replacing 201 with 200 status codes._\n\n### Failure\nAny response code in the `4xx` range should be regarded as an error that can be rectified by the client. `5xx` error codes indicate errors that cannot be corrected by the client.\n\n| **Code** | **Meaning**                                                                                                           |\n|----------|-----------------------------------------------------------------------------------------------------------------------|\n| `400`    | General error. (Body will contain details)                                                                            |\n| `401`    | Attempt to access protected resource without `Authorization` Header.                                                  |\n| `403`    | The `Bearer` or `JWT` does not grant access to the requested resource.                                                |\n| `404`    | Resource not found.                                                                                                   |\n| `405`    | Method not allowed                                                                                                    |\n| `409`    | Conflict. Usually indicated a resource with that ID already exists.                                                   |\n| `422`    | Unprocessable Entity. The body was not valid JSON, was empty or contained an object different from what was expected. |\n| `429`    | Too many requests - request rate limit has been reached.                                                              |\n| `500`    | Internal Error. If it occurs repeatedly, contact support.                                                             |\n",
     "contact": {
       "name": "Humanitec Support",
@@ -2898,6 +2898,7 @@
           "Delta"
         ],
         "summary": "List Deltas in an Application",
+        "operationId": "listDeltas",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
@@ -2945,6 +2946,7 @@
           "Delta"
         ],
         "summary": "Create a new Delta",
+        "operationId": "createDelta",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
@@ -3066,6 +3068,7 @@
           "Delta"
         ],
         "summary": "Update an existing Delta",
+        "operationId": "patchDelta",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
@@ -3214,6 +3217,7 @@
           "Delta"
         ],
         "summary": "Mark a Delta as \"archived\"",
+        "operationId": "archiveDelta",
         "description": "Archived Deltas are still accessible but can no longer be updated.",
         "parameters": [
           {
@@ -3278,6 +3282,7 @@
           "Delta"
         ],
         "summary": "Change the Environment of a Delta",
+        "operationId": "changeEnvOfDelta",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
@@ -3341,6 +3346,7 @@
           "Delta"
         ],
         "summary": "Change the name of a Delta",
+        "operationId": "changeNameOfDelta",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
@@ -3403,7 +3409,7 @@
           "public",
           "Set"
         ],
-        "operationId": "getSets",
+        "operationId": "listSets",
         "summary": "Get all Deployment Sets",
         "parameters": [
           {
@@ -3447,6 +3453,7 @@
           "Set"
         ],
         "summary": "Get a Deployment Set",
+        "operationId": "getSet",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
@@ -3508,6 +3515,7 @@
           "Set"
         ],
         "summary": "Apply a Deployment Delta to a Deployment Set",
+        "operationId": "updateSet",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
@@ -3577,6 +3585,76 @@
         }
       }
     },
+    "/orgs/{orgId}/apps/{appId}/sets/{setId}/resources": {
+      "get": {
+        "tags": [
+          "public",
+          "Set"
+        ],
+        "summary": "Get Resource Inputs for the given Deployment Set",
+        "operationId": "getSetResourceInputs",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/orgIdPathParam"
+          },
+          {
+            "$ref": "#/components/parameters/appIdPathParam"
+          },
+          {
+            "name": "setId",
+            "in": "path",
+            "description": "ID of the Deployment Set.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "legacy",
+            "in": "query",
+            "description": "If true, return resource inputs in legacy mode",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource Inputs of the requested Deployment Set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceInputsResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No Deployment Set with ID `setId` found in Application.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid resources in the Deployment Set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orgs/{orgId}/apps/{appId}/sets/{setId}/diff/{sourceSetId}": {
       "get": {
         "tags": [
@@ -3584,6 +3662,7 @@
           "Set"
         ],
         "summary": "Get the difference between 2 Deployment Sets",
+        "operationId": "getDiff",
         "parameters": [
           {
             "$ref": "#/components/parameters/orgIdPathParam"
@@ -4231,6 +4310,132 @@
           },
           "404": {
             "$ref": "#/components/responses/404NotFound"
+          }
+        }
+      }
+    },
+    "/orgs/{orgId}/apps/{appId}/envs/{envId}/logs": {
+      "get": {
+        "tags": [
+          "public",
+          "Logs"
+        ],
+        "summary": "Get container log entries for the environment",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "description": "The Organization ID\n\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "in": "path",
+            "description": "The Application ID\n\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "envId",
+            "in": "path",
+            "description": "The Environment ID\n\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workload_id",
+            "in": "query",
+            "description": "filter by workload ID\n\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "container_id",
+            "in": "query",
+            "description": "filter by container ID\n\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deployment_id",
+            "in": "query",
+            "description": "filter by deployment ID\n\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timestamp_from",
+            "in": "query",
+            "description": "filter by min time, RFC 3339 format, e.g. \"2021-10-02T15:01:23.045Z\"\n\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timestamp_to",
+            "in": "query",
+            "description": "filter by max time, RFC 3330 format, e.g. \"2021-10-02T15:01:23.045Z\"\n\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "limit log entries returned\n\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "asc",
+            "in": "query",
+            "description": "if true request results in ascending order, default order is descending\n\n",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "invert",
+            "in": "query",
+            "description": "if true reverse the order of the log entries in the output\n\n",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of log entries returned.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OutputEntryResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.\n\n"
+          },
+          "404": {
+            "description": "The environment is not found.\n\n"
+          },
+          "429": {
+            "description": "Too Many Requests.\n\n"
           }
         }
       }
@@ -6352,6 +6557,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "scheduled_deletion",
+            "in": "query",
+            "description": "If set to `true` or `false`, filters resources scheduled or not scheduled for deletion correspondingly.\n",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -13183,6 +13396,11 @@
             "example": "2022-06-22T09:37:23.523Z",
             "format": "date-time",
             "description": "Time when the Key should be replaced (2 years after its creation)."
+          },
+          "is_authorized": {
+            "type": "boolean",
+            "description": "If this key has been authorized to be used to validate requests coming from an Agent.",
+            "example": true
           }
         },
         "required": [
@@ -13190,7 +13408,8 @@
           "public_key",
           "created_at",
           "created_by",
-          "expired_at"
+          "expired_at",
+          "is_authorized"
         ]
       },
       "KeyCreateBody": {
@@ -13220,6 +13439,10 @@
           "name": {
             "description": "The Human-friendly name for the Application.",
             "type": "string"
+          },
+          "skip_environment_creation": {
+            "description": "If true, no environment will be created with the application.",
+            "type": "boolean"
           }
         },
         "required": [
@@ -15294,6 +15517,43 @@
         ],
         "type": "object"
       },
+      "ResourceInputsResponse": {
+        "description": "A payload needed to generate a resource graph.",
+        "example": {
+          "class": "cloudsql",
+          "id": "shared.postgres",
+          "resource": {
+            "host": "127.0.0.1",
+            "name": "my-database"
+          },
+          "type": "postgres"
+        },
+        "properties": {
+          "id": {
+            "description": "The Resource ID in the Deployment Set.",
+            "type": "string"
+          },
+          "type": {
+            "description": "The Resource type.",
+            "type": "string"
+          },
+          "class": {
+            "description": "The Resource class.",
+            "type": "string"
+          },
+          "resource": {
+            "description": "The Resource input parameters specified in the deployment set.",
+            "additionalProperties": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "type"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "EventBaseRequest": {
         "description": "Properties which identify an event .",
         "properties": {
@@ -15588,6 +15848,34 @@
           "e",
           "kid"
         ]
+      },
+      "OutputEntryResponse": {
+        "description": "A container log entry.",
+        "properties": {
+          "container_id": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "workload_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "payload",
+          "timestamp",
+          "workload_id",
+          "container_id"
+        ],
+        "type": "object"
       },
       "LogoResponse": {
         "properties": {
@@ -16946,6 +17234,10 @@
             "description": "The resource provisioning outputs ('values' only).",
             "type": "object"
           },
+          "scheduled_deletion": {
+            "description": "Deletion is scheduled for this resource.",
+            "type": "boolean"
+          },
           "secret_refs": {
             "additionalProperties": true,
             "description": "Secret references from the resource provisioning output.",
@@ -17071,6 +17363,10 @@
             "description": "The resource provisioning outputs ('values' only).",
             "type": "object"
           },
+          "scheduled_deletion": {
+            "description": "Deletion is scheduled for this resource.",
+            "type": "boolean"
+          },
           "secret_refs": {
             "additionalProperties": true,
             "description": "Secret references from the resource provisioning output.",
@@ -17107,7 +17403,8 @@
           "secret_refs",
           "updated_at",
           "deploy_id",
-          "gu_res_id"
+          "gu_res_id",
+          "scheduled_deletion"
         ],
         "type": "object"
       },
@@ -20605,6 +20902,7 @@
         "Artefact",
         "ArtefactVersion",
         "AuditLogs",
+        "Logs",
         "Deployment",
         "EnvironmentType",
         "Environment",
@@ -20795,6 +21093,11 @@
       "name": "PublicKeys",
       "x-displayName": "Keys",
       "description": "PublicKey stores a Public Key an organization shares with Humanitec.\n<SchemaDefinition schemaRef=\"#/components/schemas/PublicKey\" />\n"
+    },
+    {
+      "name": "Logs",
+      "x-displayName": "Container Logs",
+      "description": "A container log entry.\n<SchemaDefinition schemaRef=\"#/components/schemas/OutputEntryResponse\" />\n"
     },
     {
       "name": "Registry",
