@@ -25,3 +25,4 @@ jobs:
             body: |
               Re-generated the client based on the api schema.
             branch: update-client
+            author: 'HumanitecBot <engine@humanitec.com>'
