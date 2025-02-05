@@ -223,6 +223,9 @@ type ActiveResourceResponse struct {
 	// Resource The resource provisioning outputs ('values' only).
 	Resource map[string]interface{} `json:"resource"`
 
+	// ScheduledDeletion Deletion is scheduled for this resource.
+	ScheduledDeletion bool `json:"scheduled_deletion"`
+
 	// SecretRefs Secret references from the resource provisioning output.
 	SecretRefs map[string]interface{} `json:"secret_refs"`
 
@@ -287,6 +290,9 @@ type ApplicationCreationRequest struct {
 
 	// Name The Human-friendly name for the Application.
 	Name string `json:"name"`
+
+	// SkipEnvironmentCreation If true, no environment will be created with the application.
+	SkipEnvironmentCreation *bool `json:"skip_environment_creation,omitempty"`
 }
 
 // ApplicationResponse An Application is a collection of Workloads that work together. When deployed, all Workloads in an Application are deployed to the same namespace.
@@ -1434,6 +1440,9 @@ type Key struct {
 	// Fingerprint The Key fingerprint (sha256 hash of the DER representation of the key).
 	Fingerprint string `json:"fingerprint"`
 
+	// IsAuthorized If this key has been authorized to be used to validate requests coming from an Agent.
+	IsAuthorized bool `json:"is_authorized"`
+
 	// PublicKey A pcks8 RSA ublic key PEM encoded.
 	PublicKey string `json:"public_key"`
 }
@@ -1598,6 +1607,15 @@ type OrganizationResponse struct {
 
 	// TrialExpiresAt Timestamp the trial expires at.
 	TrialExpiresAt *time.Time `json:"trial_expires_at"`
+}
+
+// OutputEntryResponse A container log entry.
+type OutputEntryResponse struct {
+	ContainerId string `json:"container_id"`
+	Level       string `json:"level"`
+	Payload     string `json:"payload"`
+	Timestamp   string `json:"timestamp"`
+	WorkloadId  string `json:"workload_id"`
 }
 
 // PatchResourceDefinitionRequestRequest PatchResourceDefinitionRequest describes a ResourceDefinition change request.
@@ -2353,6 +2371,21 @@ type ResourceDefinitionVersion struct {
 	Provision map[string]ProvisionDependenciesResponse `json:"provision"`
 
 	// Type The Resource Type.
+	Type string `json:"type"`
+}
+
+// ResourceInputsResponse A payload needed to generate a resource graph.
+type ResourceInputsResponse struct {
+	// Class The Resource class.
+	Class *string `json:"class,omitempty"`
+
+	// Id The Resource ID in the Deployment Set.
+	Id string `json:"id"`
+
+	// Resource The Resource input parameters specified in the deployment set.
+	Resource *map[string]interface{} `json:"resource,omitempty"`
+
+	// Type The Resource type.
 	Type string `json:"type"`
 }
 
@@ -3546,8 +3579,8 @@ type ListPipelineApprovalRequestsParams struct {
 	Status *ByApprovalStatusQueryParam `form:"status,omitempty" json:"status,omitempty"`
 }
 
-// GetOrgsOrgIdAppsAppIdDeltasParams defines parameters for GetOrgsOrgIdAppsAppIdDeltas.
-type GetOrgsOrgIdAppsAppIdDeltasParams struct {
+// ListDeltasParams defines parameters for ListDeltas.
+type ListDeltasParams struct {
 	// Archived If true, return archived Deltas.
 	//
 	Archived *bool `form:"archived,omitempty" json:"archived,omitempty"`
@@ -3557,14 +3590,14 @@ type GetOrgsOrgIdAppsAppIdDeltasParams struct {
 	Env *string `form:"env,omitempty" json:"env,omitempty"`
 }
 
-// PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONBody defines parameters for PatchOrgsOrgIdAppsAppIdDeltasDeltaId.
-type PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONBody = []DeltaRequest
+// PatchDeltaJSONBody defines parameters for PatchDelta.
+type PatchDeltaJSONBody = []DeltaRequest
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONBody defines parameters for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived.
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONBody = bool
+// ArchiveDeltaJSONBody defines parameters for ArchiveDelta.
+type ArchiveDeltaJSONBody = bool
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONBody defines parameters for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName.
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONBody = string
+// ChangeNameOfDeltaJSONBody defines parameters for ChangeNameOfDelta.
+type ChangeNameOfDeltaJSONBody = string
 
 // ListDeploymentsParams defines parameters for ListDeployments.
 type ListDeploymentsParams struct {
@@ -3574,6 +3607,47 @@ type ListDeploymentsParams struct {
 
 // RebaseEnvironmentJSONBody defines parameters for RebaseEnvironment.
 type RebaseEnvironmentJSONBody = string
+
+// GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsParams defines parameters for GetOrgsOrgIdAppsAppIdEnvsEnvIdLogs.
+type GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsParams struct {
+	// WorkloadId filter by workload ID
+	//
+	WorkloadId *string `form:"workload_id,omitempty" json:"workload_id,omitempty"`
+
+	// ContainerId filter by container ID
+	//
+	ContainerId *string `form:"container_id,omitempty" json:"container_id,omitempty"`
+
+	// DeploymentId filter by deployment ID
+	//
+	DeploymentId *string `form:"deployment_id,omitempty" json:"deployment_id,omitempty"`
+
+	// TimestampFrom filter by min time, RFC 3339 format, e.g. "2021-10-02T15:01:23.045Z"
+	//
+	TimestampFrom *string `form:"timestamp_from,omitempty" json:"timestamp_from,omitempty"`
+
+	// TimestampTo filter by max time, RFC 3330 format, e.g. "2021-10-02T15:01:23.045Z"
+	//
+	TimestampTo *string `form:"timestamp_to,omitempty" json:"timestamp_to,omitempty"`
+
+	// Limit limit log entries returned
+	//
+	Limit *string `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Asc if true request results in ascending order, default order is descending
+	//
+	Asc *bool `form:"asc,omitempty" json:"asc,omitempty"`
+
+	// Invert if true reverse the order of the log entries in the output
+	//
+	Invert *bool `form:"invert,omitempty" json:"invert,omitempty"`
+}
+
+// ListActiveResourcesParams defines parameters for ListActiveResources.
+type ListActiveResourcesParams struct {
+	// ScheduledDeletion If set to `true` or `false`, filters resources scheduled or not scheduled for deletion correspondingly.
+	ScheduledDeletion *bool `form:"scheduled_deletion,omitempty" json:"scheduled_deletion,omitempty"`
+}
 
 // QueryResourceGraphJSONBody defines parameters for QueryResourceGraph.
 type QueryResourceGraphJSONBody = []ResourceProvisionRequestRequest
@@ -3760,10 +3834,16 @@ type ListRuntimeParams struct {
 	Id *[]string `form:"id,omitempty" json:"id,omitempty"`
 }
 
-// GetOrgsOrgIdAppsAppIdSetsSetIdParams defines parameters for GetOrgsOrgIdAppsAppIdSetsSetId.
-type GetOrgsOrgIdAppsAppIdSetsSetIdParams struct {
+// GetSetParams defines parameters for GetSet.
+type GetSetParams struct {
 	// Diff ID of the Deployment Set to compared against.
 	Diff *string `form:"diff,omitempty" json:"diff,omitempty"`
+}
+
+// GetSetResourceInputsParams defines parameters for GetSetResourceInputs.
+type GetSetResourceInputsParams struct {
+	// Legacy If true, return resource inputs in legacy mode
+	Legacy *bool `form:"legacy,omitempty" json:"legacy,omitempty"`
 }
 
 // GetOrgsOrgIdAppsAppIdValueSetVersionsParams defines parameters for GetOrgsOrgIdAppsAppIdValueSetVersions.
@@ -4050,23 +4130,23 @@ type CreateKeyJSONRequestBody = KeyCreateBody
 // CreateApplicationJSONRequestBody defines body for CreateApplication for application/json ContentType.
 type CreateApplicationJSONRequestBody = ApplicationCreationRequest
 
-// PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdDeltas for application/json ContentType.
-type PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody = DeltaRequest
+// CreateDeltaJSONRequestBody defines body for CreateDelta for application/json ContentType.
+type CreateDeltaJSONRequestBody = DeltaRequest
 
-// PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody defines body for PatchOrgsOrgIdAppsAppIdDeltasDeltaId for application/json ContentType.
-type PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody = PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONBody
+// PatchDeltaJSONRequestBody defines body for PatchDelta for application/json ContentType.
+type PatchDeltaJSONRequestBody = PatchDeltaJSONBody
 
 // PutDeltaJSONRequestBody defines body for PutDelta for application/json ContentType.
 type PutDeltaJSONRequestBody = DeltaRequest
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived for application/json ContentType.
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody = PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONBody
+// ArchiveDeltaJSONRequestBody defines body for ArchiveDelta for application/json ContentType.
+type ArchiveDeltaJSONRequestBody = ArchiveDeltaJSONBody
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId for application/json ContentType.
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody = EnvironmentID
+// ChangeEnvOfDeltaJSONRequestBody defines body for ChangeEnvOfDelta for application/json ContentType.
+type ChangeEnvOfDeltaJSONRequestBody = EnvironmentID
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody defines body for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName for application/json ContentType.
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody = PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONBody
+// ChangeNameOfDeltaJSONRequestBody defines body for ChangeNameOfDelta for application/json ContentType.
+type ChangeNameOfDeltaJSONRequestBody = ChangeNameOfDeltaJSONBody
 
 // CreateEnvironmentJSONRequestBody defines body for CreateEnvironment for application/json ContentType.
 type CreateEnvironmentJSONRequestBody = EnvironmentDefinitionRequest
@@ -4128,8 +4208,8 @@ type CreatePipelineCriteriaJSONRequestBody = PipelineCriteriaCreateBody
 // CreatePipelineRunJSONRequestBody defines body for CreatePipelineRun for application/json ContentType.
 type CreatePipelineRunJSONRequestBody = PipelineRunCreateBody
 
-// PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdSetsSetId for application/json ContentType.
-type PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody = DeltaRequest
+// UpdateSetJSONRequestBody defines body for UpdateSet for application/json ContentType.
+type UpdateSetJSONRequestBody = DeltaRequest
 
 // CreateUserRoleInAppJSONRequestBody defines body for CreateUserRoleInApp for application/json ContentType.
 type CreateUserRoleInAppJSONRequestBody = UserRoleRequest
@@ -5071,41 +5151,41 @@ type ClientInterface interface {
 	// ListPipelineApprovalRequests request
 	ListPipelineApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdDeltas request
-	GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListDeltas request
+	ListDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOrgsOrgIdAppsAppIdDeltasWithBody request with any body
-	PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateDeltaWithBody request with any body
+	CreateDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body CreateDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDelta request
 	GetDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody request with any body
-	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PatchDeltaWithBody request with any body
+	PatchDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PutDeltaWithBody request with any body
 	PutDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PutDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ArchiveDeltaWithBody request with any body
+	ArchiveDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ArchiveDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ArchiveDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ChangeEnvOfDeltaWithBody request with any body
+	ChangeEnvOfDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ChangeEnvOfDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeEnvOfDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ChangeNameOfDeltaWithBody request with any body
+	ChangeNameOfDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ChangeNameOfDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeNameOfDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListEnvironments request
 	ListEnvironments(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5145,8 +5225,11 @@ type ClientInterface interface {
 
 	RebaseEnvironment(ctx context.Context, orgId string, appId string, envId string, body RebaseEnvironmentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetOrgsOrgIdAppsAppIdEnvsEnvIdLogs request
+	GetOrgsOrgIdAppsAppIdEnvsEnvIdLogs(ctx context.Context, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListActiveResources request
-	ListActiveResources(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListActiveResources(ctx context.Context, orgId string, appId string, envId string, params *ListActiveResourcesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// QueryResourceGraphWithBody request with any body
 	QueryResourceGraphWithBody(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5333,19 +5416,22 @@ type ClientInterface interface {
 	// ListRuntime request
 	ListRuntime(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListRuntimeParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSets request
-	GetSets(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListSets request
+	ListSets(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdSetsSetId request
-	GetOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetSet request
+	GetSet(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOrgsOrgIdAppsAppIdSetsSetIdWithBody request with any body
-	PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateSetWithBody request with any body
+	UpdateSetWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateSet(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body UpdateSetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId request
-	GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetDiff request
+	GetDiff(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSetResourceInputs request
+	GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListUserRolesInApp request
 	ListUserRolesInApp(ctx context.Context, orgId OrgIdPathParam, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6044,8 +6130,8 @@ func (c *Client) ListPipelineApprovalRequests(ctx context.Context, orgId OrgIdPa
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdDeltasRequest(c.Server, orgId, appId, params)
+func (c *Client) ListDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListDeltasParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDeltasRequest(c.Server, orgId, appId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6056,8 +6142,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPat
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody(c.Server, orgId, appId, contentType, body)
+func (c *Client) CreateDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDeltaRequestWithBody(c.Server, orgId, appId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6068,8 +6154,8 @@ func (c *Client) PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx context.Context, orgId
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdDeltas(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdAppsAppIdDeltasRequest(c.Server, orgId, appId, body)
+func (c *Client) CreateDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body CreateDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDeltaRequest(c.Server, orgId, appId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6092,8 +6178,8 @@ func (c *Client) GetDelta(ctx context.Context, orgId OrgIdPathParam, appId AppId
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
+func (c *Client) PatchDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchDeltaRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6104,8 +6190,8 @@ func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequest(c.Server, orgId, appId, deltaId, body)
+func (c *Client) PatchDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchDeltaRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6140,8 +6226,8 @@ func (c *Client) PutDelta(ctx context.Context, orgId OrgIdPathParam, appId AppId
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
+func (c *Client) ArchiveDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewArchiveDeltaRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6152,8 +6238,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx 
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequest(c.Server, orgId, appId, deltaId, body)
+func (c *Client) ArchiveDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ArchiveDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewArchiveDeltaRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6164,8 +6250,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx context.
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
+func (c *Client) ChangeEnvOfDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewChangeEnvOfDeltaRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6176,8 +6262,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx con
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequest(c.Server, orgId, appId, deltaId, body)
+func (c *Client) ChangeEnvOfDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeEnvOfDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewChangeEnvOfDeltaRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6188,8 +6274,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx context.Con
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
+func (c *Client) ChangeNameOfDeltaWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewChangeNameOfDeltaRequestWithBody(c.Server, orgId, appId, deltaId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6200,8 +6286,8 @@ func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequest(c.Server, orgId, appId, deltaId, body)
+func (c *Client) ChangeNameOfDelta(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeNameOfDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewChangeNameOfDeltaRequest(c.Server, orgId, appId, deltaId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6380,8 +6466,20 @@ func (c *Client) RebaseEnvironment(ctx context.Context, orgId string, appId stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListActiveResources(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListActiveResourcesRequest(c.Server, orgId, appId, envId)
+func (c *Client) GetOrgsOrgIdAppsAppIdEnvsEnvIdLogs(ctx context.Context, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrgsOrgIdAppsAppIdEnvsEnvIdLogsRequest(c.Server, orgId, appId, envId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListActiveResources(ctx context.Context, orgId string, appId string, envId string, params *ListActiveResourcesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListActiveResourcesRequest(c.Server, orgId, appId, envId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -7196,8 +7294,8 @@ func (c *Client) ListRuntime(ctx context.Context, orgId OrgIdPathParam, appId Ap
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSets(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetSetsRequest(c.Server, orgId, appId)
+func (c *Client) ListSets(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListSetsRequest(c.Server, orgId, appId)
 	if err != nil {
 		return nil, err
 	}
@@ -7208,8 +7306,8 @@ func (c *Client) GetSets(ctx context.Context, orgId OrgIdPathParam, appId AppIdP
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest(c.Server, orgId, appId, setId, params)
+func (c *Client) GetSet(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSetRequest(c.Server, orgId, appId, setId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -7220,8 +7318,8 @@ func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgId
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody(c.Server, orgId, appId, setId, contentType, body)
+func (c *Client) UpdateSetWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateSetRequestWithBody(c.Server, orgId, appId, setId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7232,8 +7330,8 @@ func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx context.Context, or
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOrgsOrgIdAppsAppIdSetsSetIdRequest(c.Server, orgId, appId, setId, body)
+func (c *Client) UpdateSet(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body UpdateSetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateSetRequest(c.Server, orgId, appId, setId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7244,8 +7342,20 @@ func (c *Client) PostOrgsOrgIdAppsAppIdSetsSetId(ctx context.Context, orgId OrgI
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest(c.Server, orgId, appId, setId, sourceSetId)
+func (c *Client) GetDiff(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDiffRequest(c.Server, orgId, appId, setId, sourceSetId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSetResourceInputsRequest(c.Server, orgId, appId, setId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -9959,8 +10069,8 @@ func NewListPipelineApprovalRequestsRequest(server string, orgId OrgIdPathParam,
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdDeltasRequest generates requests for GetOrgsOrgIdAppsAppIdDeltas
-func NewGetOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams) (*http.Request, error) {
+// NewListDeltasRequest generates requests for ListDeltas
+func NewListDeltasRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListDeltasParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10038,19 +10148,19 @@ func NewGetOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId OrgIdPathParam, 
 	return req, nil
 }
 
-// NewPostOrgsOrgIdAppsAppIdDeltasRequest calls the generic PostOrgsOrgIdAppsAppIdDeltas builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdDeltasRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody) (*http.Request, error) {
+// NewCreateDeltaRequest calls the generic CreateDelta builder with application/json body
+func NewCreateDeltaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, body CreateDeltaJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody(server, orgId, appId, "application/json", bodyReader)
+	return NewCreateDeltaRequestWithBody(server, orgId, appId, "application/json", bodyReader)
 }
 
-// NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdDeltas with any type of body
-func NewPostOrgsOrgIdAppsAppIdDeltasRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateDeltaRequestWithBody generates requests for CreateDelta with any type of body
+func NewCreateDeltaRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10140,19 +10250,19 @@ func NewGetDeltaRequest(server string, orgId OrgIdPathParam, appId AppIdPathPara
 	return req, nil
 }
 
-// NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequest calls the generic PatchOrgsOrgIdAppsAppIdDeltasDeltaId builder with application/json body
-func NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody) (*http.Request, error) {
+// NewPatchDeltaRequest calls the generic PatchDelta builder with application/json body
+func NewPatchDeltaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchDeltaJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody(server, orgId, appId, deltaId, "application/json", bodyReader)
+	return NewPatchDeltaRequestWithBody(server, orgId, appId, deltaId, "application/json", bodyReader)
 }
 
-// NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody generates requests for PatchOrgsOrgIdAppsAppIdDeltasDeltaId with any type of body
-func NewPatchOrgsOrgIdAppsAppIdDeltasDeltaIdRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPatchDeltaRequestWithBody generates requests for PatchDelta with any type of body
+func NewPatchDeltaRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10262,19 +10372,19 @@ func NewPutDeltaRequestWithBody(server string, orgId OrgIdPathParam, appId AppId
 	return req, nil
 }
 
-// NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequest calls the generic PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived builder with application/json body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody) (*http.Request, error) {
+// NewArchiveDeltaRequest calls the generic ArchiveDelta builder with application/json body
+func NewArchiveDeltaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ArchiveDeltaJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody(server, orgId, appId, deltaId, "application/json", bodyReader)
+	return NewArchiveDeltaRequestWithBody(server, orgId, appId, deltaId, "application/json", bodyReader)
 }
 
-// NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody generates requests for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived with any type of body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewArchiveDeltaRequestWithBody generates requests for ArchiveDelta with any type of body
+func NewArchiveDeltaRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10323,19 +10433,19 @@ func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedRequestWithBody(server
 	return req, nil
 }
 
-// NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequest calls the generic PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId builder with application/json body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody) (*http.Request, error) {
+// NewChangeEnvOfDeltaRequest calls the generic ChangeEnvOfDelta builder with application/json body
+func NewChangeEnvOfDeltaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeEnvOfDeltaJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody(server, orgId, appId, deltaId, "application/json", bodyReader)
+	return NewChangeEnvOfDeltaRequestWithBody(server, orgId, appId, deltaId, "application/json", bodyReader)
 }
 
-// NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody generates requests for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId with any type of body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewChangeEnvOfDeltaRequestWithBody generates requests for ChangeEnvOfDelta with any type of body
+func NewChangeEnvOfDeltaRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10384,19 +10494,19 @@ func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdRequestWithBody(server st
 	return req, nil
 }
 
-// NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequest calls the generic PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName builder with application/json body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody) (*http.Request, error) {
+// NewChangeNameOfDeltaRequest calls the generic ChangeNameOfDelta builder with application/json body
+func NewChangeNameOfDeltaRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeNameOfDeltaJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequestWithBody(server, orgId, appId, deltaId, "application/json", bodyReader)
+	return NewChangeNameOfDeltaRequestWithBody(server, orgId, appId, deltaId, "application/json", bodyReader)
 }
 
-// NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequestWithBody generates requests for PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName with any type of body
-func NewPutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewChangeNameOfDeltaRequestWithBody generates requests for ChangeNameOfDelta with any type of body
+func NewChangeNameOfDeltaRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10999,8 +11109,190 @@ func NewRebaseEnvironmentRequestWithBody(server string, orgId string, appId stri
 	return req, nil
 }
 
+// NewGetOrgsOrgIdAppsAppIdEnvsEnvIdLogsRequest generates requests for GetOrgsOrgIdAppsAppIdEnvsEnvIdLogs
+func NewGetOrgsOrgIdAppsAppIdEnvsEnvIdLogsRequest(server string, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "envId", runtime.ParamLocationPath, envId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/envs/%s/logs", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.WorkloadId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "workload_id", runtime.ParamLocationQuery, *params.WorkloadId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ContainerId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "container_id", runtime.ParamLocationQuery, *params.ContainerId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.DeploymentId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "deployment_id", runtime.ParamLocationQuery, *params.DeploymentId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.TimestampFrom != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "timestamp_from", runtime.ParamLocationQuery, *params.TimestampFrom); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.TimestampTo != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "timestamp_to", runtime.ParamLocationQuery, *params.TimestampTo); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Asc != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "asc", runtime.ParamLocationQuery, *params.Asc); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Invert != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "invert", runtime.ParamLocationQuery, *params.Invert); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListActiveResourcesRequest generates requests for ListActiveResources
-func NewListActiveResourcesRequest(server string, orgId string, appId string, envId string) (*http.Request, error) {
+func NewListActiveResourcesRequest(server string, orgId string, appId string, envId string, params *ListActiveResourcesParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11037,6 +11329,28 @@ func NewListActiveResourcesRequest(server string, orgId string, appId string, en
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.ScheduledDeletion != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "scheduled_deletion", runtime.ParamLocationQuery, *params.ScheduledDeletion); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -14628,8 +14942,8 @@ func NewListRuntimeRequest(server string, orgId OrgIdPathParam, appId AppIdPathP
 	return req, nil
 }
 
-// NewGetSetsRequest generates requests for GetSets
-func NewGetSetsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam) (*http.Request, error) {
+// NewListSetsRequest generates requests for ListSets
+func NewListSetsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14669,8 +14983,8 @@ func NewGetSetsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest generates requests for GetOrgsOrgIdAppsAppIdSetsSetId
-func NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams) (*http.Request, error) {
+// NewGetSetRequest generates requests for GetSet
+func NewGetSetRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14739,19 +15053,19 @@ func NewGetOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId OrgIdPathPara
 	return req, nil
 }
 
-// NewPostOrgsOrgIdAppsAppIdSetsSetIdRequest calls the generic PostOrgsOrgIdAppsAppIdSetsSetId builder with application/json body
-func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody) (*http.Request, error) {
+// NewUpdateSetRequest calls the generic UpdateSet builder with application/json body
+func NewUpdateSetRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body UpdateSetJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody(server, orgId, appId, setId, "application/json", bodyReader)
+	return NewUpdateSetRequestWithBody(server, orgId, appId, setId, "application/json", bodyReader)
 }
 
-// NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody generates requests for PostOrgsOrgIdAppsAppIdSetsSetId with any type of body
-func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateSetRequestWithBody generates requests for UpdateSet with any type of body
+func NewUpdateSetRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14800,8 +15114,8 @@ func NewPostOrgsOrgIdAppsAppIdSetsSetIdRequestWithBody(server string, orgId OrgI
 	return req, nil
 }
 
-// NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest generates requests for GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId
-func NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string) (*http.Request, error) {
+// NewGetDiffRequest generates requests for GetDiff
+func NewGetDiffRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14845,6 +15159,76 @@ func NewGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdRequest(server string, orgI
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetSetResourceInputsRequest generates requests for GetSetResourceInputs
+func NewGetSetResourceInputsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "setId", runtime.ParamLocationPath, setId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s/sets/%s/resources", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Legacy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "legacy", runtime.ParamLocationQuery, *params.Legacy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -21419,41 +21803,41 @@ type ClientWithResponsesInterface interface {
 	// ListPipelineApprovalRequestsWithResponse request
 	ListPipelineApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListPipelineApprovalRequestsResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdDeltasWithResponse request
-	GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error)
+	// ListDeltasWithResponse request
+	ListDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListDeltasParams, reqEditors ...RequestEditorFn) (*ListDeltasResponse, error)
 
-	// PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse request with any body
-	PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error)
+	// CreateDeltaWithBodyWithResponse request with any body
+	CreateDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDeltaResponse, error)
 
-	PostOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error)
+	CreateDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body CreateDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDeltaResponse, error)
 
 	// GetDeltaWithResponse request
 	GetDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, reqEditors ...RequestEditorFn) (*GetDeltaResponse, error)
 
-	// PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse request with any body
-	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error)
+	// PatchDeltaWithBodyWithResponse request with any body
+	PatchDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchDeltaResponse, error)
 
-	PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error)
+	PatchDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchDeltaResponse, error)
 
 	// PutDeltaWithBodyWithResponse request with any body
 	PutDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error)
 
 	PutDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*PutDeltaResponse, error)
 
-	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error)
+	// ArchiveDeltaWithBodyWithResponse request with any body
+	ArchiveDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ArchiveDeltaResponse, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error)
+	ArchiveDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ArchiveDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*ArchiveDeltaResponse, error)
 
-	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error)
+	// ChangeEnvOfDeltaWithBodyWithResponse request with any body
+	ChangeEnvOfDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ChangeEnvOfDeltaResponse, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error)
+	ChangeEnvOfDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeEnvOfDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*ChangeEnvOfDeltaResponse, error)
 
-	// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse request with any body
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error)
+	// ChangeNameOfDeltaWithBodyWithResponse request with any body
+	ChangeNameOfDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ChangeNameOfDeltaResponse, error)
 
-	PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error)
+	ChangeNameOfDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeNameOfDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*ChangeNameOfDeltaResponse, error)
 
 	// ListEnvironmentsWithResponse request
 	ListEnvironmentsWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*ListEnvironmentsResponse, error)
@@ -21493,8 +21877,11 @@ type ClientWithResponsesInterface interface {
 
 	RebaseEnvironmentWithResponse(ctx context.Context, orgId string, appId string, envId string, body RebaseEnvironmentJSONRequestBody, reqEditors ...RequestEditorFn) (*RebaseEnvironmentResponse, error)
 
+	// GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsWithResponse request
+	GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsWithResponse(ctx context.Context, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse, error)
+
 	// ListActiveResourcesWithResponse request
-	ListActiveResourcesWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*ListActiveResourcesResponse, error)
+	ListActiveResourcesWithResponse(ctx context.Context, orgId string, appId string, envId string, params *ListActiveResourcesParams, reqEditors ...RequestEditorFn) (*ListActiveResourcesResponse, error)
 
 	// QueryResourceGraphWithBodyWithResponse request with any body
 	QueryResourceGraphWithBodyWithResponse(ctx context.Context, orgId string, appId string, envId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryResourceGraphResponse, error)
@@ -21681,19 +22068,22 @@ type ClientWithResponsesInterface interface {
 	// ListRuntimeWithResponse request
 	ListRuntimeWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListRuntimeParams, reqEditors ...RequestEditorFn) (*ListRuntimeResponse, error)
 
-	// GetSetsWithResponse request
-	GetSetsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*GetSetsResponse, error)
+	// ListSetsWithResponse request
+	ListSetsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*ListSetsResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse request
-	GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
+	// GetSetWithResponse request
+	GetSetWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetParams, reqEditors ...RequestEditorFn) (*GetSetResponse, error)
 
-	// PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse request with any body
-	PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
+	// UpdateSetWithBodyWithResponse request with any body
+	UpdateSetWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateSetResponse, error)
 
-	PostOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error)
+	UpdateSetWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body UpdateSetJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateSetResponse, error)
 
-	// GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse request
-	GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse, error)
+	// GetDiffWithResponse request
+	GetDiffWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetDiffResponse, error)
+
+	// GetSetResourceInputsWithResponse request
+	GetSetResourceInputsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams, reqEditors ...RequestEditorFn) (*GetSetResourceInputsResponse, error)
 
 	// ListUserRolesInAppWithResponse request
 	ListUserRolesInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, reqEditors ...RequestEditorFn) (*ListUserRolesInAppResponse, error)
@@ -22509,14 +22899,14 @@ func (r ListPipelineApprovalRequestsResponse) StatusCode() int {
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdDeltasResponse struct {
+type ListDeltasResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]DeltaResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdDeltasResponse) Status() string {
+func (r ListDeltasResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22524,14 +22914,14 @@ func (r GetOrgsOrgIdAppsAppIdDeltasResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdDeltasResponse) StatusCode() int {
+func (r ListDeltasResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostOrgsOrgIdAppsAppIdDeltasResponse struct {
+type CreateDeltaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
@@ -22539,10 +22929,10 @@ type PostOrgsOrgIdAppsAppIdDeltasResponse struct {
 	}
 	JSON400 *HumanitecErrorResponse
 }
-type PostOrgsOrgIdAppsAppIdDeltas2000 = string
+type CreateDelta2000 = string
 
 // Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdAppsAppIdDeltasResponse) Status() string {
+func (r CreateDeltaResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22550,7 +22940,7 @@ func (r PostOrgsOrgIdAppsAppIdDeltasResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdAppsAppIdDeltasResponse) StatusCode() int {
+func (r CreateDeltaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -22580,7 +22970,7 @@ func (r GetDeltaResponse) StatusCode() int {
 	return 0
 }
 
-type PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse struct {
+type PatchDeltaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeltaResponse
@@ -22589,7 +22979,7 @@ type PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse) Status() string {
+func (r PatchDeltaResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22597,7 +22987,7 @@ func (r PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse) StatusCode() int {
+func (r PatchDeltaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -22627,7 +23017,7 @@ func (r PutDeltaResponse) StatusCode() int {
 	return 0
 }
 
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse struct {
+type ArchiveDeltaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON400      *HumanitecErrorResponse
@@ -22635,7 +23025,7 @@ type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse) Status() string {
+func (r ArchiveDeltaResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22643,14 +23033,14 @@ func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse) Status() str
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse) StatusCode() int {
+func (r ArchiveDeltaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse struct {
+type ChangeEnvOfDeltaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON400      *HumanitecErrorResponse
@@ -22658,7 +23048,7 @@ type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse) Status() string {
+func (r ChangeEnvOfDeltaResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22666,14 +23056,14 @@ func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse) Status() string
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse) StatusCode() int {
+func (r ChangeEnvOfDeltaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse struct {
+type ChangeNameOfDeltaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON400      *HumanitecErrorResponse
@@ -22681,7 +23071,7 @@ type PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse) Status() string {
+func (r ChangeNameOfDeltaResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22689,7 +23079,7 @@ func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse) Status() string 
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse) StatusCode() int {
+func (r ChangeNameOfDeltaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -22922,6 +23312,28 @@ func (r RebaseEnvironmentResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r RebaseEnvironmentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]OutputEntryResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -24164,7 +24576,7 @@ func (r ListRuntimeResponse) StatusCode() int {
 	return 0
 }
 
-type GetSetsResponse struct {
+type ListSetsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]SetResponse
@@ -24172,7 +24584,7 @@ type GetSetsResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSetsResponse) Status() string {
+func (r ListSetsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24180,14 +24592,14 @@ func (r GetSetsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSetsResponse) StatusCode() int {
+func (r ListSetsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdSetsSetIdResponse struct {
+type GetSetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
@@ -24197,7 +24609,7 @@ type GetOrgsOrgIdAppsAppIdSetsSetIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdSetsSetIdResponse) Status() string {
+func (r GetSetResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24205,14 +24617,14 @@ func (r GetOrgsOrgIdAppsAppIdSetsSetIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdSetsSetIdResponse) StatusCode() int {
+func (r GetSetResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostOrgsOrgIdAppsAppIdSetsSetIdResponse struct {
+type UpdateSetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *string
@@ -24221,7 +24633,7 @@ type PostOrgsOrgIdAppsAppIdSetsSetIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r PostOrgsOrgIdAppsAppIdSetsSetIdResponse) Status() string {
+func (r UpdateSetResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24229,14 +24641,14 @@ func (r PostOrgsOrgIdAppsAppIdSetsSetIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostOrgsOrgIdAppsAppIdSetsSetIdResponse) StatusCode() int {
+func (r UpdateSetResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse struct {
+type GetDiffResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *PlainDeltaResponse
@@ -24244,7 +24656,7 @@ type GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse) Status() string {
+func (r GetDiffResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24252,7 +24664,31 @@ func (r GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse) StatusCode() int {
+func (r GetDiffResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSetResourceInputsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]ResourceInputsResponse
+	JSON400      *HumanitecErrorResponse
+	JSON404      *string
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSetResourceInputsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSetResourceInputsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -27249,30 +27685,30 @@ func (c *ClientWithResponses) ListPipelineApprovalRequestsWithResponse(ctx conte
 	return ParseListPipelineApprovalRequestsResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdDeltasWithResponse request returning *GetOrgsOrgIdAppsAppIdDeltasResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *GetOrgsOrgIdAppsAppIdDeltasParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdDeltas(ctx, orgId, appId, params, reqEditors...)
+// ListDeltasWithResponse request returning *ListDeltasResponse
+func (c *ClientWithResponses) ListDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListDeltasParams, reqEditors ...RequestEditorFn) (*ListDeltasResponse, error) {
+	rsp, err := c.ListDeltas(ctx, orgId, appId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdDeltasResponse(rsp)
+	return ParseListDeltasResponse(rsp)
 }
 
-// PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdDeltasResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdDeltasWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error) {
-	rsp, err := c.PostOrgsOrgIdAppsAppIdDeltasWithBody(ctx, orgId, appId, contentType, body, reqEditors...)
+// CreateDeltaWithBodyWithResponse request with arbitrary body returning *CreateDeltaResponse
+func (c *ClientWithResponses) CreateDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDeltaResponse, error) {
+	rsp, err := c.CreateDeltaWithBody(ctx, orgId, appId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdAppsAppIdDeltasResponse(rsp)
+	return ParseCreateDeltaResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdDeltasWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PostOrgsOrgIdAppsAppIdDeltasJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error) {
-	rsp, err := c.PostOrgsOrgIdAppsAppIdDeltas(ctx, orgId, appId, body, reqEditors...)
+func (c *ClientWithResponses) CreateDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body CreateDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDeltaResponse, error) {
+	rsp, err := c.CreateDelta(ctx, orgId, appId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdAppsAppIdDeltasResponse(rsp)
+	return ParseCreateDeltaResponse(rsp)
 }
 
 // GetDeltaWithResponse request returning *GetDeltaResponse
@@ -27284,21 +27720,21 @@ func (c *ClientWithResponses) GetDeltaWithResponse(ctx context.Context, orgId Or
 	return ParseGetDeltaResponse(rsp)
 }
 
-// PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse request with arbitrary body returning *PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse
-func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error) {
-	rsp, err := c.PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
+// PatchDeltaWithBodyWithResponse request with arbitrary body returning *PatchDeltaResponse
+func (c *ClientWithResponses) PatchDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchDeltaResponse, error) {
+	rsp, err := c.PatchDeltaWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse(rsp)
+	return ParsePatchDeltaResponse(rsp)
 }
 
-func (c *ClientWithResponses) PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchOrgsOrgIdAppsAppIdDeltasDeltaIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error) {
-	rsp, err := c.PatchOrgsOrgIdAppsAppIdDeltasDeltaId(ctx, orgId, appId, deltaId, body, reqEditors...)
+func (c *ClientWithResponses) PatchDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PatchDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchDeltaResponse, error) {
+	rsp, err := c.PatchDelta(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse(rsp)
+	return ParsePatchDeltaResponse(rsp)
 }
 
 // PutDeltaWithBodyWithResponse request with arbitrary body returning *PutDeltaResponse
@@ -27318,55 +27754,55 @@ func (c *ClientWithResponses) PutDeltaWithResponse(ctx context.Context, orgId Or
 	return ParsePutDeltaResponse(rsp)
 }
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
+// ArchiveDeltaWithBodyWithResponse request with arbitrary body returning *ArchiveDeltaResponse
+func (c *ClientWithResponses) ArchiveDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ArchiveDeltaResponse, error) {
+	rsp, err := c.ArchiveDeltaWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse(rsp)
+	return ParseArchiveDeltaResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchived(ctx, orgId, appId, deltaId, body, reqEditors...)
+func (c *ClientWithResponses) ArchiveDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ArchiveDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*ArchiveDeltaResponse, error) {
+	rsp, err := c.ArchiveDelta(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse(rsp)
+	return ParseArchiveDeltaResponse(rsp)
 }
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
+// ChangeEnvOfDeltaWithBodyWithResponse request with arbitrary body returning *ChangeEnvOfDeltaResponse
+func (c *ClientWithResponses) ChangeEnvOfDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ChangeEnvOfDeltaResponse, error) {
+	rsp, err := c.ChangeEnvOfDeltaWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse(rsp)
+	return ParseChangeEnvOfDeltaResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvId(ctx, orgId, appId, deltaId, body, reqEditors...)
+func (c *ClientWithResponses) ChangeEnvOfDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeEnvOfDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*ChangeEnvOfDeltaResponse, error) {
+	rsp, err := c.ChangeEnvOfDelta(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse(rsp)
+	return ParseChangeEnvOfDeltaResponse(rsp)
 }
 
-// PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse request with arbitrary body returning *PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
+// ChangeNameOfDeltaWithBodyWithResponse request with arbitrary body returning *ChangeNameOfDeltaResponse
+func (c *ClientWithResponses) ChangeNameOfDeltaWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ChangeNameOfDeltaResponse, error) {
+	rsp, err := c.ChangeNameOfDeltaWithBody(ctx, orgId, appId, deltaId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse(rsp)
+	return ParseChangeNameOfDeltaResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error) {
-	rsp, err := c.PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataName(ctx, orgId, appId, deltaId, body, reqEditors...)
+func (c *ClientWithResponses) ChangeNameOfDeltaWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, deltaId string, body ChangeNameOfDeltaJSONRequestBody, reqEditors ...RequestEditorFn) (*ChangeNameOfDeltaResponse, error) {
+	rsp, err := c.ChangeNameOfDelta(ctx, orgId, appId, deltaId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse(rsp)
+	return ParseChangeNameOfDeltaResponse(rsp)
 }
 
 // ListEnvironmentsWithResponse request returning *ListEnvironmentsResponse
@@ -27491,9 +27927,18 @@ func (c *ClientWithResponses) RebaseEnvironmentWithResponse(ctx context.Context,
 	return ParseRebaseEnvironmentResponse(rsp)
 }
 
+// GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsWithResponse request returning *GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse
+func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsWithResponse(ctx context.Context, orgId string, appId string, envId string, params *GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse, error) {
+	rsp, err := c.GetOrgsOrgIdAppsAppIdEnvsEnvIdLogs(ctx, orgId, appId, envId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse(rsp)
+}
+
 // ListActiveResourcesWithResponse request returning *ListActiveResourcesResponse
-func (c *ClientWithResponses) ListActiveResourcesWithResponse(ctx context.Context, orgId string, appId string, envId string, reqEditors ...RequestEditorFn) (*ListActiveResourcesResponse, error) {
-	rsp, err := c.ListActiveResources(ctx, orgId, appId, envId, reqEditors...)
+func (c *ClientWithResponses) ListActiveResourcesWithResponse(ctx context.Context, orgId string, appId string, envId string, params *ListActiveResourcesParams, reqEditors ...RequestEditorFn) (*ListActiveResourcesResponse, error) {
+	rsp, err := c.ListActiveResources(ctx, orgId, appId, envId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -28087,48 +28532,57 @@ func (c *ClientWithResponses) ListRuntimeWithResponse(ctx context.Context, orgId
 	return ParseListRuntimeResponse(rsp)
 }
 
-// GetSetsWithResponse request returning *GetSetsResponse
-func (c *ClientWithResponses) GetSetsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*GetSetsResponse, error) {
-	rsp, err := c.GetSets(ctx, orgId, appId, reqEditors...)
+// ListSetsWithResponse request returning *ListSetsResponse
+func (c *ClientWithResponses) ListSetsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, reqEditors ...RequestEditorFn) (*ListSetsResponse, error) {
+	rsp, err := c.ListSets(ctx, orgId, appId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSetsResponse(rsp)
+	return ParseListSetsResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse request returning *GetOrgsOrgIdAppsAppIdSetsSetIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetOrgsOrgIdAppsAppIdSetsSetIdParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdSetsSetId(ctx, orgId, appId, setId, params, reqEditors...)
+// GetSetWithResponse request returning *GetSetResponse
+func (c *ClientWithResponses) GetSetWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetParams, reqEditors ...RequestEditorFn) (*GetSetResponse, error) {
+	rsp, err := c.GetSet(ctx, orgId, appId, setId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdSetsSetIdResponse(rsp)
+	return ParseGetSetResponse(rsp)
 }
 
-// PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse request with arbitrary body returning *PostOrgsOrgIdAppsAppIdSetsSetIdResponse
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdSetsSetIdWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
-	rsp, err := c.PostOrgsOrgIdAppsAppIdSetsSetIdWithBody(ctx, orgId, appId, setId, contentType, body, reqEditors...)
+// UpdateSetWithBodyWithResponse request with arbitrary body returning *UpdateSetResponse
+func (c *ClientWithResponses) UpdateSetWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateSetResponse, error) {
+	rsp, err := c.UpdateSetWithBody(ctx, orgId, appId, setId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdAppsAppIdSetsSetIdResponse(rsp)
+	return ParseUpdateSetResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostOrgsOrgIdAppsAppIdSetsSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body PostOrgsOrgIdAppsAppIdSetsSetIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
-	rsp, err := c.PostOrgsOrgIdAppsAppIdSetsSetId(ctx, orgId, appId, setId, body, reqEditors...)
+func (c *ClientWithResponses) UpdateSetWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, body UpdateSetJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateSetResponse, error) {
+	rsp, err := c.UpdateSet(ctx, orgId, appId, setId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostOrgsOrgIdAppsAppIdSetsSetIdResponse(rsp)
+	return ParseUpdateSetResponse(rsp)
 }
 
-// GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse request returning *GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse
-func (c *ClientWithResponses) GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse, error) {
-	rsp, err := c.GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetId(ctx, orgId, appId, setId, sourceSetId, reqEditors...)
+// GetDiffWithResponse request returning *GetDiffResponse
+func (c *ClientWithResponses) GetDiffWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetDiffResponse, error) {
+	rsp, err := c.GetDiff(ctx, orgId, appId, setId, sourceSetId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse(rsp)
+	return ParseGetDiffResponse(rsp)
+}
+
+// GetSetResourceInputsWithResponse request returning *GetSetResourceInputsResponse
+func (c *ClientWithResponses) GetSetResourceInputsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams, reqEditors ...RequestEditorFn) (*GetSetResourceInputsResponse, error) {
+	rsp, err := c.GetSetResourceInputs(ctx, orgId, appId, setId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSetResourceInputsResponse(rsp)
 }
 
 // ListUserRolesInAppWithResponse request returning *ListUserRolesInAppResponse
@@ -30082,15 +30536,15 @@ func ParseListPipelineApprovalRequestsResponse(rsp *http.Response) (*ListPipelin
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdDeltasResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdDeltasWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdDeltasResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdDeltasResponse, error) {
+// ParseListDeltasResponse parses an HTTP response from a ListDeltasWithResponse call
+func ParseListDeltasResponse(rsp *http.Response) (*ListDeltasResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdDeltasResponse{
+	response := &ListDeltasResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30108,15 +30562,15 @@ func ParseGetOrgsOrgIdAppsAppIdDeltasResponse(rsp *http.Response) (*GetOrgsOrgId
 	return response, nil
 }
 
-// ParsePostOrgsOrgIdAppsAppIdDeltasResponse parses an HTTP response from a PostOrgsOrgIdAppsAppIdDeltasWithResponse call
-func ParsePostOrgsOrgIdAppsAppIdDeltasResponse(rsp *http.Response) (*PostOrgsOrgIdAppsAppIdDeltasResponse, error) {
+// ParseCreateDeltaResponse parses an HTTP response from a CreateDeltaWithResponse call
+func ParseCreateDeltaResponse(rsp *http.Response) (*CreateDeltaResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOrgsOrgIdAppsAppIdDeltasResponse{
+	response := &CreateDeltaResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30176,15 +30630,15 @@ func ParseGetDeltaResponse(rsp *http.Response) (*GetDeltaResponse, error) {
 	return response, nil
 }
 
-// ParsePatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse parses an HTTP response from a PatchOrgsOrgIdAppsAppIdDeltasDeltaIdWithResponse call
-func ParsePatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse(rsp *http.Response) (*PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse, error) {
+// ParsePatchDeltaResponse parses an HTTP response from a PatchDeltaWithResponse call
+func ParsePatchDeltaResponse(rsp *http.Response) (*PatchDeltaResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PatchOrgsOrgIdAppsAppIdDeltasDeltaIdResponse{
+	response := &PatchDeltaResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30249,15 +30703,15 @@ func ParsePutDeltaResponse(rsp *http.Response) (*PutDeltaResponse, error) {
 	return response, nil
 }
 
-// ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse parses an HTTP response from a PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedWithResponse call
-func ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse(rsp *http.Response) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse, error) {
+// ParseArchiveDeltaResponse parses an HTTP response from a ArchiveDeltaWithResponse call
+func ParseArchiveDeltaResponse(rsp *http.Response) (*ArchiveDeltaResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse{
+	response := &ArchiveDeltaResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30282,15 +30736,15 @@ func ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataArchivedResponse(rsp *http.R
 	return response, nil
 }
 
-// ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse parses an HTTP response from a PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdWithResponse call
-func ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse(rsp *http.Response) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse, error) {
+// ParseChangeEnvOfDeltaResponse parses an HTTP response from a ChangeEnvOfDeltaWithResponse call
+func ParseChangeEnvOfDeltaResponse(rsp *http.Response) (*ChangeEnvOfDeltaResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse{
+	response := &ChangeEnvOfDeltaResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30315,15 +30769,15 @@ func ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataEnvIdResponse(rsp *http.Resp
 	return response, nil
 }
 
-// ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse parses an HTTP response from a PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameWithResponse call
-func ParsePutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse(rsp *http.Response) (*PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse, error) {
+// ParseChangeNameOfDeltaResponse parses an HTTP response from a ChangeNameOfDeltaWithResponse call
+func ParseChangeNameOfDeltaResponse(rsp *http.Response) (*ChangeNameOfDeltaResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PutOrgsOrgIdAppsAppIdDeltasDeltaIdMetadataNameResponse{
+	response := &ChangeNameOfDeltaResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30686,6 +31140,32 @@ func ParseRebaseEnvironmentResponse(rsp *http.Response) (*RebaseEnvironmentRespo
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsWithResponse call
+func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrgsOrgIdAppsAppIdEnvsEnvIdLogsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []OutputEntryResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 
@@ -32685,15 +33165,15 @@ func ParseListRuntimeResponse(rsp *http.Response) (*ListRuntimeResponse, error) 
 	return response, nil
 }
 
-// ParseGetSetsResponse parses an HTTP response from a GetSetsWithResponse call
-func ParseGetSetsResponse(rsp *http.Response) (*GetSetsResponse, error) {
+// ParseListSetsResponse parses an HTTP response from a ListSetsWithResponse call
+func ParseListSetsResponse(rsp *http.Response) (*ListSetsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSetsResponse{
+	response := &ListSetsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -32718,15 +33198,15 @@ func ParseGetSetsResponse(rsp *http.Response) (*GetSetsResponse, error) {
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdSetsSetIdResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdSetsSetIdWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdSetsSetIdResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
+// ParseGetSetResponse parses an HTTP response from a GetSetWithResponse call
+func ParseGetSetResponse(rsp *http.Response) (*GetSetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdSetsSetIdResponse{
+	response := &GetSetResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -32753,15 +33233,15 @@ func ParseGetOrgsOrgIdAppsAppIdSetsSetIdResponse(rsp *http.Response) (*GetOrgsOr
 	return response, nil
 }
 
-// ParsePostOrgsOrgIdAppsAppIdSetsSetIdResponse parses an HTTP response from a PostOrgsOrgIdAppsAppIdSetsSetIdWithResponse call
-func ParsePostOrgsOrgIdAppsAppIdSetsSetIdResponse(rsp *http.Response) (*PostOrgsOrgIdAppsAppIdSetsSetIdResponse, error) {
+// ParseUpdateSetResponse parses an HTTP response from a UpdateSetWithResponse call
+func ParseUpdateSetResponse(rsp *http.Response) (*UpdateSetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOrgsOrgIdAppsAppIdSetsSetIdResponse{
+	response := &UpdateSetResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -32793,15 +33273,15 @@ func ParsePostOrgsOrgIdAppsAppIdSetsSetIdResponse(rsp *http.Response) (*PostOrgs
 	return response, nil
 }
 
-// ParseGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse parses an HTTP response from a GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdWithResponse call
-func ParseGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse(rsp *http.Response) (*GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse, error) {
+// ParseGetDiffResponse parses an HTTP response from a GetDiffWithResponse call
+func ParseGetDiffResponse(rsp *http.Response) (*GetDiffResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse{
+	response := &GetDiffResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -32813,6 +33293,46 @@ func ParseGetOrgsOrgIdAppsAppIdSetsSetIdDiffSourceSetIdResponse(rsp *http.Respon
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSetResourceInputsResponse parses an HTTP response from a GetSetResourceInputsWithResponse call
+func ParseGetSetResourceInputsResponse(rsp *http.Response) (*GetSetResourceInputsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSetResourceInputsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ResourceInputsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest string
