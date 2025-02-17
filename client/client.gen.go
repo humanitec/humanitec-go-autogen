@@ -95,6 +95,12 @@ const (
 	ScoreHumanitecExtensionsDeployWhenDeploy ScoreHumanitecExtensionsDeployWhen = "deploy"
 )
 
+// Defines values for SubjectType.
+const (
+	Group SubjectType = "group"
+	User  SubjectType = "user"
+)
+
 // Defines values for ValueSetVersionResultOf.
 const (
 	AppValueCreate            ValueSetVersionResultOf = "app_value_create"
@@ -2695,6 +2701,9 @@ type SetResponse struct {
 	Version int `json:"version"`
 }
 
+// SubjectType Subjects that can assume roles on objects.
+type SubjectType string
+
 // TokenDefinitionRequest Defines the token to be created.
 type TokenDefinitionRequest struct {
 	// Description A description of the token. (Optional)
@@ -2938,13 +2947,13 @@ type UserRoleRequest struct {
 	Name *string `json:"name,omitempty"`
 
 	// Role The role that this user holds
-	Role *string `json:"role,omitempty"`
+	Role string `json:"role"`
 
-	// Type The type of the account. Could be user, service or system
-	Type *string `json:"type,omitempty"`
+	// Type Subjects that can assume roles on objects.
+	Type *SubjectType `json:"type"`
 
-	// User The user ID that hold the role
-	User *string `json:"user,omitempty"`
+	// User The User ID that hold the Role on the Object
+	User string `json:"user"`
 }
 
 // UserRoleResponse UserRole holds the mapping of role to user for a particular object.
@@ -2967,8 +2976,8 @@ type UserRoleResponse struct {
 	// Role The role that this user holds
 	Role string `json:"role"`
 
-	// Type The type of the account. Could be user, service or system
-	Type string `json:"type"`
+	// Type Subjects that can assume roles on objects.
+	Type *SubjectType `json:"type"`
 
 	// User The user ID that hold the role
 	User *string `json:"user,omitempty"`
