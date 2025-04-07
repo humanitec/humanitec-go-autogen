@@ -21,11 +21,32 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for ApplicationResponseStatus.
+const (
+	ApplicationResponseStatusActive   ApplicationResponseStatus = "active"
+	ApplicationResponseStatusDeleting ApplicationResponseStatus = "deleting"
+)
+
 // Defines values for ClusterConnectionCheckResultConditionStatus.
 const (
 	ClusterConnectionCheckResultConditionStatusFalse   ClusterConnectionCheckResultConditionStatus = "False"
 	ClusterConnectionCheckResultConditionStatusTrue    ClusterConnectionCheckResultConditionStatus = "True"
 	ClusterConnectionCheckResultConditionStatusUnknown ClusterConnectionCheckResultConditionStatus = "Unknown"
+)
+
+// Defines values for EnvironmentResponseStatus.
+const (
+	EnvironmentResponseStatusActive   EnvironmentResponseStatus = "active"
+	EnvironmentResponseStatusDeleting EnvironmentResponseStatus = "deleting"
+)
+
+// Defines values for OrganizationRole.
+const (
+	Administrator       OrganizationRole = "administrator"
+	ArtefactContributor OrganizationRole = "artefactContributor"
+	Manager             OrganizationRole = "manager"
+	Member              OrganizationRole = "member"
+	OrgViewer           OrganizationRole = "orgViewer"
 )
 
 // Defines values for PipelineApprovalRequestStatus.
@@ -93,6 +114,12 @@ const (
 	ScoreHumanitecExtensionsDeployWhenAfter  ScoreHumanitecExtensionsDeployWhen = "after"
 	ScoreHumanitecExtensionsDeployWhenBefore ScoreHumanitecExtensionsDeployWhen = "before"
 	ScoreHumanitecExtensionsDeployWhenDeploy ScoreHumanitecExtensionsDeployWhen = "deploy"
+)
+
+// Defines values for SubjectTypeEnum.
+const (
+	SubjectTypeEnumGroup SubjectTypeEnum = "group"
+	SubjectTypeEnumUser  SubjectTypeEnum = "user"
 )
 
 // Defines values for ValueSetVersionResultOf.
@@ -295,6 +322,12 @@ type ApplicationCreationRequest struct {
 	SkipEnvironmentCreation *bool `json:"skip_environment_creation,omitempty"`
 }
 
+// ApplicationPatchPayload Patch request body to update Application metadata.
+type ApplicationPatchPayload struct {
+	// Name The Human-friendly name for the Application.
+	Name string `json:"name"`
+}
+
 // ApplicationResponse An Application is a collection of Workloads that work together. When deployed, all Workloads in an Application are deployed to the same namespace.
 //
 // Apps are the root of the configuration tree holding Environments, Deployments, Shared Values, and Secrets.
@@ -316,7 +349,19 @@ type ApplicationResponse struct {
 
 	// OrgId The Organization id of this Application
 	OrgId string `json:"org_id"`
+
+	// Status The status of the application
+	Status ApplicationResponseStatus `json:"status"`
+
+	// StatusChangedAt The timestamp in UTC of when the Environment status was last changed.
+	StatusChangedAt time.Time `json:"status_changed_at"`
+
+	// StatusMessage The message associated with the status of the environment
+	StatusMessage *string `json:"status_message,omitempty"`
 }
+
+// ApplicationResponseStatus The status of the application
+type ApplicationResponseStatus string
 
 // ArchiveDefinitionVersionRequest defines model for ArchiveDefinitionVersionRequest.
 type ArchiveDefinitionVersionRequest struct {
@@ -553,6 +598,9 @@ type ClusterConnectionCheckRequest struct {
 
 	// EnvType The environment type to test
 	EnvType string `json:"env_type"`
+
+	// ExpectedDefinitions List of the definitions with their type that should be used by the resource graph nodes generated based on the context.
+	ExpectedDefinitions *[]ResourceDefinitions `json:"expected_definitions,omitempty"`
 }
 
 // ClusterConnectionCheckResourceSummary defines model for ClusterConnectionCheckResourceSummary.
@@ -1120,8 +1168,11 @@ type DeploymentResponse struct {
 	FromId string `json:"from_id"`
 
 	// Id The ID of the Deployment.
-	Id       string                               `json:"id"`
-	Pipeline *DeploymentPipelineReferenceResponse `json:"pipeline,omitempty"`
+	Id string `json:"id"`
+
+	// LegacyMode Defines if it's a Legacy Mode deployment, nil means either the mode is unknown or the deployment not yet finished.
+	LegacyMode *bool                                `json:"legacy_mode,omitempty"`
+	Pipeline   *DeploymentPipelineReferenceResponse `json:"pipeline,omitempty"`
 
 	// SetId ID of the Deployment Set describing the state of the Environment after Deployment.
 	SetId string `json:"set_id"`
@@ -1234,9 +1285,21 @@ type EnvironmentResponse struct {
 	// Name The Human-friendly name for the Environment.
 	Name string `json:"name"`
 
+	// Status The status of the environment
+	Status EnvironmentResponseStatus `json:"status"`
+
+	// StatusChangedAt The timestamp in UTC of when the Environment status was last changed.
+	StatusChangedAt time.Time `json:"status_changed_at"`
+
+	// StatusMessage The message associated with the status of the environment
+	StatusMessage *string `json:"status_message,omitempty"`
+
 	// Type The Environment Type. This is used for organizing and managing Environments.
 	Type string `json:"type"`
 }
+
+// EnvironmentResponseStatus The status of the environment
+type EnvironmentResponseStatus string
 
 // EnvironmentRuntimeInfoResponse EnvironmentRuntimeInfo
 type EnvironmentRuntimeInfoResponse struct {
@@ -1332,6 +1395,51 @@ type GCPSMRequest struct {
 // GCPSMResponse GCP Secret Manager specification.
 type GCPSMResponse struct {
 	ProjectId *string `json:"project_id,omitempty"`
+}
+
+// Group Group holds the metadata of a new group.
+type Group struct {
+	// CreatedAt The time the user was first registered with Humanitec
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// GroupId The name of the group in the IdP
+	GroupId string `json:"group_id"`
+
+	// Id The id used in Humanitec to identify the group.
+	Id string `json:"id"`
+
+	// IdpId The IdP id.
+	IdpId string `json:"idp_id"`
+}
+
+// GroupRequest GroupRequest holds the definition of a new group.
+type GroupRequest struct {
+	// GroupId The name of the group in the IdP.
+	GroupId string `json:"group_id"`
+
+	// IdpId The IdP id.
+	IdpId string `json:"idp_id"`
+
+	// Role Roles that can be assumed by an entity on an organization.
+	Role OrganizationRole `json:"role"`
+}
+
+// GroupWithRole GroupWithRole holds the metadata of a new group with its role in the organization.
+type GroupWithRole struct {
+	// CreatedAt The time the user was first registered with Humanitec
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// GroupId The name of the group in the IdP
+	GroupId string `json:"group_id"`
+
+	// Id The id used in Humanitec to identify the group.
+	Id string `json:"id"`
+
+	// IdpId The IdP id.
+	IdpId string `json:"idp_id"`
+
+	// Role Roles that can be assumed by an entity on an organization.
+	Role OrganizationRole `json:"role"`
 }
 
 // HumanitecErrorResponse HumanitecError represents a standard Humanitec Error
@@ -1608,6 +1716,9 @@ type OrganizationResponse struct {
 	// TrialExpiresAt Timestamp the trial expires at.
 	TrialExpiresAt *time.Time `json:"trial_expires_at"`
 }
+
+// OrganizationRole Roles that can be assumed by an entity on an organization.
+type OrganizationRole string
 
 // OutputEntryResponse A container log entry.
 type OutputEntryResponse struct {
@@ -2374,6 +2485,15 @@ type ResourceDefinitionVersion struct {
 	Type string `json:"type"`
 }
 
+// ResourceDefinitions Object that contains definition id and resource type
+type ResourceDefinitions struct {
+	// Id The definition id
+	Id string `json:"id"`
+
+	// Type Type of the resource provisioned by the definition
+	Type string `json:"type"`
+}
+
 // ResourceInputsResponse A payload needed to generate a resource graph.
 type ResourceInputsResponse struct {
 	// Class The Resource class.
@@ -2425,7 +2545,7 @@ type ResourceTypeResponse struct {
 
 // RoleRequest Role defines the role that will be used in request
 type RoleRequest struct {
-	Role *string `json:"role,omitempty"`
+	Role string `json:"role"`
 }
 
 // RolesResponse defines model for RolesResponse.
@@ -2695,6 +2815,9 @@ type SetResponse struct {
 	Version int `json:"version"`
 }
 
+// SubjectTypeEnum Subjects that can assume roles on objects.
+type SubjectTypeEnum string
+
 // TokenDefinitionRequest Defines the token to be created.
 type TokenDefinitionRequest struct {
 	// Description A description of the token. (Optional)
@@ -2920,42 +3043,24 @@ type UserProfileResponse struct {
 	Type string `json:"type"`
 }
 
-// UserRoleRequest UserRole holds the mapping of role to user for a particular object.
+// UserRoleRequest Holds the mapping of role for a subject on a particular object.
 type UserRoleRequest struct {
-	// CreatedAt The time the user was first registered with Humanitec
-	CreatedAt *string `json:"created_at,omitempty"`
-
-	// Email The email address of the user from the profile
-	Email *string `json:"email,omitempty"`
-
 	// Id The User ID for this user
-	Id *string `json:"id,omitempty"`
-
-	// Invite The status of an invitation (If applicable)
-	Invite *string `json:"invite,omitempty"`
-
-	// Name The name the user goes by
-	Name *string `json:"name,omitempty"`
+	Id string `json:"id"`
 
 	// Role The role that this user holds
-	Role *string `json:"role,omitempty"`
-
-	// Type The type of the account. Could be user, service or system
-	Type *string `json:"type,omitempty"`
-
-	// User The user ID that hold the role
-	User *string `json:"user,omitempty"`
+	Role string `json:"role"`
 }
 
-// UserRoleResponse UserRole holds the mapping of role to user for a particular object.
+// UserRoleResponse UserRole holds the mapping of role to user or group for a particular object.
 type UserRoleResponse struct {
-	// CreatedAt The time the user was first registered with Humanitec
+	// CreatedAt The time the user or the group was first registered with Humanitec
 	CreatedAt string `json:"created_at"`
 
 	// Email The email address of the user from the profile
 	Email *string `json:"email,omitempty"`
 
-	// Id The User ID for this user
+	// Id The User ID for this user or group
 	Id string `json:"id"`
 
 	// Invite The status of an invitation (If applicable)
@@ -2967,11 +3072,8 @@ type UserRoleResponse struct {
 	// Role The role that this user holds
 	Role string `json:"role"`
 
-	// Type The type of the account. Could be user, service or system
+	// Type The type of the account. Could be user, service, group or system
 	Type string `json:"type"`
-
-	// User The user ID that hold the role
-	User *string `json:"user,omitempty"`
 }
 
 // ValueCreatePayloadRequest defines model for ValueCreatePayloadRequest.
@@ -3492,6 +3594,9 @@ type DeprecatedQueryParam = bool
 // EnvIdPathParam defines model for envIdPathParam.
 type EnvIdPathParam = string
 
+// EnvTypePathParam defines model for envTypePathParam.
+type EnvTypePathParam = string
+
 // FingerprintPathParam defines model for fingerprintPathParam.
 type FingerprintPathParam = string
 
@@ -3500,6 +3605,9 @@ type FingerprintQueryParam = string
 
 // GraphIdPathParam defines model for graphIdPathParam.
 type GraphIdPathParam = string
+
+// GroupIdPathParam defines model for groupIdPathParam.
+type GroupIdPathParam = string
 
 // IdempotencyKey defines model for idempotencyKey.
 type IdempotencyKey = string
@@ -3536,6 +3644,12 @@ type RunIdPathParam = string
 
 // StepIndexPathParam defines model for stepIndexPathParam.
 type StepIndexPathParam = int
+
+// SubjectTypeQueryParam Subjects that can assume roles on objects.
+type SubjectTypeQueryParam = SubjectTypeEnum
+
+// UserIdPathParam defines model for userIdPathParam.
+type UserIdPathParam = string
 
 // N400BadRequest HumanitecError represents a standard Humanitec Error
 type N400BadRequest = HumanitecErrorResponse
@@ -3840,10 +3954,10 @@ type GetSetParams struct {
 	Diff *string `form:"diff,omitempty" json:"diff,omitempty"`
 }
 
-// GetSetResourceInputsParams defines parameters for GetSetResourceInputs.
-type GetSetResourceInputsParams struct {
-	// Legacy If true, return resource inputs in legacy mode
-	Legacy *bool `form:"legacy,omitempty" json:"legacy,omitempty"`
+// ListUserRolesInAppParams defines parameters for ListUserRolesInApp.
+type ListUserRolesInAppParams struct {
+	// Type Type of Subject. Either User or Group
+	Type *SubjectTypeQueryParam `form:"type,omitempty" json:"type,omitempty"`
 }
 
 // GetOrgsOrgIdAppsAppIdValueSetVersionsParams defines parameters for GetOrgsOrgIdAppsAppIdValueSetVersions.
@@ -3926,6 +4040,12 @@ type ListAuditLogEntriesParams struct {
 
 	// To Optional filter for entries created before the given time.
 	To *time.Time `form:"to,omitempty" json:"to,omitempty"`
+}
+
+// ListUserRolesInEnvTypeParams defines parameters for ListUserRolesInEnvType.
+type ListUserRolesInEnvTypeParams struct {
+	// Type Type of Subject. Either User or Group
+	Type *SubjectTypeQueryParam `form:"type,omitempty" json:"type,omitempty"`
 }
 
 // ListHumanitecPublicKeysParams defines parameters for ListHumanitecPublicKeys.
@@ -4074,6 +4194,12 @@ type ListResourceDefinitionVersionsParams struct {
 	Page *PageTokenQueryParam `form:"page,omitempty" json:"page,omitempty"`
 }
 
+// ListUserRolesInOrgParams defines parameters for ListUserRolesInOrg.
+type ListUserRolesInOrgParams struct {
+	// Type Type of Subject. Either User or Group
+	Type *SubjectTypeQueryParam `form:"type,omitempty" json:"type,omitempty"`
+}
+
 // ListWorkloadProfileChartVersionsParams defines parameters for ListWorkloadProfileChartVersions.
 type ListWorkloadProfileChartVersionsParams struct {
 	// PerPage The maximum number of items to return in a page of results
@@ -4129,6 +4255,9 @@ type CreateKeyJSONRequestBody = KeyCreateBody
 
 // CreateApplicationJSONRequestBody defines body for CreateApplication for application/json ContentType.
 type CreateApplicationJSONRequestBody = ApplicationCreationRequest
+
+// PatchApplicationJSONRequestBody defines body for PatchApplication for application/json ContentType.
+type PatchApplicationJSONRequestBody = ApplicationPatchPayload
 
 // CreateDeltaJSONRequestBody defines body for CreateDelta for application/json ContentType.
 type CreateDeltaJSONRequestBody = DeltaRequest
@@ -4264,6 +4393,9 @@ type CreateUserRoleInEnvTypeJSONRequestBody = UserRoleRequest
 
 // UpdateUserRoleInEnvTypeJSONRequestBody defines body for UpdateUserRoleInEnvType for application/json ContentType.
 type UpdateUserRoleInEnvTypeJSONRequestBody = RoleRequest
+
+// CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
+type CreateGroupJSONRequestBody = GroupRequest
 
 // CreateDeprecatedImageBuildJSONRequestBody defines body for CreateDeprecatedImageBuild for application/json ContentType.
 type CreateDeprecatedImageBuildJSONRequestBody = ImageBuildRequest
@@ -5148,6 +5280,11 @@ type ClientInterface interface {
 	// GetApplication request
 	GetApplication(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PatchApplicationWithBody request with any body
+	PatchApplicationWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchApplication(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PatchApplicationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListPipelineApprovalRequests request
 	ListPipelineApprovalRequests(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5431,26 +5568,26 @@ type ClientInterface interface {
 	GetDiff(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSetResourceInputs request
-	GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListUserRolesInApp request
-	ListUserRolesInApp(ctx context.Context, orgId OrgIdPathParam, appId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListUserRolesInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListUserRolesInAppParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateUserRoleInAppWithBody request with any body
-	CreateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPathParam, appId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId string, body CreateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body CreateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteUserRoleInApp request
-	DeleteUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetUserRoleInApp request
-	GetUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateUserRoleInAppWithBody request with any body
-	UpdateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, body UpdateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, body UpdateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdAppsAppIdValueSetVersions request
 	GetOrgsOrgIdAppsAppIdValueSetVersions(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5575,26 +5712,34 @@ type ClientInterface interface {
 	UpdateEnvironmentType(ctx context.Context, orgId string, envTypeId string, body UpdateEnvironmentTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListUserRolesInEnvType request
-	ListUserRolesInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListUserRolesInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, params *ListUserRolesInEnvTypeParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateUserRoleInEnvTypeWithBody request with any body
-	CreateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgIdPathParam, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, body CreateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, body CreateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteUserRoleInEnvType request
-	DeleteUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetUserRoleInEnvType request
-	GetUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateUserRoleInEnvTypeWithBody request with any body
-	UpdateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, body UpdateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, body UpdateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrgsOrgIdEvents request
 	GetOrgsOrgIdEvents(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateGroupWithBody request with any body
+	CreateGroupWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateGroup(ctx context.Context, orgId OrgIdPathParam, body CreateGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGroupUsers request
+	ListGroupUsers(ctx context.Context, orgId OrgIdPathParam, groupId GroupIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListHumanitecPublicKeys request
 	ListHumanitecPublicKeys(ctx context.Context, orgId string, params *ListHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5811,7 +5956,7 @@ type ClientInterface interface {
 	PatchOrgsOrgIdSecretstoresStoreId(ctx context.Context, orgId string, storeId string, body PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListUserRolesInOrg request
-	ListUserRolesInOrg(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListUserRolesInOrg(ctx context.Context, orgId OrgIdPathParam, params *ListUserRolesInOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateServiceUserInOrgWithBody request with any body
 	CreateServiceUserInOrgWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5819,15 +5964,18 @@ type ClientInterface interface {
 	CreateServiceUserInOrg(ctx context.Context, orgId OrgIdPathParam, body CreateServiceUserInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteUserRoleInOrg request
-	DeleteUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetUserRoleInOrg request
-	GetUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateUserRoleInOrgWithBody request with any body
-	UpdateUserRoleInOrgWithBody(ctx context.Context, orgId OrgIdPathParam, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateUserRoleInOrgWithBody(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId string, body UpdateUserRoleInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, body UpdateUserRoleInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListUserGroupsInOrg request
+	ListUserGroupsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListWorkloadProfileChartVersions request
 	ListWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6108,6 +6256,30 @@ func (c *Client) DeleteApplication(ctx context.Context, orgId string, appId stri
 
 func (c *Client) GetApplication(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetApplicationRequest(c.Server, orgId, appId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchApplicationWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchApplicationRequestWithBody(c.Server, orgId, appId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchApplication(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PatchApplicationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchApplicationRequest(c.Server, orgId, appId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7354,8 +7526,8 @@ func (c *Client) GetDiff(ctx context.Context, orgId OrgIdPathParam, appId AppIdP
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetSetResourceInputsRequest(c.Server, orgId, appId, setId, params)
+func (c *Client) GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSetResourceInputsRequest(c.Server, orgId, appId, setId)
 	if err != nil {
 		return nil, err
 	}
@@ -7366,8 +7538,8 @@ func (c *Client) GetSetResourceInputs(ctx context.Context, orgId OrgIdPathParam,
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListUserRolesInApp(ctx context.Context, orgId OrgIdPathParam, appId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListUserRolesInAppRequest(c.Server, orgId, appId)
+func (c *Client) ListUserRolesInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListUserRolesInAppParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUserRolesInAppRequest(c.Server, orgId, appId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -7378,7 +7550,7 @@ func (c *Client) ListUserRolesInApp(ctx context.Context, orgId OrgIdPathParam, a
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPathParam, appId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateUserRoleInAppRequestWithBody(c.Server, orgId, appId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -7390,7 +7562,7 @@ func (c *Client) CreateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPat
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId string, body CreateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body CreateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateUserRoleInAppRequest(c.Server, orgId, appId, body)
 	if err != nil {
 		return nil, err
@@ -7402,7 +7574,7 @@ func (c *Client) CreateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteUserRoleInAppRequest(c.Server, orgId, appId, userId)
 	if err != nil {
 		return nil, err
@@ -7414,7 +7586,7 @@ func (c *Client) DeleteUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetUserRoleInAppRequest(c.Server, orgId, appId, userId)
 	if err != nil {
 		return nil, err
@@ -7426,7 +7598,7 @@ func (c *Client) GetUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, app
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRoleInAppRequestWithBody(c.Server, orgId, appId, userId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -7438,7 +7610,7 @@ func (c *Client) UpdateUserRoleInAppWithBody(ctx context.Context, orgId OrgIdPat
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, body UpdateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateUserRoleInApp(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, body UpdateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRoleInAppRequest(c.Server, orgId, appId, userId, body)
 	if err != nil {
 		return nil, err
@@ -7990,8 +8162,8 @@ func (c *Client) UpdateEnvironmentType(ctx context.Context, orgId string, envTyp
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListUserRolesInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListUserRolesInEnvTypeRequest(c.Server, orgId, envType)
+func (c *Client) ListUserRolesInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, params *ListUserRolesInEnvTypeParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUserRolesInEnvTypeRequest(c.Server, orgId, envType, params)
 	if err != nil {
 		return nil, err
 	}
@@ -8002,7 +8174,7 @@ func (c *Client) ListUserRolesInEnvType(ctx context.Context, orgId OrgIdPathPara
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgIdPathParam, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateUserRoleInEnvTypeRequestWithBody(c.Server, orgId, envType, contentType, body)
 	if err != nil {
 		return nil, err
@@ -8014,7 +8186,7 @@ func (c *Client) CreateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgI
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, body CreateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, body CreateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateUserRoleInEnvTypeRequest(c.Server, orgId, envType, body)
 	if err != nil {
 		return nil, err
@@ -8026,7 +8198,7 @@ func (c *Client) CreateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathPar
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteUserRoleInEnvTypeRequest(c.Server, orgId, envType, userId)
 	if err != nil {
 		return nil, err
@@ -8038,7 +8210,7 @@ func (c *Client) DeleteUserRoleInEnvType(ctx context.Context, orgId OrgIdPathPar
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetUserRoleInEnvTypeRequest(c.Server, orgId, envType, userId)
 	if err != nil {
 		return nil, err
@@ -8050,7 +8222,7 @@ func (c *Client) GetUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam,
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRoleInEnvTypeRequestWithBody(c.Server, orgId, envType, userId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -8062,7 +8234,7 @@ func (c *Client) UpdateUserRoleInEnvTypeWithBody(ctx context.Context, orgId OrgI
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, body UpdateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, body UpdateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRoleInEnvTypeRequest(c.Server, orgId, envType, userId, body)
 	if err != nil {
 		return nil, err
@@ -8076,6 +8248,42 @@ func (c *Client) UpdateUserRoleInEnvType(ctx context.Context, orgId OrgIdPathPar
 
 func (c *Client) GetOrgsOrgIdEvents(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrgsOrgIdEventsRequest(c.Server, orgId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateGroupWithBody(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGroupRequestWithBody(c.Server, orgId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateGroup(ctx context.Context, orgId OrgIdPathParam, body CreateGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGroupRequest(c.Server, orgId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListGroupUsers(ctx context.Context, orgId OrgIdPathParam, groupId GroupIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGroupUsersRequest(c.Server, orgId, groupId)
 	if err != nil {
 		return nil, err
 	}
@@ -9022,8 +9230,8 @@ func (c *Client) PatchOrgsOrgIdSecretstoresStoreId(ctx context.Context, orgId st
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListUserRolesInOrg(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListUserRolesInOrgRequest(c.Server, orgId)
+func (c *Client) ListUserRolesInOrg(ctx context.Context, orgId OrgIdPathParam, params *ListUserRolesInOrgParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUserRolesInOrgRequest(c.Server, orgId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -9058,7 +9266,7 @@ func (c *Client) CreateServiceUserInOrg(ctx context.Context, orgId OrgIdPathPara
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteUserRoleInOrgRequest(c.Server, orgId, userId)
 	if err != nil {
 		return nil, err
@@ -9070,7 +9278,7 @@ func (c *Client) DeleteUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetUserRoleInOrgRequest(c.Server, orgId, userId)
 	if err != nil {
 		return nil, err
@@ -9082,7 +9290,7 @@ func (c *Client) GetUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, use
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateUserRoleInOrgWithBody(ctx context.Context, orgId OrgIdPathParam, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateUserRoleInOrgWithBody(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRoleInOrgRequestWithBody(c.Server, orgId, userId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -9094,8 +9302,20 @@ func (c *Client) UpdateUserRoleInOrgWithBody(ctx context.Context, orgId OrgIdPat
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId string, body UpdateUserRoleInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, body UpdateUserRoleInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRoleInOrgRequest(c.Server, orgId, userId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListUserGroupsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUserGroupsInOrgRequest(c.Server, orgId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -9938,6 +10158,60 @@ func NewGetApplicationRequest(server string, orgId string, appId string) (*http.
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPatchApplicationRequest calls the generic PatchApplication builder with application/json body
+func NewPatchApplicationRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, body PatchApplicationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchApplicationRequestWithBody(server, orgId, appId, "application/json", bodyReader)
+}
+
+// NewPatchApplicationRequestWithBody generates requests for PatchApplication with any type of body
+func NewPatchApplicationRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "appId", runtime.ParamLocationPath, appId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/apps/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -15170,7 +15444,7 @@ func NewGetDiffRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam
 }
 
 // NewGetSetResourceInputsRequest generates requests for GetSetResourceInputs
-func NewGetSetResourceInputsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams) (*http.Request, error) {
+func NewGetSetResourceInputsRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, setId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15209,28 +15483,6 @@ func NewGetSetResourceInputsRequest(server string, orgId OrgIdPathParam, appId A
 		return nil, err
 	}
 
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Legacy != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "legacy", runtime.ParamLocationQuery, *params.Legacy); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
@@ -15240,7 +15492,7 @@ func NewGetSetResourceInputsRequest(server string, orgId OrgIdPathParam, appId A
 }
 
 // NewListUserRolesInAppRequest generates requests for ListUserRolesInApp
-func NewListUserRolesInAppRequest(server string, orgId OrgIdPathParam, appId string) (*http.Request, error) {
+func NewListUserRolesInAppRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, params *ListUserRolesInAppParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15272,6 +15524,28 @@ func NewListUserRolesInAppRequest(server string, orgId OrgIdPathParam, appId str
 		return nil, err
 	}
 
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Type != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "type", runtime.ParamLocationQuery, *params.Type); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
@@ -15281,7 +15555,7 @@ func NewListUserRolesInAppRequest(server string, orgId OrgIdPathParam, appId str
 }
 
 // NewCreateUserRoleInAppRequest calls the generic CreateUserRoleInApp builder with application/json body
-func NewCreateUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId string, body CreateUserRoleInAppJSONRequestBody) (*http.Request, error) {
+func NewCreateUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, body CreateUserRoleInAppJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -15292,7 +15566,7 @@ func NewCreateUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId st
 }
 
 // NewCreateUserRoleInAppRequestWithBody generates requests for CreateUserRoleInApp with any type of body
-func NewCreateUserRoleInAppRequestWithBody(server string, orgId OrgIdPathParam, appId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateUserRoleInAppRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15335,7 +15609,7 @@ func NewCreateUserRoleInAppRequestWithBody(server string, orgId OrgIdPathParam, 
 }
 
 // NewDeleteUserRoleInAppRequest generates requests for DeleteUserRoleInApp
-func NewDeleteUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId string, userId string) (*http.Request, error) {
+func NewDeleteUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15383,7 +15657,7 @@ func NewDeleteUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId st
 }
 
 // NewGetUserRoleInAppRequest generates requests for GetUserRoleInApp
-func NewGetUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId string, userId string) (*http.Request, error) {
+func NewGetUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15431,7 +15705,7 @@ func NewGetUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId strin
 }
 
 // NewUpdateUserRoleInAppRequest calls the generic UpdateUserRoleInApp builder with application/json body
-func NewUpdateUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId string, userId string, body UpdateUserRoleInAppJSONRequestBody) (*http.Request, error) {
+func NewUpdateUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, body UpdateUserRoleInAppJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -15442,7 +15716,7 @@ func NewUpdateUserRoleInAppRequest(server string, orgId OrgIdPathParam, appId st
 }
 
 // NewUpdateUserRoleInAppRequestWithBody generates requests for UpdateUserRoleInApp with any type of body
-func NewUpdateUserRoleInAppRequestWithBody(server string, orgId OrgIdPathParam, appId string, userId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateUserRoleInAppRequestWithBody(server string, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17352,7 +17626,7 @@ func NewUpdateEnvironmentTypeRequestWithBody(server string, orgId string, envTyp
 }
 
 // NewListUserRolesInEnvTypeRequest generates requests for ListUserRolesInEnvType
-func NewListUserRolesInEnvTypeRequest(server string, orgId OrgIdPathParam, envType string) (*http.Request, error) {
+func NewListUserRolesInEnvTypeRequest(server string, orgId OrgIdPathParam, envType EnvTypePathParam, params *ListUserRolesInEnvTypeParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17384,6 +17658,28 @@ func NewListUserRolesInEnvTypeRequest(server string, orgId OrgIdPathParam, envTy
 		return nil, err
 	}
 
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Type != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "type", runtime.ParamLocationQuery, *params.Type); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
@@ -17393,7 +17689,7 @@ func NewListUserRolesInEnvTypeRequest(server string, orgId OrgIdPathParam, envTy
 }
 
 // NewCreateUserRoleInEnvTypeRequest calls the generic CreateUserRoleInEnvType builder with application/json body
-func NewCreateUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType string, body CreateUserRoleInEnvTypeJSONRequestBody) (*http.Request, error) {
+func NewCreateUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType EnvTypePathParam, body CreateUserRoleInEnvTypeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -17404,7 +17700,7 @@ func NewCreateUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envT
 }
 
 // NewCreateUserRoleInEnvTypeRequestWithBody generates requests for CreateUserRoleInEnvType with any type of body
-func NewCreateUserRoleInEnvTypeRequestWithBody(server string, orgId OrgIdPathParam, envType string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateUserRoleInEnvTypeRequestWithBody(server string, orgId OrgIdPathParam, envType EnvTypePathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17447,7 +17743,7 @@ func NewCreateUserRoleInEnvTypeRequestWithBody(server string, orgId OrgIdPathPar
 }
 
 // NewDeleteUserRoleInEnvTypeRequest generates requests for DeleteUserRoleInEnvType
-func NewDeleteUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType string, userId string) (*http.Request, error) {
+func NewDeleteUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17495,7 +17791,7 @@ func NewDeleteUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envT
 }
 
 // NewGetUserRoleInEnvTypeRequest generates requests for GetUserRoleInEnvType
-func NewGetUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType string, userId string) (*http.Request, error) {
+func NewGetUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17543,7 +17839,7 @@ func NewGetUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType
 }
 
 // NewUpdateUserRoleInEnvTypeRequest calls the generic UpdateUserRoleInEnvType builder with application/json body
-func NewUpdateUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType string, userId string, body UpdateUserRoleInEnvTypeJSONRequestBody) (*http.Request, error) {
+func NewUpdateUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, body UpdateUserRoleInEnvTypeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -17554,7 +17850,7 @@ func NewUpdateUserRoleInEnvTypeRequest(server string, orgId OrgIdPathParam, envT
 }
 
 // NewUpdateUserRoleInEnvTypeRequestWithBody generates requests for UpdateUserRoleInEnvType with any type of body
-func NewUpdateUserRoleInEnvTypeRequestWithBody(server string, orgId OrgIdPathParam, envType string, userId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateUserRoleInEnvTypeRequestWithBody(server string, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17620,6 +17916,94 @@ func NewGetOrgsOrgIdEventsRequest(server string, orgId string) (*http.Request, e
 	}
 
 	operationPath := fmt.Sprintf("/orgs/%s/events", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateGroupRequest calls the generic CreateGroup builder with application/json body
+func NewCreateGroupRequest(server string, orgId OrgIdPathParam, body CreateGroupJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateGroupRequestWithBody(server, orgId, "application/json", bodyReader)
+}
+
+// NewCreateGroupRequestWithBody generates requests for CreateGroup with any type of body
+func NewCreateGroupRequestWithBody(server string, orgId OrgIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/groups", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListGroupUsersRequest generates requests for ListGroupUsers
+func NewListGroupUsersRequest(server string, orgId OrgIdPathParam, groupId GroupIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "groupId", runtime.ParamLocationPath, groupId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/groups/%s/users", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -20758,7 +21142,7 @@ func NewPatchOrgsOrgIdSecretstoresStoreIdRequestWithBody(server string, orgId st
 }
 
 // NewListUserRolesInOrgRequest generates requests for ListUserRolesInOrg
-func NewListUserRolesInOrgRequest(server string, orgId OrgIdPathParam) (*http.Request, error) {
+func NewListUserRolesInOrgRequest(server string, orgId OrgIdPathParam, params *ListUserRolesInOrgParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20781,6 +21165,28 @@ func NewListUserRolesInOrgRequest(server string, orgId OrgIdPathParam) (*http.Re
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Type != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "type", runtime.ParamLocationQuery, *params.Type); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -20839,7 +21245,7 @@ func NewCreateServiceUserInOrgRequestWithBody(server string, orgId OrgIdPathPara
 }
 
 // NewDeleteUserRoleInOrgRequest generates requests for DeleteUserRoleInOrg
-func NewDeleteUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId string) (*http.Request, error) {
+func NewDeleteUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId UserIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20880,7 +21286,7 @@ func NewDeleteUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId s
 }
 
 // NewGetUserRoleInOrgRequest generates requests for GetUserRoleInOrg
-func NewGetUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId string) (*http.Request, error) {
+func NewGetUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId UserIdPathParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20921,7 +21327,7 @@ func NewGetUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId stri
 }
 
 // NewUpdateUserRoleInOrgRequest calls the generic UpdateUserRoleInOrg builder with application/json body
-func NewUpdateUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId string, body UpdateUserRoleInOrgJSONRequestBody) (*http.Request, error) {
+func NewUpdateUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId UserIdPathParam, body UpdateUserRoleInOrgJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -20932,7 +21338,7 @@ func NewUpdateUserRoleInOrgRequest(server string, orgId OrgIdPathParam, userId s
 }
 
 // NewUpdateUserRoleInOrgRequestWithBody generates requests for UpdateUserRoleInOrg with any type of body
-func NewUpdateUserRoleInOrgRequestWithBody(server string, orgId OrgIdPathParam, userId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateUserRoleInOrgRequestWithBody(server string, orgId OrgIdPathParam, userId UserIdPathParam, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20970,6 +21376,47 @@ func NewUpdateUserRoleInOrgRequestWithBody(server string, orgId OrgIdPathParam, 
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListUserGroupsInOrgRequest generates requests for ListUserGroupsInOrg
+func NewListUserGroupsInOrgRequest(server string, orgId OrgIdPathParam, userId UserIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/users/%s/groups", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -21800,6 +22247,11 @@ type ClientWithResponsesInterface interface {
 	// GetApplicationWithResponse request
 	GetApplicationWithResponse(ctx context.Context, orgId string, appId string, reqEditors ...RequestEditorFn) (*GetApplicationResponse, error)
 
+	// PatchApplicationWithBodyWithResponse request with any body
+	PatchApplicationWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchApplicationResponse, error)
+
+	PatchApplicationWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PatchApplicationJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchApplicationResponse, error)
+
 	// ListPipelineApprovalRequestsWithResponse request
 	ListPipelineApprovalRequestsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListPipelineApprovalRequestsParams, reqEditors ...RequestEditorFn) (*ListPipelineApprovalRequestsResponse, error)
 
@@ -22083,26 +22535,26 @@ type ClientWithResponsesInterface interface {
 	GetDiffWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, sourceSetId string, reqEditors ...RequestEditorFn) (*GetDiffResponse, error)
 
 	// GetSetResourceInputsWithResponse request
-	GetSetResourceInputsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams, reqEditors ...RequestEditorFn) (*GetSetResourceInputsResponse, error)
+	GetSetResourceInputsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, reqEditors ...RequestEditorFn) (*GetSetResourceInputsResponse, error)
 
 	// ListUserRolesInAppWithResponse request
-	ListUserRolesInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, reqEditors ...RequestEditorFn) (*ListUserRolesInAppResponse, error)
+	ListUserRolesInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListUserRolesInAppParams, reqEditors ...RequestEditorFn) (*ListUserRolesInAppResponse, error)
 
 	// CreateUserRoleInAppWithBodyWithResponse request with any body
-	CreateUserRoleInAppWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInAppResponse, error)
+	CreateUserRoleInAppWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInAppResponse, error)
 
-	CreateUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, body CreateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserRoleInAppResponse, error)
+	CreateUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body CreateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserRoleInAppResponse, error)
 
 	// DeleteUserRoleInAppWithResponse request
-	DeleteUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, reqEditors ...RequestEditorFn) (*DeleteUserRoleInAppResponse, error)
+	DeleteUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*DeleteUserRoleInAppResponse, error)
 
 	// GetUserRoleInAppWithResponse request
-	GetUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, reqEditors ...RequestEditorFn) (*GetUserRoleInAppResponse, error)
+	GetUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetUserRoleInAppResponse, error)
 
 	// UpdateUserRoleInAppWithBodyWithResponse request with any body
-	UpdateUserRoleInAppWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInAppResponse, error)
+	UpdateUserRoleInAppWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInAppResponse, error)
 
-	UpdateUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, body UpdateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInAppResponse, error)
+	UpdateUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, body UpdateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInAppResponse, error)
 
 	// GetOrgsOrgIdAppsAppIdValueSetVersionsWithResponse request
 	GetOrgsOrgIdAppsAppIdValueSetVersionsWithResponse(ctx context.Context, orgId string, appId string, params *GetOrgsOrgIdAppsAppIdValueSetVersionsParams, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdAppsAppIdValueSetVersionsResponse, error)
@@ -22227,26 +22679,34 @@ type ClientWithResponsesInterface interface {
 	UpdateEnvironmentTypeWithResponse(ctx context.Context, orgId string, envTypeId string, body UpdateEnvironmentTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateEnvironmentTypeResponse, error)
 
 	// ListUserRolesInEnvTypeWithResponse request
-	ListUserRolesInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, reqEditors ...RequestEditorFn) (*ListUserRolesInEnvTypeResponse, error)
+	ListUserRolesInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, params *ListUserRolesInEnvTypeParams, reqEditors ...RequestEditorFn) (*ListUserRolesInEnvTypeResponse, error)
 
 	// CreateUserRoleInEnvTypeWithBodyWithResponse request with any body
-	CreateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error)
+	CreateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error)
 
-	CreateUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, body CreateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error)
+	CreateUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, body CreateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error)
 
 	// DeleteUserRoleInEnvTypeWithResponse request
-	DeleteUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, reqEditors ...RequestEditorFn) (*DeleteUserRoleInEnvTypeResponse, error)
+	DeleteUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*DeleteUserRoleInEnvTypeResponse, error)
 
 	// GetUserRoleInEnvTypeWithResponse request
-	GetUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, reqEditors ...RequestEditorFn) (*GetUserRoleInEnvTypeResponse, error)
+	GetUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetUserRoleInEnvTypeResponse, error)
 
 	// UpdateUserRoleInEnvTypeWithBodyWithResponse request with any body
-	UpdateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInEnvTypeResponse, error)
+	UpdateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInEnvTypeResponse, error)
 
-	UpdateUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, body UpdateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInEnvTypeResponse, error)
+	UpdateUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, body UpdateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInEnvTypeResponse, error)
 
 	// GetOrgsOrgIdEventsWithResponse request
 	GetOrgsOrgIdEventsWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*GetOrgsOrgIdEventsResponse, error)
+
+	// CreateGroupWithBodyWithResponse request with any body
+	CreateGroupWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGroupResponse, error)
+
+	CreateGroupWithResponse(ctx context.Context, orgId OrgIdPathParam, body CreateGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGroupResponse, error)
+
+	// ListGroupUsersWithResponse request
+	ListGroupUsersWithResponse(ctx context.Context, orgId OrgIdPathParam, groupId GroupIdPathParam, reqEditors ...RequestEditorFn) (*ListGroupUsersResponse, error)
 
 	// ListHumanitecPublicKeysWithResponse request
 	ListHumanitecPublicKeysWithResponse(ctx context.Context, orgId string, params *ListHumanitecPublicKeysParams, reqEditors ...RequestEditorFn) (*ListHumanitecPublicKeysResponse, error)
@@ -22463,7 +22923,7 @@ type ClientWithResponsesInterface interface {
 	PatchOrgsOrgIdSecretstoresStoreIdWithResponse(ctx context.Context, orgId string, storeId string, body PatchOrgsOrgIdSecretstoresStoreIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchOrgsOrgIdSecretstoresStoreIdResponse, error)
 
 	// ListUserRolesInOrgWithResponse request
-	ListUserRolesInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*ListUserRolesInOrgResponse, error)
+	ListUserRolesInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListUserRolesInOrgParams, reqEditors ...RequestEditorFn) (*ListUserRolesInOrgResponse, error)
 
 	// CreateServiceUserInOrgWithBodyWithResponse request with any body
 	CreateServiceUserInOrgWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateServiceUserInOrgResponse, error)
@@ -22471,15 +22931,18 @@ type ClientWithResponsesInterface interface {
 	CreateServiceUserInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, body CreateServiceUserInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateServiceUserInOrgResponse, error)
 
 	// DeleteUserRoleInOrgWithResponse request
-	DeleteUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId string, reqEditors ...RequestEditorFn) (*DeleteUserRoleInOrgResponse, error)
+	DeleteUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*DeleteUserRoleInOrgResponse, error)
 
 	// GetUserRoleInOrgWithResponse request
-	GetUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId string, reqEditors ...RequestEditorFn) (*GetUserRoleInOrgResponse, error)
+	GetUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetUserRoleInOrgResponse, error)
 
 	// UpdateUserRoleInOrgWithBodyWithResponse request with any body
-	UpdateUserRoleInOrgWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInOrgResponse, error)
+	UpdateUserRoleInOrgWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInOrgResponse, error)
 
-	UpdateUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId string, body UpdateUserRoleInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInOrgResponse, error)
+	UpdateUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, body UpdateUserRoleInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInOrgResponse, error)
+
+	// ListUserGroupsInOrgWithResponse request
+	ListUserGroupsInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*ListUserGroupsInOrgResponse, error)
 
 	// ListWorkloadProfileChartVersionsWithResponse request
 	ListWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileChartVersionsResponse, error)
@@ -22870,6 +23333,29 @@ func (r GetApplicationResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetApplicationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PatchApplicationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ApplicationResponse
+	JSON404      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PatchApplicationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PatchApplicationResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -23811,6 +24297,7 @@ type GetOrgsOrgIdAppsAppIdEnvsEnvIdValuesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]ValueResponse
+	JSON400      *HumanitecErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -24699,6 +25186,8 @@ type ListUserRolesInAppResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]UserRoleResponse
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -24721,7 +25210,9 @@ type CreateUserRoleInAppResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -24743,7 +25234,9 @@ func (r CreateUserRoleInAppResponse) StatusCode() int {
 type DeleteUserRoleInAppResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -24766,7 +25259,9 @@ type GetUserRoleInAppResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -24789,7 +25284,9 @@ type UpdateUserRoleInAppResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -25564,6 +26061,8 @@ type ListUserRolesInEnvTypeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]UserRoleResponse
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -25586,7 +26085,9 @@ type CreateUserRoleInEnvTypeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -25608,7 +26109,9 @@ func (r CreateUserRoleInEnvTypeResponse) StatusCode() int {
 type DeleteUserRoleInEnvTypeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -25631,7 +26134,9 @@ type GetUserRoleInEnvTypeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -25654,7 +26159,9 @@ type UpdateUserRoleInEnvTypeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -25689,6 +26196,55 @@ func (r GetOrgsOrgIdEventsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrgsOrgIdEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateGroupResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GroupWithRole
+	JSON400      *HumanitecErrorResponse
+	JSON403      *N403Forbidden
+	JSON409      *HumanitecErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateGroupResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateGroupResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListGroupUsersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]UserProfileResponse
+	JSON400      *N400BadRequest
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGroupUsersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGroupUsersResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -27072,6 +27628,8 @@ type ListUserRolesInOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]UserRoleResponse
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -27116,7 +27674,9 @@ func (r CreateServiceUserInOrgResponse) StatusCode() int {
 type DeleteUserRoleInOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -27139,7 +27699,9 @@ type GetUserRoleInOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -27162,7 +27724,9 @@ type UpdateUserRoleInOrgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *UserRoleResponse
-	JSON400      *HumanitecErrorResponse
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -27175,6 +27739,31 @@ func (r UpdateUserRoleInOrgResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateUserRoleInOrgResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListUserGroupsInOrgResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Group
+	JSON400      *N400BadRequest
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r ListUserGroupsInOrgResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListUserGroupsInOrgResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -27674,6 +28263,23 @@ func (c *ClientWithResponses) GetApplicationWithResponse(ctx context.Context, or
 		return nil, err
 	}
 	return ParseGetApplicationResponse(rsp)
+}
+
+// PatchApplicationWithBodyWithResponse request with arbitrary body returning *PatchApplicationResponse
+func (c *ClientWithResponses) PatchApplicationWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchApplicationResponse, error) {
+	rsp, err := c.PatchApplicationWithBody(ctx, orgId, appId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchApplicationResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchApplicationWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body PatchApplicationJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchApplicationResponse, error) {
+	rsp, err := c.PatchApplication(ctx, orgId, appId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchApplicationResponse(rsp)
 }
 
 // ListPipelineApprovalRequestsWithResponse request returning *ListPipelineApprovalRequestsResponse
@@ -28577,8 +29183,8 @@ func (c *ClientWithResponses) GetDiffWithResponse(ctx context.Context, orgId Org
 }
 
 // GetSetResourceInputsWithResponse request returning *GetSetResourceInputsResponse
-func (c *ClientWithResponses) GetSetResourceInputsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, params *GetSetResourceInputsParams, reqEditors ...RequestEditorFn) (*GetSetResourceInputsResponse, error) {
-	rsp, err := c.GetSetResourceInputs(ctx, orgId, appId, setId, params, reqEditors...)
+func (c *ClientWithResponses) GetSetResourceInputsWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, setId string, reqEditors ...RequestEditorFn) (*GetSetResourceInputsResponse, error) {
+	rsp, err := c.GetSetResourceInputs(ctx, orgId, appId, setId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -28586,8 +29192,8 @@ func (c *ClientWithResponses) GetSetResourceInputsWithResponse(ctx context.Conte
 }
 
 // ListUserRolesInAppWithResponse request returning *ListUserRolesInAppResponse
-func (c *ClientWithResponses) ListUserRolesInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, reqEditors ...RequestEditorFn) (*ListUserRolesInAppResponse, error) {
-	rsp, err := c.ListUserRolesInApp(ctx, orgId, appId, reqEditors...)
+func (c *ClientWithResponses) ListUserRolesInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, params *ListUserRolesInAppParams, reqEditors ...RequestEditorFn) (*ListUserRolesInAppResponse, error) {
+	rsp, err := c.ListUserRolesInApp(ctx, orgId, appId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -28595,7 +29201,7 @@ func (c *ClientWithResponses) ListUserRolesInAppWithResponse(ctx context.Context
 }
 
 // CreateUserRoleInAppWithBodyWithResponse request with arbitrary body returning *CreateUserRoleInAppResponse
-func (c *ClientWithResponses) CreateUserRoleInAppWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInAppResponse, error) {
+func (c *ClientWithResponses) CreateUserRoleInAppWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInAppResponse, error) {
 	rsp, err := c.CreateUserRoleInAppWithBody(ctx, orgId, appId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -28603,7 +29209,7 @@ func (c *ClientWithResponses) CreateUserRoleInAppWithBodyWithResponse(ctx contex
 	return ParseCreateUserRoleInAppResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, body CreateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserRoleInAppResponse, error) {
+func (c *ClientWithResponses) CreateUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, body CreateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserRoleInAppResponse, error) {
 	rsp, err := c.CreateUserRoleInApp(ctx, orgId, appId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -28612,7 +29218,7 @@ func (c *ClientWithResponses) CreateUserRoleInAppWithResponse(ctx context.Contex
 }
 
 // DeleteUserRoleInAppWithResponse request returning *DeleteUserRoleInAppResponse
-func (c *ClientWithResponses) DeleteUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, reqEditors ...RequestEditorFn) (*DeleteUserRoleInAppResponse, error) {
+func (c *ClientWithResponses) DeleteUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*DeleteUserRoleInAppResponse, error) {
 	rsp, err := c.DeleteUserRoleInApp(ctx, orgId, appId, userId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -28621,7 +29227,7 @@ func (c *ClientWithResponses) DeleteUserRoleInAppWithResponse(ctx context.Contex
 }
 
 // GetUserRoleInAppWithResponse request returning *GetUserRoleInAppResponse
-func (c *ClientWithResponses) GetUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, reqEditors ...RequestEditorFn) (*GetUserRoleInAppResponse, error) {
+func (c *ClientWithResponses) GetUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetUserRoleInAppResponse, error) {
 	rsp, err := c.GetUserRoleInApp(ctx, orgId, appId, userId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -28630,7 +29236,7 @@ func (c *ClientWithResponses) GetUserRoleInAppWithResponse(ctx context.Context, 
 }
 
 // UpdateUserRoleInAppWithBodyWithResponse request with arbitrary body returning *UpdateUserRoleInAppResponse
-func (c *ClientWithResponses) UpdateUserRoleInAppWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInAppResponse, error) {
+func (c *ClientWithResponses) UpdateUserRoleInAppWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInAppResponse, error) {
 	rsp, err := c.UpdateUserRoleInAppWithBody(ctx, orgId, appId, userId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -28638,7 +29244,7 @@ func (c *ClientWithResponses) UpdateUserRoleInAppWithBodyWithResponse(ctx contex
 	return ParseUpdateUserRoleInAppResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId string, userId string, body UpdateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInAppResponse, error) {
+func (c *ClientWithResponses) UpdateUserRoleInAppWithResponse(ctx context.Context, orgId OrgIdPathParam, appId AppIdPathParam, userId UserIdPathParam, body UpdateUserRoleInAppJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInAppResponse, error) {
 	rsp, err := c.UpdateUserRoleInApp(ctx, orgId, appId, userId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29039,8 +29645,8 @@ func (c *ClientWithResponses) UpdateEnvironmentTypeWithResponse(ctx context.Cont
 }
 
 // ListUserRolesInEnvTypeWithResponse request returning *ListUserRolesInEnvTypeResponse
-func (c *ClientWithResponses) ListUserRolesInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, reqEditors ...RequestEditorFn) (*ListUserRolesInEnvTypeResponse, error) {
-	rsp, err := c.ListUserRolesInEnvType(ctx, orgId, envType, reqEditors...)
+func (c *ClientWithResponses) ListUserRolesInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, params *ListUserRolesInEnvTypeParams, reqEditors ...RequestEditorFn) (*ListUserRolesInEnvTypeResponse, error) {
+	rsp, err := c.ListUserRolesInEnvType(ctx, orgId, envType, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -29048,7 +29654,7 @@ func (c *ClientWithResponses) ListUserRolesInEnvTypeWithResponse(ctx context.Con
 }
 
 // CreateUserRoleInEnvTypeWithBodyWithResponse request with arbitrary body returning *CreateUserRoleInEnvTypeResponse
-func (c *ClientWithResponses) CreateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error) {
+func (c *ClientWithResponses) CreateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error) {
 	rsp, err := c.CreateUserRoleInEnvTypeWithBody(ctx, orgId, envType, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29056,7 +29662,7 @@ func (c *ClientWithResponses) CreateUserRoleInEnvTypeWithBodyWithResponse(ctx co
 	return ParseCreateUserRoleInEnvTypeResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, body CreateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error) {
+func (c *ClientWithResponses) CreateUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, body CreateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserRoleInEnvTypeResponse, error) {
 	rsp, err := c.CreateUserRoleInEnvType(ctx, orgId, envType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29065,7 +29671,7 @@ func (c *ClientWithResponses) CreateUserRoleInEnvTypeWithResponse(ctx context.Co
 }
 
 // DeleteUserRoleInEnvTypeWithResponse request returning *DeleteUserRoleInEnvTypeResponse
-func (c *ClientWithResponses) DeleteUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, reqEditors ...RequestEditorFn) (*DeleteUserRoleInEnvTypeResponse, error) {
+func (c *ClientWithResponses) DeleteUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*DeleteUserRoleInEnvTypeResponse, error) {
 	rsp, err := c.DeleteUserRoleInEnvType(ctx, orgId, envType, userId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29074,7 +29680,7 @@ func (c *ClientWithResponses) DeleteUserRoleInEnvTypeWithResponse(ctx context.Co
 }
 
 // GetUserRoleInEnvTypeWithResponse request returning *GetUserRoleInEnvTypeResponse
-func (c *ClientWithResponses) GetUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, reqEditors ...RequestEditorFn) (*GetUserRoleInEnvTypeResponse, error) {
+func (c *ClientWithResponses) GetUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetUserRoleInEnvTypeResponse, error) {
 	rsp, err := c.GetUserRoleInEnvType(ctx, orgId, envType, userId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29083,7 +29689,7 @@ func (c *ClientWithResponses) GetUserRoleInEnvTypeWithResponse(ctx context.Conte
 }
 
 // UpdateUserRoleInEnvTypeWithBodyWithResponse request with arbitrary body returning *UpdateUserRoleInEnvTypeResponse
-func (c *ClientWithResponses) UpdateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInEnvTypeResponse, error) {
+func (c *ClientWithResponses) UpdateUserRoleInEnvTypeWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInEnvTypeResponse, error) {
 	rsp, err := c.UpdateUserRoleInEnvTypeWithBody(ctx, orgId, envType, userId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29091,7 +29697,7 @@ func (c *ClientWithResponses) UpdateUserRoleInEnvTypeWithBodyWithResponse(ctx co
 	return ParseUpdateUserRoleInEnvTypeResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType string, userId string, body UpdateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInEnvTypeResponse, error) {
+func (c *ClientWithResponses) UpdateUserRoleInEnvTypeWithResponse(ctx context.Context, orgId OrgIdPathParam, envType EnvTypePathParam, userId UserIdPathParam, body UpdateUserRoleInEnvTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInEnvTypeResponse, error) {
 	rsp, err := c.UpdateUserRoleInEnvType(ctx, orgId, envType, userId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29106,6 +29712,32 @@ func (c *ClientWithResponses) GetOrgsOrgIdEventsWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseGetOrgsOrgIdEventsResponse(rsp)
+}
+
+// CreateGroupWithBodyWithResponse request with arbitrary body returning *CreateGroupResponse
+func (c *ClientWithResponses) CreateGroupWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGroupResponse, error) {
+	rsp, err := c.CreateGroupWithBody(ctx, orgId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGroupResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateGroupWithResponse(ctx context.Context, orgId OrgIdPathParam, body CreateGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGroupResponse, error) {
+	rsp, err := c.CreateGroup(ctx, orgId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGroupResponse(rsp)
+}
+
+// ListGroupUsersWithResponse request returning *ListGroupUsersResponse
+func (c *ClientWithResponses) ListGroupUsersWithResponse(ctx context.Context, orgId OrgIdPathParam, groupId GroupIdPathParam, reqEditors ...RequestEditorFn) (*ListGroupUsersResponse, error) {
+	rsp, err := c.ListGroupUsers(ctx, orgId, groupId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGroupUsersResponse(rsp)
 }
 
 // ListHumanitecPublicKeysWithResponse request returning *ListHumanitecPublicKeysResponse
@@ -29791,8 +30423,8 @@ func (c *ClientWithResponses) PatchOrgsOrgIdSecretstoresStoreIdWithResponse(ctx 
 }
 
 // ListUserRolesInOrgWithResponse request returning *ListUserRolesInOrgResponse
-func (c *ClientWithResponses) ListUserRolesInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, reqEditors ...RequestEditorFn) (*ListUserRolesInOrgResponse, error) {
-	rsp, err := c.ListUserRolesInOrg(ctx, orgId, reqEditors...)
+func (c *ClientWithResponses) ListUserRolesInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListUserRolesInOrgParams, reqEditors ...RequestEditorFn) (*ListUserRolesInOrgResponse, error) {
+	rsp, err := c.ListUserRolesInOrg(ctx, orgId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -29817,7 +30449,7 @@ func (c *ClientWithResponses) CreateServiceUserInOrgWithResponse(ctx context.Con
 }
 
 // DeleteUserRoleInOrgWithResponse request returning *DeleteUserRoleInOrgResponse
-func (c *ClientWithResponses) DeleteUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId string, reqEditors ...RequestEditorFn) (*DeleteUserRoleInOrgResponse, error) {
+func (c *ClientWithResponses) DeleteUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*DeleteUserRoleInOrgResponse, error) {
 	rsp, err := c.DeleteUserRoleInOrg(ctx, orgId, userId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29826,7 +30458,7 @@ func (c *ClientWithResponses) DeleteUserRoleInOrgWithResponse(ctx context.Contex
 }
 
 // GetUserRoleInOrgWithResponse request returning *GetUserRoleInOrgResponse
-func (c *ClientWithResponses) GetUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId string, reqEditors ...RequestEditorFn) (*GetUserRoleInOrgResponse, error) {
+func (c *ClientWithResponses) GetUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetUserRoleInOrgResponse, error) {
 	rsp, err := c.GetUserRoleInOrg(ctx, orgId, userId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29835,7 +30467,7 @@ func (c *ClientWithResponses) GetUserRoleInOrgWithResponse(ctx context.Context, 
 }
 
 // UpdateUserRoleInOrgWithBodyWithResponse request with arbitrary body returning *UpdateUserRoleInOrgResponse
-func (c *ClientWithResponses) UpdateUserRoleInOrgWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, userId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInOrgResponse, error) {
+func (c *ClientWithResponses) UpdateUserRoleInOrgWithBodyWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserRoleInOrgResponse, error) {
 	rsp, err := c.UpdateUserRoleInOrgWithBody(ctx, orgId, userId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -29843,12 +30475,21 @@ func (c *ClientWithResponses) UpdateUserRoleInOrgWithBodyWithResponse(ctx contex
 	return ParseUpdateUserRoleInOrgResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId string, body UpdateUserRoleInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInOrgResponse, error) {
+func (c *ClientWithResponses) UpdateUserRoleInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, body UpdateUserRoleInOrgJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserRoleInOrgResponse, error) {
 	rsp, err := c.UpdateUserRoleInOrg(ctx, orgId, userId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateUserRoleInOrgResponse(rsp)
+}
+
+// ListUserGroupsInOrgWithResponse request returning *ListUserGroupsInOrgResponse
+func (c *ClientWithResponses) ListUserGroupsInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*ListUserGroupsInOrgResponse, error) {
+	rsp, err := c.ListUserGroupsInOrg(ctx, orgId, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListUserGroupsInOrgResponse(rsp)
 }
 
 // ListWorkloadProfileChartVersionsWithResponse request returning *ListWorkloadProfileChartVersionsResponse
@@ -30479,6 +31120,39 @@ func ParseGetApplicationResponse(rsp *http.Response) (*GetApplicationResponse, e
 	}
 
 	response := &GetApplicationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ApplicationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePatchApplicationResponse parses an HTTP response from a PatchApplicationWithResponse call
+func ParsePatchApplicationResponse(rsp *http.Response) (*PatchApplicationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PatchApplicationResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31898,6 +32572,13 @@ func ParseGetOrgsOrgIdAppsAppIdEnvsEnvIdValuesResponse(rsp *http.Response) (*Get
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -33367,6 +34048,20 @@ func ParseListUserRolesInAppResponse(rsp *http.Response) (*ListUserRolesInAppRes
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
@@ -33394,11 +34089,25 @@ func ParseCreateUserRoleInAppResponse(rsp *http.Response) (*CreateUserRoleInAppR
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -33420,11 +34129,25 @@ func ParseDeleteUserRoleInAppResponse(rsp *http.Response) (*DeleteUserRoleInAppR
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -33453,11 +34176,25 @@ func ParseGetUserRoleInAppResponse(rsp *http.Response) (*GetUserRoleInAppRespons
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -33486,11 +34223,25 @@ func ParseUpdateUserRoleInAppResponse(rsp *http.Response) (*UpdateUserRoleInAppR
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -34686,6 +35437,20 @@ func ParseListUserRolesInEnvTypeResponse(rsp *http.Response) (*ListUserRolesInEn
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
@@ -34713,11 +35478,25 @@ func ParseCreateUserRoleInEnvTypeResponse(rsp *http.Response) (*CreateUserRoleIn
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -34739,11 +35518,25 @@ func ParseDeleteUserRoleInEnvTypeResponse(rsp *http.Response) (*DeleteUserRoleIn
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -34772,11 +35565,25 @@ func ParseGetUserRoleInEnvTypeResponse(rsp *http.Response) (*GetUserRoleInEnvTyp
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -34805,11 +35612,25 @@ func ParseUpdateUserRoleInEnvTypeResponse(rsp *http.Response) (*UpdateUserRoleIn
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -34836,6 +35657,93 @@ func ParseGetOrgsOrgIdEventsResponse(rsp *http.Response) (*GetOrgsOrgIdEventsRes
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateGroupResponse parses an HTTP response from a CreateGroupWithResponse call
+func ParseCreateGroupResponse(rsp *http.Response) (*CreateGroupResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateGroupResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GroupWithRole
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListGroupUsersResponse parses an HTTP response from a ListGroupUsersWithResponse call
+func ParseListGroupUsersResponse(rsp *http.Response) (*ListGroupUsersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGroupUsersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []UserProfileResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -37050,6 +37958,20 @@ func ParseListUserRolesInOrgResponse(rsp *http.Response) (*ListUserRolesInOrgRes
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
@@ -37103,11 +38025,25 @@ func ParseDeleteUserRoleInOrgResponse(rsp *http.Response) (*DeleteUserRoleInOrgR
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -37136,11 +38072,25 @@ func ParseGetUserRoleInOrgResponse(rsp *http.Response) (*GetUserRoleInOrgRespons
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -37169,11 +38119,72 @@ func ParseUpdateUserRoleInOrgResponse(rsp *http.Response) (*UpdateUserRoleInOrgR
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
+		var dest N400BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListUserGroupsInOrgResponse parses an HTTP response from a ListUserGroupsInOrgWithResponse call
+func ParseListUserGroupsInOrgResponse(rsp *http.Response) (*ListUserGroupsInOrgResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListUserGroupsInOrgResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Group
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
