@@ -766,6 +766,9 @@ type ConvertScoreToSetBody struct {
 	// PropertyOverrides An optional set of path overrides that will be applied to the workload.
 	PropertyOverrides *map[string]interface{} `json:"property_overrides,omitempty"`
 
+	// ResourceTypeAliases An optional set of resource types overrides that will be applied in the deployment set.
+	ResourceTypeAliases *map[string]string `json:"resource_type_aliases,omitempty"`
+
 	// Spec A Json object containing the workload specification. Score v1b1 is expected.
 	Spec map[string]interface{} `json:"spec"`
 }
@@ -924,6 +927,9 @@ type CreateWorkloadArtefactVersion struct {
 
 	// Ref (Optional) The ref the Artefact Version was built from.
 	Ref *string `json:"ref,omitempty"`
+
+	// ResourceTypeAliases An optional set of resource types overrides that will be applied in the deployment set.
+	ResourceTypeAliases *map[string]string `json:"resource_type_aliases,omitempty"`
 
 	// Spec A Json object containing the workload specification. Score v1b1 is expected.
 	Spec map[string]interface{} `json:"spec"`
