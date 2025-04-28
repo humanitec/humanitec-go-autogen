@@ -14387,6 +14387,16 @@
                   "containers.my-container.variables.DEBUG": null
                 }
               },
+              "resource_type_aliases": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "An optional set of resource types overrides that will be applied in the deployment set.",
+                "example": {
+                  "s3": "my-org/s3"
+                }
+              },
               "extensions": {
                 "$ref": "#/components/schemas/ScoreHumanitecExtensions"
               }
@@ -14883,6 +14893,16 @@
             "example": {
               "containers.my-container.image": "busybox:latest",
               "containers.my-container.variables.DEBUG": null
+            }
+          },
+          "resource_type_aliases": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "An optional set of resource types overrides that will be applied in the deployment set.",
+            "example": {
+              "s3": "my-org/s3"
             }
           },
           "extensions": {
