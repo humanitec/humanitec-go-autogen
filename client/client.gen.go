@@ -3051,10 +3051,10 @@ type UserProfileResponse struct {
 
 // UserRoleRequest Holds the mapping of role for a subject on a particular object.
 type UserRoleRequest struct {
-	// Id The User ID for this user
+	// Id The User or Group Id
 	Id string `json:"id"`
 
-	// Role The role that this user holds
+	// Role The role that this User or Group holds
 	Role string `json:"role"`
 }
 
@@ -3066,16 +3066,19 @@ type UserRoleResponse struct {
 	// Email The email address of the user from the profile
 	Email *string `json:"email,omitempty"`
 
-	// Id The User ID for this user or group
+	// Id The User or Group Id
 	Id string `json:"id"`
+
+	// IdpId The IdP id the group is registered for. Empty if user is not a group.
+	IdpId *string `json:"idp_id,omitempty"`
 
 	// Invite The status of an invitation (If applicable)
 	Invite *string `json:"invite,omitempty"`
 
-	// Name The name the user goes by
+	// Name The name the User or Group goes by
 	Name string `json:"name"`
 
-	// Role The role that this user holds
+	// Role The role that this User or Group holds
 	Role string `json:"role"`
 
 	// Type The type of the account. Could be user, service, group or system
