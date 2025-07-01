@@ -2204,6 +2204,9 @@ type ProvisionDependenciesRequest struct {
 
 	// MatchDependents If the resources dependant on the main resource, are also dependant on the co-provisioned one.
 	MatchDependents *bool `json:"match_dependents,omitempty"`
+
+	// Params (Optional) Additional parameters to be passed to the driver which will provision the resource.
+	Params *map[string]interface{} `json:"params,omitempty"`
 }
 
 // ProvisionDependenciesResponse ProvisionDependencies defines resources which are needed to be co-provisioned with the current resource.
@@ -2213,6 +2216,9 @@ type ProvisionDependenciesResponse struct {
 
 	// MatchDependents If the resources dependant on the main resource, are also dependant on the co-provisioned one.
 	MatchDependents *bool `json:"match_dependents,omitempty"`
+
+	// Params (Optional) Additional parameters to be passed to the driver which will provision the resource.
+	Params *map[string]interface{} `json:"params,omitempty"`
 }
 
 // PublicKey PublicKey stores a Public Key an organization shares with Humanitec.
