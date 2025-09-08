@@ -1753,6 +1753,11 @@ type PatchResourceDefinitionRequestRequest struct {
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
 }
 
+// Permissions List of permissions.
+type Permissions struct {
+	Permissions []string `json:"permissions"`
+}
+
 // Pipeline An object containing the details of a Pipeline.
 type Pipeline struct {
 	// AppId The id of the Application containing this Pipeline.
@@ -2825,6 +2830,11 @@ type SetResponse struct {
 
 	// Version The version of the Deployment Set Schema to use. (Currently, only 0 is supported, and if omitted, version 0 is assumed.)
 	Version int `json:"version"`
+}
+
+// SubjectPermissions Maps of objects and permissions the subject holds on them.
+type SubjectPermissions struct {
+	Objects map[string]Permissions `json:"objects"`
 }
 
 // SubjectTypeEnum Subjects that can assume roles on objects.
@@ -5991,6 +6001,9 @@ type ClientInterface interface {
 
 	// ListUserGroupsInOrg request
 	ListUserGroupsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSubjectPermsInOrg request
+	GetSubjectPermsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListWorkloadProfileChartVersions request
 	ListWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9331,6 +9344,18 @@ func (c *Client) UpdateUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, 
 
 func (c *Client) ListUserGroupsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListUserGroupsInOrgRequest(c.Server, orgId, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSubjectPermsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSubjectPermsInOrgRequest(c.Server, orgId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -21436,6 +21461,47 @@ func NewListUserGroupsInOrgRequest(server string, orgId OrgIdPathParam, userId U
 	return req, nil
 }
 
+// NewGetSubjectPermsInOrgRequest generates requests for GetSubjectPermsInOrg
+func NewGetSubjectPermsInOrgRequest(server string, orgId OrgIdPathParam, userId UserIdPathParam) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orgs/%s/users/%s/perms", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListWorkloadProfileChartVersionsRequest generates requests for ListWorkloadProfileChartVersions
 func NewListWorkloadProfileChartVersionsRequest(server string, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams) (*http.Request, error) {
 	var err error
@@ -22958,6 +23024,9 @@ type ClientWithResponsesInterface interface {
 
 	// ListUserGroupsInOrgWithResponse request
 	ListUserGroupsInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*ListUserGroupsInOrgResponse, error)
+
+	// GetSubjectPermsInOrgWithResponse request
+	GetSubjectPermsInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetSubjectPermsInOrgResponse, error)
 
 	// ListWorkloadProfileChartVersionsWithResponse request
 	ListWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileChartVersionsResponse, error)
@@ -27318,6 +27387,7 @@ func (r CreateResourceDriverResponse) StatusCode() int {
 type DeleteResourceDriverResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON409      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
 
@@ -27779,6 +27849,30 @@ func (r ListUserGroupsInOrgResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListUserGroupsInOrgResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSubjectPermsInOrgResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SubjectPermissions
+	JSON403      *N403Forbidden
+	JSON404      *N404NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSubjectPermsInOrgResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSubjectPermsInOrgResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -30505,6 +30599,15 @@ func (c *ClientWithResponses) ListUserGroupsInOrgWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseListUserGroupsInOrgResponse(rsp)
+}
+
+// GetSubjectPermsInOrgWithResponse request returning *GetSubjectPermsInOrgResponse
+func (c *ClientWithResponses) GetSubjectPermsInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetSubjectPermsInOrgResponse, error) {
+	rsp, err := c.GetSubjectPermsInOrg(ctx, orgId, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSubjectPermsInOrgResponse(rsp)
 }
 
 // ListWorkloadProfileChartVersionsWithResponse request returning *ListWorkloadProfileChartVersionsResponse
@@ -37490,6 +37593,13 @@ func ParseDeleteResourceDriverResponse(rsp *http.Response) (*DeleteResourceDrive
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -38186,6 +38296,46 @@ func ParseListUserGroupsInOrgResponse(rsp *http.Response) (*ListUserGroupsInOrgR
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSubjectPermsInOrgResponse parses an HTTP response from a GetSubjectPermsInOrgWithResponse call
+func ParseGetSubjectPermsInOrgResponse(rsp *http.Response) (*GetSubjectPermsInOrgResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSubjectPermsInOrgResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SubjectPermissions
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
 		var dest N403Forbidden
