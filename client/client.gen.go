@@ -1753,29 +1753,6 @@ type PatchResourceDefinitionRequestRequest struct {
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
 }
 
-// PatchResourceTypeRequestRequest defines model for PatchResourceTypeRequestRequest.
-type PatchResourceTypeRequestRequest struct {
-	// Category (Optional) Category name (used to group similar resources on the UI).
-	Category *string `json:"category,omitempty"`
-
-	// InputsSchema (Optional) A JSON Schema specifying the type-specific parameters for the driver (input).
-	InputsSchema *map[string]interface{} `json:"inputs_schema,omitempty"`
-
-	// Name (Optional) Resource display name.
-	Name *string `json:"name,omitempty"`
-
-	// OutputsSchema (Optional) A JSON Schema specifying the type-specific data passed to the deployment (output).
-	OutputsSchema *map[string]interface{} `json:"outputs_schema,omitempty"`
-
-	// Use (Optional) Kind of dependency between resource of this type and a workload. It should be one of: `direct`, `indirect`, `implicit`.
-	Use *string `json:"use,omitempty"`
-}
-
-// Permissions List of permissions.
-type Permissions struct {
-	Permissions []string `json:"permissions"`
-}
-
 // Pipeline An object containing the details of a Pipeline.
 type Pipeline struct {
 	// AppId The id of the Application containing this Pipeline.
@@ -2555,29 +2532,6 @@ type ResourceProvisionRequestRequest struct {
 	Type     string                  `json:"type"`
 }
 
-// ResourceTypeRequest Resources Types define the technology that Applications can have dependencies on.
-//
-// Each Resource Type also defines a set of input parameters (`inputs_schema`), and a set of output data (`outputs_schema`). When provisioning a resource, these are treated as inputs and outputs respectively.
-type ResourceTypeRequest struct {
-	// Category Category name (used to group similar resources on the UI).
-	Category *string `json:"category,omitempty"`
-
-	// InputsSchema A JSON Schema specifying the type-specific parameters for the driver (input).
-	InputsSchema *map[string]interface{} `json:"inputs_schema,omitempty"`
-
-	// Name Display name.
-	Name *string `json:"name,omitempty"`
-
-	// OutputsSchema A JSON Schema specifying the type-specific data passed to the deployment (output).
-	OutputsSchema *map[string]interface{} `json:"outputs_schema,omitempty"`
-
-	// Type Unique resource type identifier (system-wide, across all organizations). It should start with the Humanitec Organization ID followed by "/".
-	Type string `json:"type"`
-
-	// Use Kind of dependency between resource of this type and a workload. It should be one of: `direct`, `indirect`, `implicit`.
-	Use string `json:"use"`
-}
-
 // ResourceTypeResponse Resources Types define the technology that Applications can have dependencies on.
 //
 // Each Resource Type also defines a set of input parameters (`inputs_schema`), and a set of output data (`outputs_schema`). When provisioning a resource, these are treated as inputs and outputs respectively.
@@ -2873,11 +2827,6 @@ type SetResponse struct {
 	Version int `json:"version"`
 }
 
-// SubjectPermissions Maps of objects and permissions the subject holds on them.
-type SubjectPermissions struct {
-	Objects map[string]Permissions `json:"objects"`
-}
-
 // SubjectTypeEnum Subjects that can assume roles on objects.
 type SubjectTypeEnum string
 
@@ -3001,24 +2950,6 @@ type UpdateResourceDefinitionRequestRequest struct {
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
-}
-
-// UpdateResourceTypeRequestRequest defines model for UpdateResourceTypeRequestRequest.
-type UpdateResourceTypeRequestRequest struct {
-	// Category Category name (used to group similar resources on the UI).
-	Category *string `json:"category,omitempty"`
-
-	// InputsSchema (Optional) A JSON Schema specifying the type-specific parameters for the driver (input).
-	InputsSchema *map[string]interface{} `json:"inputs_schema,omitempty"`
-
-	// Name (Optional) Resource display name.
-	Name *string `json:"name,omitempty"`
-
-	// OutputsSchema (Optional) A JSON Schema specifying the type-specific data passed to the deployment (output).
-	OutputsSchema *map[string]interface{} `json:"outputs_schema,omitempty"`
-
-	// Use Kind of dependency between resource of this type and a workload. It should be one of: `direct`, `indirect`, `implicit`.
-	Use string `json:"use"`
 }
 
 // UpdateSecretStorePayloadRequest Secret Store represents external secret management system used by an organization to store secrets referenced in Humanitec.
@@ -4526,15 +4457,6 @@ type CreateResourceDriverJSONRequestBody = CreateDriverRequestRequest
 // UpdateResourceDriverJSONRequestBody defines body for UpdateResourceDriver for application/json ContentType.
 type UpdateResourceDriverJSONRequestBody = UpdateDriverRequestRequest
 
-// CreateResourceTypeJSONRequestBody defines body for CreateResourceType for application/json ContentType.
-type CreateResourceTypeJSONRequestBody = ResourceTypeRequest
-
-// PatchResourceTypeJSONRequestBody defines body for PatchResourceType for application/json ContentType.
-type PatchResourceTypeJSONRequestBody = PatchResourceTypeRequestRequest
-
-// UpdateResourceTypeJSONRequestBody defines body for UpdateResourceType for application/json ContentType.
-type UpdateResourceTypeJSONRequestBody = UpdateResourceTypeRequestRequest
-
 // CreateResourceClassJSONRequestBody defines body for CreateResourceClass for application/json ContentType.
 type CreateResourceClassJSONRequestBody = ResourceClassRequest
 
@@ -6008,24 +5930,6 @@ type ClientInterface interface {
 	// ListResourceTypes request
 	ListResourceTypes(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateResourceTypeWithBody request with any body
-	CreateResourceTypeWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateResourceType(ctx context.Context, orgId string, body CreateResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteResourceType request
-	DeleteResourceType(ctx context.Context, orgId string, typeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// PatchResourceTypeWithBody request with any body
-	PatchResourceTypeWithBody(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	PatchResourceType(ctx context.Context, orgId string, typeId string, body PatchResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// UpdateResourceTypeWithBody request with any body
-	UpdateResourceTypeWithBody(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	UpdateResourceType(ctx context.Context, orgId string, typeId string, body UpdateResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// CreateResourceClassWithBody request with any body
 	CreateResourceClassWithBody(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -6087,9 +5991,6 @@ type ClientInterface interface {
 
 	// ListUserGroupsInOrg request
 	ListUserGroupsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetSubjectPermsInOrg request
-	GetSubjectPermsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListWorkloadProfileChartVersions request
 	ListWorkloadProfileChartVersions(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9164,90 +9065,6 @@ func (c *Client) ListResourceTypes(ctx context.Context, orgId string, reqEditors
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateResourceTypeWithBody(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateResourceTypeRequestWithBody(c.Server, orgId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateResourceType(ctx context.Context, orgId string, body CreateResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateResourceTypeRequest(c.Server, orgId, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteResourceType(ctx context.Context, orgId string, typeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteResourceTypeRequest(c.Server, orgId, typeId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PatchResourceTypeWithBody(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchResourceTypeRequestWithBody(c.Server, orgId, typeId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PatchResourceType(ctx context.Context, orgId string, typeId string, body PatchResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPatchResourceTypeRequest(c.Server, orgId, typeId, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateResourceTypeWithBody(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateResourceTypeRequestWithBody(c.Server, orgId, typeId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateResourceType(ctx context.Context, orgId string, typeId string, body UpdateResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateResourceTypeRequest(c.Server, orgId, typeId, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) CreateResourceClassWithBody(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateResourceClassRequestWithBody(c.Server, orgId, typeId, contentType, body)
 	if err != nil {
@@ -9514,18 +9331,6 @@ func (c *Client) UpdateUserRoleInOrg(ctx context.Context, orgId OrgIdPathParam, 
 
 func (c *Client) ListUserGroupsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListUserGroupsInOrgRequest(c.Server, orgId, userId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetSubjectPermsInOrg(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetSubjectPermsInOrgRequest(c.Server, orgId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -20876,202 +20681,6 @@ func NewListResourceTypesRequest(server string, orgId string) (*http.Request, er
 	return req, nil
 }
 
-// NewCreateResourceTypeRequest calls the generic CreateResourceType builder with application/json body
-func NewCreateResourceTypeRequest(server string, orgId string, body CreateResourceTypeJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateResourceTypeRequestWithBody(server, orgId, "application/json", bodyReader)
-}
-
-// NewCreateResourceTypeRequestWithBody generates requests for CreateResourceType with any type of body
-func NewCreateResourceTypeRequestWithBody(server string, orgId string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/resources/types", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewDeleteResourceTypeRequest generates requests for DeleteResourceType
-func NewDeleteResourceTypeRequest(server string, orgId string, typeId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "typeId", runtime.ParamLocationPath, typeId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/resources/types/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewPatchResourceTypeRequest calls the generic PatchResourceType builder with application/json body
-func NewPatchResourceTypeRequest(server string, orgId string, typeId string, body PatchResourceTypeJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPatchResourceTypeRequestWithBody(server, orgId, typeId, "application/json", bodyReader)
-}
-
-// NewPatchResourceTypeRequestWithBody generates requests for PatchResourceType with any type of body
-func NewPatchResourceTypeRequestWithBody(server string, orgId string, typeId string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "typeId", runtime.ParamLocationPath, typeId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/resources/types/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PATCH", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewUpdateResourceTypeRequest calls the generic UpdateResourceType builder with application/json body
-func NewUpdateResourceTypeRequest(server string, orgId string, typeId string, body UpdateResourceTypeJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewUpdateResourceTypeRequestWithBody(server, orgId, typeId, "application/json", bodyReader)
-}
-
-// NewUpdateResourceTypeRequestWithBody generates requests for UpdateResourceType with any type of body
-func NewUpdateResourceTypeRequestWithBody(server string, orgId string, typeId string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "typeId", runtime.ParamLocationPath, typeId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/resources/types/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
 // NewCreateResourceClassRequest calls the generic CreateResourceClass builder with application/json body
 func NewCreateResourceClassRequest(server string, orgId string, typeId string, body CreateResourceClassJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -21810,47 +21419,6 @@ func NewListUserGroupsInOrgRequest(server string, orgId OrgIdPathParam, userId U
 	}
 
 	operationPath := fmt.Sprintf("/orgs/%s/users/%s/groups", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetSubjectPermsInOrgRequest generates requests for GetSubjectPermsInOrg
-func NewGetSubjectPermsInOrgRequest(server string, orgId OrgIdPathParam, userId UserIdPathParam) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orgId", runtime.ParamLocationPath, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/orgs/%s/users/%s/perms", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -23329,24 +22897,6 @@ type ClientWithResponsesInterface interface {
 	// ListResourceTypesWithResponse request
 	ListResourceTypesWithResponse(ctx context.Context, orgId string, reqEditors ...RequestEditorFn) (*ListResourceTypesResponse, error)
 
-	// CreateResourceTypeWithBodyWithResponse request with any body
-	CreateResourceTypeWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceTypeResponse, error)
-
-	CreateResourceTypeWithResponse(ctx context.Context, orgId string, body CreateResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceTypeResponse, error)
-
-	// DeleteResourceTypeWithResponse request
-	DeleteResourceTypeWithResponse(ctx context.Context, orgId string, typeId string, reqEditors ...RequestEditorFn) (*DeleteResourceTypeResponse, error)
-
-	// PatchResourceTypeWithBodyWithResponse request with any body
-	PatchResourceTypeWithBodyWithResponse(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceTypeResponse, error)
-
-	PatchResourceTypeWithResponse(ctx context.Context, orgId string, typeId string, body PatchResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceTypeResponse, error)
-
-	// UpdateResourceTypeWithBodyWithResponse request with any body
-	UpdateResourceTypeWithBodyWithResponse(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateResourceTypeResponse, error)
-
-	UpdateResourceTypeWithResponse(ctx context.Context, orgId string, typeId string, body UpdateResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateResourceTypeResponse, error)
-
 	// CreateResourceClassWithBodyWithResponse request with any body
 	CreateResourceClassWithBodyWithResponse(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceClassResponse, error)
 
@@ -23408,9 +22958,6 @@ type ClientWithResponsesInterface interface {
 
 	// ListUserGroupsInOrgWithResponse request
 	ListUserGroupsInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*ListUserGroupsInOrgResponse, error)
-
-	// GetSubjectPermsInOrgWithResponse request
-	GetSubjectPermsInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetSubjectPermsInOrgResponse, error)
 
 	// ListWorkloadProfileChartVersionsWithResponse request
 	ListWorkloadProfileChartVersionsWithResponse(ctx context.Context, orgId OrgIdPathParam, params *ListWorkloadProfileChartVersionsParams, reqEditors ...RequestEditorFn) (*ListWorkloadProfileChartVersionsResponse, error)
@@ -27771,7 +27318,6 @@ func (r CreateResourceDriverResponse) StatusCode() int {
 type DeleteResourceDriverResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON409      *HumanitecErrorResponse
 	JSON500      *HumanitecErrorResponse
 }
 
@@ -27857,109 +27403,6 @@ func (r ListResourceTypesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListResourceTypesResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type CreateResourceTypeResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ResourceTypeResponse
-	JSON400      *HumanitecErrorResponse
-	JSON403      *HumanitecErrorResponse
-	JSON409      *HumanitecErrorResponse
-	JSON500      *HumanitecErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateResourceTypeResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateResourceTypeResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type DeleteResourceTypeResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON400      *HumanitecErrorResponse
-	JSON403      *HumanitecErrorResponse
-	JSON404      *HumanitecErrorResponse
-	JSON500      *HumanitecErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteResourceTypeResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteResourceTypeResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type PatchResourceTypeResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ResourceTypeResponse
-	JSON400      *HumanitecErrorResponse
-	JSON403      *HumanitecErrorResponse
-	JSON404      *HumanitecErrorResponse
-	JSON500      *HumanitecErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r PatchResourceTypeResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r PatchResourceTypeResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type UpdateResourceTypeResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ResourceTypeResponse
-	JSON400      *HumanitecErrorResponse
-	JSON403      *HumanitecErrorResponse
-	JSON404      *HumanitecErrorResponse
-	JSON500      *HumanitecErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r UpdateResourceTypeResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r UpdateResourceTypeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -28336,30 +27779,6 @@ func (r ListUserGroupsInOrgResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListUserGroupsInOrgResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetSubjectPermsInOrgResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *SubjectPermissions
-	JSON403      *N403Forbidden
-	JSON404      *N404NotFound
-}
-
-// Status returns HTTPResponse.Status
-func (r GetSubjectPermsInOrgResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetSubjectPermsInOrgResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -30888,66 +30307,6 @@ func (c *ClientWithResponses) ListResourceTypesWithResponse(ctx context.Context,
 	return ParseListResourceTypesResponse(rsp)
 }
 
-// CreateResourceTypeWithBodyWithResponse request with arbitrary body returning *CreateResourceTypeResponse
-func (c *ClientWithResponses) CreateResourceTypeWithBodyWithResponse(ctx context.Context, orgId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceTypeResponse, error) {
-	rsp, err := c.CreateResourceTypeWithBody(ctx, orgId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateResourceTypeResponse(rsp)
-}
-
-func (c *ClientWithResponses) CreateResourceTypeWithResponse(ctx context.Context, orgId string, body CreateResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateResourceTypeResponse, error) {
-	rsp, err := c.CreateResourceType(ctx, orgId, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateResourceTypeResponse(rsp)
-}
-
-// DeleteResourceTypeWithResponse request returning *DeleteResourceTypeResponse
-func (c *ClientWithResponses) DeleteResourceTypeWithResponse(ctx context.Context, orgId string, typeId string, reqEditors ...RequestEditorFn) (*DeleteResourceTypeResponse, error) {
-	rsp, err := c.DeleteResourceType(ctx, orgId, typeId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteResourceTypeResponse(rsp)
-}
-
-// PatchResourceTypeWithBodyWithResponse request with arbitrary body returning *PatchResourceTypeResponse
-func (c *ClientWithResponses) PatchResourceTypeWithBodyWithResponse(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceTypeResponse, error) {
-	rsp, err := c.PatchResourceTypeWithBody(ctx, orgId, typeId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePatchResourceTypeResponse(rsp)
-}
-
-func (c *ClientWithResponses) PatchResourceTypeWithResponse(ctx context.Context, orgId string, typeId string, body PatchResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceTypeResponse, error) {
-	rsp, err := c.PatchResourceType(ctx, orgId, typeId, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePatchResourceTypeResponse(rsp)
-}
-
-// UpdateResourceTypeWithBodyWithResponse request with arbitrary body returning *UpdateResourceTypeResponse
-func (c *ClientWithResponses) UpdateResourceTypeWithBodyWithResponse(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateResourceTypeResponse, error) {
-	rsp, err := c.UpdateResourceTypeWithBody(ctx, orgId, typeId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateResourceTypeResponse(rsp)
-}
-
-func (c *ClientWithResponses) UpdateResourceTypeWithResponse(ctx context.Context, orgId string, typeId string, body UpdateResourceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateResourceTypeResponse, error) {
-	rsp, err := c.UpdateResourceType(ctx, orgId, typeId, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateResourceTypeResponse(rsp)
-}
-
 // CreateResourceClassWithBodyWithResponse request with arbitrary body returning *CreateResourceClassResponse
 func (c *ClientWithResponses) CreateResourceClassWithBodyWithResponse(ctx context.Context, orgId string, typeId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResourceClassResponse, error) {
 	rsp, err := c.CreateResourceClassWithBody(ctx, orgId, typeId, contentType, body, reqEditors...)
@@ -31146,15 +30505,6 @@ func (c *ClientWithResponses) ListUserGroupsInOrgWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseListUserGroupsInOrgResponse(rsp)
-}
-
-// GetSubjectPermsInOrgWithResponse request returning *GetSubjectPermsInOrgResponse
-func (c *ClientWithResponses) GetSubjectPermsInOrgWithResponse(ctx context.Context, orgId OrgIdPathParam, userId UserIdPathParam, reqEditors ...RequestEditorFn) (*GetSubjectPermsInOrgResponse, error) {
-	rsp, err := c.GetSubjectPermsInOrg(ctx, orgId, userId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetSubjectPermsInOrgResponse(rsp)
 }
 
 // ListWorkloadProfileChartVersionsWithResponse request returning *ListWorkloadProfileChartVersionsResponse
@@ -38140,13 +37490,6 @@ func ParseDeleteResourceDriverResponse(rsp *http.Response) (*DeleteResourceDrive
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -38266,215 +37609,6 @@ func ParseListResourceTypesResponse(rsp *http.Response) (*ListResourceTypesRespo
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseCreateResourceTypeResponse parses an HTTP response from a CreateResourceTypeWithResponse call
-func ParseCreateResourceTypeResponse(rsp *http.Response) (*CreateResourceTypeResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateResourceTypeResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResourceTypeResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON409 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteResourceTypeResponse parses an HTTP response from a DeleteResourceTypeWithResponse call
-func ParseDeleteResourceTypeResponse(rsp *http.Response) (*DeleteResourceTypeResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteResourceTypeResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParsePatchResourceTypeResponse parses an HTTP response from a PatchResourceTypeWithResponse call
-func ParsePatchResourceTypeResponse(rsp *http.Response) (*PatchResourceTypeResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &PatchResourceTypeResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResourceTypeResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseUpdateResourceTypeResponse parses an HTTP response from a UpdateResourceTypeWithResponse call
-func ParseUpdateResourceTypeResponse(rsp *http.Response) (*UpdateResourceTypeResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &UpdateResourceTypeResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResourceTypeResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest HumanitecErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest HumanitecErrorResponse
@@ -39052,46 +38186,6 @@ func ParseListUserGroupsInOrgResponse(rsp *http.Response) (*ListUserGroupsInOrgR
 			return nil, err
 		}
 		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403Forbidden
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404NotFound
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetSubjectPermsInOrgResponse parses an HTTP response from a GetSubjectPermsInOrgWithResponse call
-func ParseGetSubjectPermsInOrgResponse(rsp *http.Response) (*GetSubjectPermsInOrgResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetSubjectPermsInOrgResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest SubjectPermissions
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
 		var dest N403Forbidden
