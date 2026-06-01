@@ -34,6 +34,12 @@ const (
 	ClusterConnectionCheckResultConditionStatusUnknown ClusterConnectionCheckResultConditionStatus = "Unknown"
 )
 
+// Defines values for DeploymentRequestMode.
+const (
+	Full        DeploymentRequestMode = "full"
+	Incremental DeploymentRequestMode = "incremental"
+)
+
 // Defines values for EnvironmentResponseStatus.
 const (
 	EnvironmentResponseStatusActive   EnvironmentResponseStatus = "active"
@@ -1135,7 +1141,11 @@ type DeploymentRequest struct {
 	Comment *string `json:"comment,omitempty"`
 
 	// DeltaId ID of the Deployment Delta describing the changes to the current Environment for this Deployment.
-	DeltaId  *string                             `json:"delta_id,omitempty"`
+	DeltaId *string `json:"delta_id,omitempty"`
+
+	// Mode The deployment mode. Must be "full" or "incremental". Defaults to "full" when absent.
+	// "incremental" is only valid in direct (non-legacy) mode.
+	Mode     *DeploymentRequestMode              `json:"mode,omitempty"`
 	Pipeline *DeploymentPipelineReferenceRequest `json:"pipeline,omitempty"`
 
 	// SetId ID of the Deployment Set describing the state of the Environment after Deployment.
@@ -1144,6 +1154,10 @@ type DeploymentRequest struct {
 	// ValueSetVersionId ID of the Value Set Version describe the values to be used for this Deployment.
 	ValueSetVersionId *string `json:"value_set_version_id"`
 }
+
+// DeploymentRequestMode The deployment mode. Must be "full" or "incremental". Defaults to "full" when absent.
+// "incremental" is only valid in direct (non-legacy) mode.
+type DeploymentRequestMode string
 
 // DeploymentResponse Deployments represent updates to the running state of an Environment.
 //
@@ -1177,8 +1191,11 @@ type DeploymentResponse struct {
 	Id string `json:"id"`
 
 	// LegacyMode Defines if it's a Legacy Mode deployment, nil means either the mode is unknown or the deployment not yet finished.
-	LegacyMode *bool                                `json:"legacy_mode,omitempty"`
-	Pipeline   *DeploymentPipelineReferenceResponse `json:"pipeline,omitempty"`
+	LegacyMode *bool `json:"legacy_mode,omitempty"`
+
+	// Mode The deployment mode. Either "full" or "incremental". "incremental" is only valid in direct (non-legacy) mode.
+	Mode     *string                              `json:"mode,omitempty"`
+	Pipeline *DeploymentPipelineReferenceResponse `json:"pipeline,omitempty"`
 
 	// SetId ID of the Deployment Set describing the state of the Environment after Deployment.
 	SetId string `json:"set_id"`
