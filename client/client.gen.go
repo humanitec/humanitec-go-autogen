@@ -2102,7 +2102,7 @@ type PipelineRunCreateBody struct {
 }
 
 // PipelineRunCreateByDeploymentRequestCriteriaBody Trigger the pipeline that has a deployment_request trigger and criteria that match this target environment. If "delta_id" or "set_id" is provided, the matching criteria must support deployment type "deploy". If "deployment_id" is provided, the matching criteria must support deployment type "re-deploy".
-// When "delta_id" is provided, the inputs to the Pipeline Run will be "env_id", "comment", "delta_id" and "value_set_version_id" if provided. When "deployment_id" is provided, the inputs to the Pipeline Run will be "env_id", "comment", "deployment_id", with "set_id", "value_set_version_id" being retrieved from the deployment itself. When "set_id" is provided, the inputs to the Pipeline Run will be "env_id", "comment", "set_id", and "value_set_version_id" if provided.
+// When "delta_id" is provided, the inputs to the Pipeline Run will be "env_id", "comment", "delta_id" and "value_set_version_id" if provided. When "deployment_id" is provided, the inputs to the Pipeline Run will be "env_id", "comment", "deployment_id", with "set_id", "value_set_version_id" being retrieved from the deployment itself. When "set_id" is provided, the inputs to the Pipeline Run will be "env_id", "comment", "set_id", and "value_set_version_id" if provided. "mode" is included as an input whenever it is provided.
 type PipelineRunCreateByDeploymentRequestCriteriaBody struct {
 	// Comment An optional comment to apply to the Deployment.
 	Comment *string `json:"comment,omitempty"`
@@ -2119,6 +2119,9 @@ type PipelineRunCreateByDeploymentRequestCriteriaBody struct {
 	// Environment The target environment within the Application to deploy to.
 	// Deprecated:
 	Environment *string `json:"environment,omitempty"`
+
+	// Mode An optional deployment mode to apply to the Deployment. The set of allowed values is defined and validated by the deployment API.
+	Mode *string `json:"mode,omitempty"`
 
 	// SetId A direct deployment set to apply to the target environment. This deployment set must already exist. This field is mutually exclusive with "delta_id" and "set_id".
 	SetId *string `json:"set_id,omitempty"`
