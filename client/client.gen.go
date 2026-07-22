@@ -880,6 +880,9 @@ type CreateResourceDefinitionRequestRequest struct {
 	// Id The Resource Definition ID.
 	Id string `json:"id"`
 
+	// InPlaceDriverChange (Optional) If true, the Operator will not delete resources provisioned by the previous driver when driver_type changes on a later update; the new driver takes over the existing infrastructure in place. Applies to the Operator provisioning path only.
+	InPlaceDriverChange *bool `json:"in_place_driver_change,omitempty"`
+
 	// Name The display name.
 	Name string `json:"name"`
 
@@ -1194,8 +1197,11 @@ type DeploymentResponse struct {
 	LegacyMode *bool `json:"legacy_mode,omitempty"`
 
 	// Mode The deployment mode. Either "full" or "incremental". "incremental" is only valid in direct (non-legacy) mode.
-	Mode     *string                              `json:"mode,omitempty"`
-	Pipeline *DeploymentPipelineReferenceResponse `json:"pipeline,omitempty"`
+	Mode *string `json:"mode,omitempty"`
+
+	// OperatorVersion The version of the Humanitec Operator that performed this Deployment. Only set in Operator Mode; nil if the version is unknown, could not be retrieved, or the Deployment has not yet finished.
+	OperatorVersion *string                              `json:"operator_version,omitempty"`
+	Pipeline        *DeploymentPipelineReferenceResponse `json:"pipeline,omitempty"`
 
 	// SetId ID of the Deployment Set describing the state of the Environment after Deployment.
 	SetId string `json:"set_id"`
@@ -1705,17 +1711,18 @@ type NodeBodyResponse struct {
 	DefId      string `json:"def_id"`
 
 	// DefVersionId The Resource Definition Version ID that was used to provision the resource.
-	DefVersionId   string                 `json:"def_version_id"`
-	DependsOn      []string               `json:"depends_on"`
-	Driver         map[string]interface{} `json:"driver"`
-	DriverAccount  *string                `json:"driver_account,omitempty"`
-	DriverType     string                 `json:"driver_type"`
-	Guresid        string                 `json:"guresid"`
-	Id             string                 `json:"id"`
-	Resource       map[string]interface{} `json:"resource"`
-	ResourceSchema map[string]interface{} `json:"resource_schema"`
-	Target         *string                `json:"target,omitempty"`
-	Type           string                 `json:"type"`
+	DefVersionId        string                 `json:"def_version_id"`
+	DependsOn           []string               `json:"depends_on"`
+	Driver              map[string]interface{} `json:"driver"`
+	DriverAccount       *string                `json:"driver_account,omitempty"`
+	DriverType          string                 `json:"driver_type"`
+	Guresid             string                 `json:"guresid"`
+	Id                  string                 `json:"id"`
+	InPlaceDriverChange bool                   `json:"in_place_driver_change"`
+	Resource            map[string]interface{} `json:"resource"`
+	ResourceSchema      map[string]interface{} `json:"resource_schema"`
+	Target              *string                `json:"target,omitempty"`
+	Type                string                 `json:"type"`
 }
 
 // OrganizationResponse An Organization is the top level object in Humanitec. All other objects belong to an Organization.
@@ -1759,6 +1766,9 @@ type PatchResourceDefinitionRequestRequest struct {
 
 	// DriverInputs ValuesSecretsRefs stores data that should be passed around split by sensitivity.
 	DriverInputs *ValuesSecretsRefsRequest `json:"driver_inputs,omitempty"`
+
+	// InPlaceDriverChange (Optional) If true, the Operator will not delete resources provisioned by the previous driver when driver_type changes on a later update; the new driver takes over the existing infrastructure in place. Applies to the Operator provisioning path only. Omit to leave the current value unchanged.
+	InPlaceDriverChange *bool `json:"in_place_driver_change,omitempty"`
 
 	// Name (Optional) Resource display name
 	Name *string `json:"name,omitempty"`
@@ -2467,6 +2477,9 @@ type ResourceDefinitionResponse struct {
 	// Id The Resource Definition ID.
 	Id string `json:"id"`
 
+	// InPlaceDriverChange If true, the Operator will not delete resources provisioned by the previous driver when driver_type changes on a later update; the new driver takes over the existing infrastructure in place. Applies to the Operator provisioning path only.
+	InPlaceDriverChange bool `json:"in_place_driver_change"`
+
 	// IsDefault Indicates this definition is a built-in one (provided by Humanitec).
 	IsDefault bool `json:"is_default"`
 
@@ -2523,6 +2536,9 @@ type ResourceDefinitionVersion struct {
 
 	// Id The Resource Definition Version ID.
 	Id string `json:"id"`
+
+	// InPlaceDriverChange If true, the Operator will not delete resources provisioned by the previous driver when driver_type changes on a later update; the new driver takes over the existing infrastructure in place. Applies to the Operator provisioning path only.
+	InPlaceDriverChange bool `json:"in_place_driver_change"`
 
 	// Name The display name.
 	Name string `json:"name"`
@@ -3012,6 +3028,9 @@ type UpdateResourceDefinitionRequestRequest struct {
 
 	// DriverType (Optional) The driver to be used to create the resource.
 	DriverType *string `json:"driver_type,omitempty"`
+
+	// InPlaceDriverChange (Optional) If true, the Operator will not delete resources provisioned by the previous driver when driver_type changes on a later update; the new driver takes over the existing infrastructure in place. Applies to the Operator provisioning path only.
+	InPlaceDriverChange *bool `json:"in_place_driver_change,omitempty"`
 
 	// Name The display name.
 	Name string `json:"name"`
