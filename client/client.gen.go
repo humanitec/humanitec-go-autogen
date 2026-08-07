@@ -1013,6 +1013,9 @@ type DeltaRequest struct {
 	// Modules ModuleDeltas groups the different operations together.
 	Modules *ModuleDeltasRequest   `json:"modules,omitempty"`
 	Shared  *[]UpdateActionRequest `json:"shared"`
+
+	// Workloads WorkloadDeltas groups the different operations together.
+	Workloads *WorkloadDeltasRequest `json:"workloads,omitempty"`
 }
 
 // DeltaResponse A Deployment Delta (or just "Delta") describes the changes that must be applied to one Deployment Set to generate another Deployment Set. Deployment Deltas are the only way to create new Deployment Sets.
@@ -1054,6 +1057,9 @@ type DeltaResponse struct {
 	// Modules ModuleDeltas groups the different operations together.
 	Modules ModuleDeltasResponse   `json:"modules"`
 	Shared  []UpdateActionResponse `json:"shared"`
+
+	// Workloads WorkloadDeltas groups the different operations together.
+	Workloads *WorkloadDeltasResponse `json:"workloads,omitempty"`
 }
 
 // DependencyGraphResponse The Dependency Graph which holds the list of objects which contain information to provision resources, sorted according to resources provisioning order.
@@ -1407,6 +1413,16 @@ type EventResponse struct {
 
 	// Type Event type
 	Type string `json:"type"`
+}
+
+// Extensions A general purpose way of extending the workload described by a Score spec, for the things a Score spec deliberately cannot express because they are compute specific.
+//
+// It is keyed by compute type so that a single Workload can carry extensions for more than one target. Only `kubernetes` is defined for now.
+//
+// NOTE: this schema is shared by requests and responses. Unlike the other schemas here it has no request/response asymmetry - there are no required properties in either direction - so splitting it would only duplicate it.
+type Extensions struct {
+	// Kubernetes Compute specific extensions for Kubernetes. The shape of this object is not settled yet, so it is carried as-is and interpreted by the driver that provisions the workload.
+	Kubernetes *map[string]interface{} `json:"kubernetes,omitempty"`
 }
 
 // GCPAuthRequest Credentials to authenticate GCP Secret Manager.
@@ -2239,6 +2255,9 @@ type PlainDeltaResponse struct {
 	// Modules ModuleDeltas groups the different operations together.
 	Modules ModuleDeltasResponse   `json:"modules"`
 	Shared  []UpdateActionResponse `json:"shared"`
+
+	// Workloads WorkloadDeltas groups the different operations together.
+	Workloads *WorkloadDeltasResponse `json:"workloads,omitempty"`
 }
 
 // PodStateResponse PodState represents single pod status
@@ -2907,6 +2926,9 @@ type SetResponse struct {
 
 	// Version The version of the Deployment Set Schema to use. (Currently, only 0 is supported, and if omitted, version 0 is assumed.)
 	Version int `json:"version"`
+
+	// Workloads The Workloads that make up the Set. A Set holding at least one Workload is deployed in Generic Mode. Omitted when the Set holds no Workloads.
+	Workloads *map[string]WorkloadResponse `json:"workloads,omitempty"`
 }
 
 // SubjectPermissions Maps of objects and permissions the subject holds on them.
@@ -3455,6 +3477,20 @@ type WorkloadArtefactVersionDeploymentSet struct {
 	Shared map[string]map[string]interface{} `json:"shared"`
 }
 
+// WorkloadDeltasRequest WorkloadDeltas groups the different operations together.
+type WorkloadDeltasRequest struct {
+	Add    *map[string]*WorkloadRequest      `json:"add"`
+	Remove *[]string                         `json:"remove"`
+	Update *map[string][]UpdateActionRequest `json:"update"`
+}
+
+// WorkloadDeltasResponse WorkloadDeltas groups the different operations together.
+type WorkloadDeltasResponse struct {
+	Add    map[string]WorkloadResponse       `json:"add"`
+	Remove []string                          `json:"remove"`
+	Update map[string][]UpdateActionResponse `json:"update"`
+}
+
 // WorkloadProfileChartReference References a workload profile chart.
 type WorkloadProfileChartReference struct {
 	// Id Workload Profile Chart ID
@@ -3652,6 +3688,42 @@ type WorkloadProfileVersionResponse struct {
 
 	// WorkloadProfileId Workload Profile ID
 	WorkloadProfileId string `json:"workload_profile_id"`
+}
+
+// WorkloadRequest A single workload specification - currently a Score spec - together with any compute specific extensions.
+//
+// Workloads are the counterpart of Modules: a Module describes a workload in terms of a Workload Profile which is rendered into Kubernetes manifests at deployment time, whereas a Workload carries the specification verbatim and leaves interpretation to the driver that provisions it.
+type WorkloadRequest struct {
+	// Class The Resource Class with which the `workload` resource is created. "default" when empty.
+	Class *string `json:"class,omitempty"`
+
+	// Extensions A general purpose way of extending the workload described by a Score spec, for the things a Score spec deliberately cannot express because they are compute specific.
+	//
+	// It is keyed by compute type so that a single Workload can carry extensions for more than one target. Only `kubernetes` is defined for now.
+	//
+	// NOTE: this schema is shared by requests and responses. Unlike the other schemas here it has no request/response asymmetry - there are no required properties in either direction - so splitting it would only duplicate it.
+	Extensions *Extensions `json:"extensions,omitempty"`
+
+	// Spec The workload specification. It is stored as-is - this service neither converts nor validates it.
+	Spec *map[string]interface{} `json:"spec"`
+}
+
+// WorkloadResponse A single workload specification - currently a Score spec - together with any compute specific extensions.
+//
+// Workloads are the counterpart of Modules: a Module describes a workload in terms of a Workload Profile which is rendered into Kubernetes manifests at deployment time, whereas a Workload carries the specification verbatim and leaves interpretation to the driver that provisions it.
+type WorkloadResponse struct {
+	// Class The Resource Class with which the `workload` resource is created. "default" when empty.
+	Class *string `json:"class,omitempty"`
+
+	// Extensions A general purpose way of extending the workload described by a Score spec, for the things a Score spec deliberately cannot express because they are compute specific.
+	//
+	// It is keyed by compute type so that a single Workload can carry extensions for more than one target. Only `kubernetes` is defined for now.
+	//
+	// NOTE: this schema is shared by requests and responses. Unlike the other schemas here it has no request/response asymmetry - there are no required properties in either direction - so splitting it would only duplicate it.
+	Extensions *Extensions `json:"extensions,omitempty"`
+
+	// Spec The workload specification. It is stored as-is - this service neither converts nor validates it.
+	Spec map[string]interface{} `json:"spec"`
 }
 
 // AgentIdPathParam defines model for agentIdPathParam.
