@@ -2842,6 +2842,9 @@ type ScoreHumanitecExtensionsDeploySuccess string
 // ScoreHumanitecExtensionsDeployWhen The stage the deployment should occur. "deploy", deployed in-parallel with other workloads (the default). "before", deployed before other workloads. "after", deployed after other workloads.
 type ScoreHumanitecExtensionsDeployWhen string
 
+// SecretHeadersRequest SecretHeaders maps header names to their secret values.
+type SecretHeadersRequest map[string]*string
+
 // SecretReference It stores sensitive value in the organization primary store or a reference to a sensitive value stored in a store registered under the organization.
 type SecretReference struct {
 	// Ref Secret reference in the format of the target store. It can't be defined if `value` is defined.
@@ -3378,8 +3381,8 @@ type VaultResponse struct {
 	Url     *string `json:"url,omitempty"`
 }
 
-// WebhookRequest Webhook is a special type of a Job. It performs an HTTPS request to a specified URL with specified headers.
-type WebhookRequest struct {
+// WebhookCreateRequest WebhookCreate is the request body for creating a webhook.
+type WebhookCreateRequest struct {
 	// Disabled Defines whether this job is currently disabled.
 	Disabled *bool             `json:"disabled"`
 	Headers  *JSONFieldRequest `json:"headers,omitempty"`
@@ -3387,6 +3390,9 @@ type WebhookRequest struct {
 	// Id Job ID, unique within the Organization
 	Id      *string           `json:"id,omitempty"`
 	Payload *JSONFieldRequest `json:"payload,omitempty"`
+
+	// SecretHeaders SecretHeaders maps header names to their secret values.
+	SecretHeaders *SecretHeadersRequest `json:"secret_headers,omitempty"`
 
 	// Triggers A list of Events by which the Job is triggered
 	Triggers *[]EventBaseRequest `json:"triggers,omitempty"`
@@ -3411,6 +3417,9 @@ type WebhookResponse struct {
 	Id      string            `json:"id"`
 	Payload JSONFieldResponse `json:"payload"`
 
+	// SecretHeaders The names of the webhook's secret HTTP headers.
+	SecretHeaders []string `json:"secret_headers"`
+
 	// Triggers A list of Events by which the Job is triggered
 	Triggers []EventBaseResponse `json:"triggers"`
 
@@ -3418,15 +3427,18 @@ type WebhookResponse struct {
 	Url *string `json:"url"`
 }
 
-// WebhookUpdateResponse Webhook is a special type of a Job. It performs an HTTPS request to a specified URL with specified headers.
-type WebhookUpdateResponse struct {
+// WebhookUpdateRequest WebhookUpdate is the partial update for a webhook.
+type WebhookUpdateRequest struct {
 	// Disabled Defines whether this job is currently disabled.
 	Disabled *bool             `json:"disabled"`
-	Headers  JSONFieldResponse `json:"headers"`
-	Payload  JSONFieldResponse `json:"payload"`
+	Headers  *JSONFieldRequest `json:"headers,omitempty"`
+	Payload  *JSONFieldRequest `json:"payload,omitempty"`
+
+	// SecretHeaders SecretHeaders maps header names to their secret values.
+	SecretHeaders *SecretHeadersRequest `json:"secret_headers,omitempty"`
 
 	// Triggers A list of Events by which the Job is triggered
-	Triggers *[]EventBaseResponse `json:"triggers"`
+	Triggers *[]EventBaseRequest `json:"triggers"`
 
 	// Url The webhook's URL (without protocol, only HTTPS is supported)
 	Url *string `json:"url"`
@@ -4560,10 +4572,10 @@ type PatchOrgsOrgIdAppsAppIdValuesKeyJSONRequestBody = ValuePatchPayloadRequest
 type PutOrgsOrgIdAppsAppIdValuesKeyJSONRequestBody = ValueEditPayloadRequest
 
 // PostOrgsOrgIdAppsAppIdWebhooksJSONRequestBody defines body for PostOrgsOrgIdAppsAppIdWebhooks for application/json ContentType.
-type PostOrgsOrgIdAppsAppIdWebhooksJSONRequestBody = WebhookRequest
+type PostOrgsOrgIdAppsAppIdWebhooksJSONRequestBody = WebhookCreateRequest
 
 // PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody defines body for PatchOrgsOrgIdAppsAppIdWebhooksJobId for application/json ContentType.
-type PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody = WebhookRequest
+type PatchOrgsOrgIdAppsAppIdWebhooksJobIdJSONRequestBody = WebhookUpdateRequest
 
 // CreateArtefactVersionJSONRequestBody defines body for CreateArtefactVersion for application/json ContentType.
 type CreateArtefactVersionJSONRequestBody = CreateArtefactVersion
@@ -24502,6 +24514,8 @@ type DeleteActiveResourceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON400      *HumanitecErrorResponse
+	JSON401      *HumanitecErrorResponse
+	JSON403      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 	JSON409      *HumanitecErrorResponse
 }
@@ -26231,7 +26245,7 @@ func (r GetOrgsOrgIdAppsAppIdWebhooksJobIdResponse) StatusCode() int {
 type PatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *WebhookUpdateResponse
+	JSON200      *WebhookResponse
 	JSON400      *HumanitecErrorResponse
 	JSON404      *HumanitecErrorResponse
 }
@@ -32782,6 +32796,20 @@ func ParseDeleteActiveResourceResponse(rsp *http.Response) (*DeleteActiveResourc
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest HumanitecErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest HumanitecErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -35524,7 +35552,7 @@ func ParsePatchOrgsOrgIdAppsAppIdWebhooksJobIdResponse(rsp *http.Response) (*Pat
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest WebhookUpdateResponse
+		var dest WebhookResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
