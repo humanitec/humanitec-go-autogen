@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Humanitec API",
-    "version": "0.28.37",
+    "version": "0.28.40",
     "description": "# Introduction\nThe *Humanitec API* allows you to automate and integrate Humanitec into your developer and operational workflows.\nThe API is a REST based API. It is based around a set of concepts:\n\n* Core\n* External Resources\n* Sets and Deltas\n\n## Authentication\n\nAlmost all requests made to the Humanitec API require Authentication. See our [Developer Docs on API Authentication](https://developer.humanitec.com/platform-orchestrator/reference/api-references/#authentication) for instructions.\n\n## Content Types\nThe Humanitec API, unless explicitly specified, only accepts content types of `application/json` and will always return valid `application/json` or an empty response.\n\n## Response Codes\n### Success\nAny response code in the `2xx` range should be regarded as success.\n\n| **Code** | **Meaning**                         |\n|----------|-------------------------------------|\n| `200`    | Success                             |\n| `201`    | Success, a new resource was created |\n| `204`    | Success, but no content in response |\n\n_Note: We plan to simplify the interface by replacing 201 with 200 status codes._\n\n### Failure\nAny response code in the `4xx` range should be regarded as an error that can be rectified by the client. `5xx` error codes indicate errors that cannot be corrected by the client.\n\n| **Code** | **Meaning**                                                                                                           |\n|----------|-----------------------------------------------------------------------------------------------------------------------|\n| `400`    | General error. (Body will contain details)                                                                            |\n| `401`    | Attempt to access protected resource without `Authorization` Header.                                                  |\n| `403`    | The `Bearer` or `JWT` does not grant access to the requested resource.                                                |\n| `404`    | Resource not found.                                                                                                   |\n| `405`    | Method not allowed                                                                                                    |\n| `409`    | Conflict. Usually indicated a resource with that ID already exists.                                                   |\n| `422`    | Unprocessable Entity. The body was not valid JSON, was empty or contained an object different from what was expected. |\n| `429`    | Too many requests - request rate limit has been reached.                                                              |\n| `500`    | Internal Error. If it occurs repeatedly, contact support.                                                             |\n",
     "contact": {
       "name": "Humanitec Support",
@@ -3880,7 +3880,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WebhookRequest"
+                "$ref": "#/components/schemas/WebhookCreateRequest"
               }
             }
           }
@@ -4069,7 +4069,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WebhookRequest"
+                "$ref": "#/components/schemas/WebhookUpdateRequest"
               }
             }
           }
@@ -4080,7 +4080,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WebhookUpdateResponse"
+                  "$ref": "#/components/schemas/WebhookResponse"
                 }
               }
             }
@@ -6919,6 +6919,26 @@
           },
           "400": {
             "description": "The driver associated to the request resource could not be found.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication token is missing or invalid.\n\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanitecErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The user is not allowed to deploy to the Environment Type of the resource.\n\n",
             "content": {
               "application/json": {
                 "schema": {
@@ -16421,6 +16441,61 @@
         "additionalProperties": {},
         "type": "object"
       },
+      "SecretHeadersRequest": {
+        "additionalProperties": {
+          "nullable": true,
+          "type": "string"
+        },
+        "description": "SecretHeaders maps header names to their secret values.",
+        "type": "object"
+      },
+      "SecretHeadersResponse": {
+        "additionalProperties": {
+          "nullable": true,
+          "type": "string"
+        },
+        "description": "SecretHeaders maps header names to their secret values.",
+        "type": "object"
+      },
+      "WebhookCreateRequest": {
+        "description": "WebhookCreate is the request body for creating a webhook.",
+        "properties": {
+          "disabled": {
+            "description": "Defines whether this job is currently disabled.",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "headers": {
+            "$ref": "#/components/schemas/JSONFieldRequest",
+            "description": "The webhook's HTTP headers."
+          },
+          "id": {
+            "description": "Job ID, unique within the Organization",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/JSONFieldRequest",
+            "description": "The webhook's HTTP headers."
+          },
+          "secret_headers": {
+            "$ref": "#/components/schemas/SecretHeadersRequest",
+            "description": "The webhook's secret HTTP headers, as an object of header names to secret values."
+          },
+          "triggers": {
+            "description": "A list of Events by which the Job is triggered",
+            "items": {
+              "$ref": "#/components/schemas/EventBaseRequest"
+            },
+            "type": "array"
+          },
+          "url": {
+            "description": "The webhook's URL (without protocol, only HTTPS is supported).",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "WebhookRequest": {
         "description": "Webhook is a special type of a Job. It performs an HTTPS request to a specified URL with specified headers.",
         "properties": {
@@ -16439,7 +16514,14 @@
           },
           "payload": {
             "$ref": "#/components/schemas/JSONFieldRequest",
-            "description": "The webhook's HTTP headers."
+            "description": "The webhook's payload."
+          },
+          "secret_headers": {
+            "description": "The names of the webhook's secret HTTP headers.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "triggers": {
             "description": "A list of Events by which the Job is triggered",
@@ -16485,7 +16567,14 @@
           },
           "payload": {
             "$ref": "#/components/schemas/JSONFieldResponse",
-            "description": "The webhook's HTTP headers."
+            "description": "The webhook's payload."
+          },
+          "secret_headers": {
+            "description": "The names of the webhook's secret HTTP headers.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "triggers": {
             "description": "A list of Events by which the Job is triggered",
@@ -16506,12 +16595,13 @@
           "triggers",
           "url",
           "headers",
+          "secret_headers",
           "payload"
         ],
         "type": "object"
       },
-      "WebhookUpdateResponse": {
-        "description": "Webhook is a special type of a Job. It performs an HTTPS request to a specified URL with specified headers.",
+      "WebhookUpdateRequest": {
+        "description": "WebhookUpdate is the partial update for a webhook.",
         "properties": {
           "disabled": {
             "description": "Defines whether this job is currently disabled.",
@@ -16519,17 +16609,21 @@
             "type": "boolean"
           },
           "headers": {
-            "$ref": "#/components/schemas/JSONFieldResponse",
+            "$ref": "#/components/schemas/JSONFieldRequest",
             "description": "The webhook's HTTP headers."
           },
           "payload": {
-            "$ref": "#/components/schemas/JSONFieldResponse",
+            "$ref": "#/components/schemas/JSONFieldRequest",
             "description": "The webhook's HTTP headers."
+          },
+          "secret_headers": {
+            "$ref": "#/components/schemas/SecretHeadersRequest",
+            "description": "The webhook's secret HTTP headers. Set value to null to leave existing secret headers untouched. Set to a non-null value, to replace. Any previously stored header name not present here is deleted."
           },
           "triggers": {
             "description": "A list of Events by which the Job is triggered",
             "items": {
-              "$ref": "#/components/schemas/EventBaseResponse"
+              "$ref": "#/components/schemas/EventBaseRequest"
             },
             "nullable": true,
             "type": "array"
@@ -16540,13 +16634,6 @@
             "type": "string"
           }
         },
-        "required": [
-          "disabled",
-          "triggers",
-          "url",
-          "headers",
-          "payload"
-        ],
         "type": "object"
       },
       "PublicKey": {
