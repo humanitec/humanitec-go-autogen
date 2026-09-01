@@ -3,7 +3,7 @@ module github.com/humanitec/humanitec-go-autogen
 go 1.24.0
 
 require (
-	github.com/oapi-codegen/runtime v1.6.0
+	github.com/oapi-codegen/runtime v1.7.0
 	github.com/stretchr/testify v1.12.1
 	gopkg.in/yaml.v2 v2.4.0
 )
