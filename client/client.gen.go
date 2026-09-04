@@ -3491,16 +3491,14 @@ type WorkloadArtefactVersionDeploymentSet struct {
 
 // WorkloadDeltasRequest WorkloadDeltas groups the different operations together.
 type WorkloadDeltasRequest struct {
-	Add    *map[string]*WorkloadRequest      `json:"add"`
-	Remove *[]string                         `json:"remove"`
-	Update *map[string][]UpdateActionRequest `json:"update"`
+	Add    *map[string]*WorkloadRequest `json:"add"`
+	Remove *[]string                    `json:"remove"`
 }
 
 // WorkloadDeltasResponse WorkloadDeltas groups the different operations together.
 type WorkloadDeltasResponse struct {
-	Add    map[string]WorkloadResponse       `json:"add"`
-	Remove []string                          `json:"remove"`
-	Update map[string][]UpdateActionResponse `json:"update"`
+	Add    map[string]WorkloadResponse `json:"add"`
+	Remove []string                    `json:"remove"`
 }
 
 // WorkloadProfileChartReference References a workload profile chart.
