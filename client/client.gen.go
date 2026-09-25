@@ -1416,14 +1416,8 @@ type EventResponse struct {
 }
 
 // Extensions A general purpose way of extending the workload described by a Score spec, for the things a Score spec deliberately cannot express because they are compute specific.
-//
-// It is keyed by compute type so that a single Workload can carry extensions for more than one target. Only `kubernetes` is defined for now.
-//
-// NOTE: this schema is shared by requests and responses. Unlike the other schemas here it has no request/response asymmetry - there are no required properties in either direction - so splitting it would only duplicate it.
-type Extensions struct {
-	// Kubernetes Compute specific extensions for Kubernetes. The shape of this object is not settled yet, so it is carried as-is and interpreted by the driver that provisions the workload.
-	Kubernetes *map[string]interface{} `json:"kubernetes,omitempty"`
-}
+// Humanitec just passes it through to the driver and doesn't care about its schema.
+type Extensions = map[string]interface{}
 
 // GCPAuthRequest Credentials to authenticate GCP Secret Manager.
 type GCPAuthRequest struct {
@@ -2921,7 +2915,7 @@ type SetResponse struct {
 	// Id The ID which is a hash of the content of the Deployment Set.
 	Id string `json:"id"`
 
-	// Modules The Modules that make up the Set
+	// Modules The Modules (Profile Workloads) that make up the Set, deployed through their Workload Profile.
 	Modules map[string]ModuleResponse `json:"modules"`
 
 	// Shared Resources that are shared across the set
@@ -2930,7 +2924,7 @@ type SetResponse struct {
 	// Version The version of the Deployment Set Schema to use. (Currently, only 0 is supported, and if omitted, version 0 is assumed.)
 	Version int `json:"version"`
 
-	// Workloads The Workloads that make up the Set. A Set holding at least one Workload is deployed in Generic Mode. Omitted when the Set holds no Workloads.
+	// Workloads The Generic Workloads that make up the Set, deployed through their `workload` resource. A Set may hold these alongside `modules`, and both are deployed. Omitted when the Set holds no Workloads.
 	Workloads *map[string]WorkloadResponse `json:"workloads,omitempty"`
 }
 
@@ -3708,10 +3702,7 @@ type WorkloadRequest struct {
 	Class *string `json:"class,omitempty"`
 
 	// Extensions A general purpose way of extending the workload described by a Score spec, for the things a Score spec deliberately cannot express because they are compute specific.
-	//
-	// It is keyed by compute type so that a single Workload can carry extensions for more than one target. Only `kubernetes` is defined for now.
-	//
-	// NOTE: this schema is shared by requests and responses. Unlike the other schemas here it has no request/response asymmetry - there are no required properties in either direction - so splitting it would only duplicate it.
+	// Humanitec just passes it through to the driver and doesn't care about its schema.
 	Extensions *Extensions `json:"extensions,omitempty"`
 
 	// Spec The workload specification. It is stored as-is - this service neither converts nor validates it.
@@ -3726,10 +3717,7 @@ type WorkloadResponse struct {
 	Class *string `json:"class,omitempty"`
 
 	// Extensions A general purpose way of extending the workload described by a Score spec, for the things a Score spec deliberately cannot express because they are compute specific.
-	//
-	// It is keyed by compute type so that a single Workload can carry extensions for more than one target. Only `kubernetes` is defined for now.
-	//
-	// NOTE: this schema is shared by requests and responses. Unlike the other schemas here it has no request/response asymmetry - there are no required properties in either direction - so splitting it would only duplicate it.
+	// Humanitec just passes it through to the driver and doesn't care about its schema.
 	Extensions *Extensions `json:"extensions,omitempty"`
 
 	// Spec The workload specification. It is stored as-is - this service neither converts nor validates it.
