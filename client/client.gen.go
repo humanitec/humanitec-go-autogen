@@ -229,6 +229,9 @@ type ActiveResourceResponse struct {
 	// DefVersionId The Resource Definition Version that this resource was provisioned from.
 	DefVersionId string `json:"def_version_id"`
 
+	// DeleteAfter When the resource's ttl expires, computed as unreferenced_at + ttl. null while the resource is referenced or when it has no ttl. Not stored.
+	DeleteAfter *time.Time `json:"delete_after"`
+
 	// DeployId The deployment that the resource was last provisioned in.
 	DeployId string `json:"deploy_id"`
 
@@ -268,8 +271,14 @@ type ActiveResourceResponse struct {
 	// TargetDefVersionId The Resource Definition Version pinned to this resource to be provisioned from.
 	TargetDefVersionId *string `json:"target_def_version_id,omitempty"`
 
+	// Ttl The ttl of the Resource Definition Version that last deployed the resource, as a Go duration. "" means it is never deleted automatically, and is always "" for internally provisioned resources.
+	Ttl string `json:"ttl"`
+
 	// Type The Resource Type of the resource
 	Type string `json:"type"`
+
+	// UnreferencedAt When the resource was first found unreferenced by a deployment, null while it is referenced. Only set in operator mode.
+	UnreferencedAt *time.Time `json:"unreferenced_at"`
 
 	// UpdatedAt The time the resource was last provisioned as part of a deployment.
 	UpdatedAt time.Time `json:"updated_at"`
@@ -888,6 +897,9 @@ type CreateResourceDefinitionRequestRequest struct {
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
+
+	// Ttl (Optional) The minimum time an Active Resource provisioned from this definition version is kept once no deployment references it, as a Go duration in whole seconds (e.g. "0s", "336h"). Omitted or "" means it is never deleted automatically.
+	Ttl *string `json:"ttl,omitempty"`
 
 	// Type The Resource Type.
 	Type string `json:"type"`
@@ -1788,6 +1800,9 @@ type PatchResourceDefinitionRequestRequest struct {
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
+
+	// Ttl (Optional) The minimum time an Active Resource provisioned from this definition version is kept once no deployment references it, as a Go duration in whole seconds (e.g. "0s", "336h"). Omit to leave the current value unchanged, or set to "" so that it is never deleted automatically.
+	Ttl *string `json:"ttl,omitempty"`
 }
 
 // PatchResourceTypeRequestRequest defines model for PatchResourceTypeRequestRequest.
@@ -2508,6 +2523,9 @@ type ResourceDefinitionResponse struct {
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource.
 	Provision *map[string]ProvisionDependenciesResponse `json:"provision,omitempty"`
 
+	// Ttl The minimum time an Active Resource provisioned from this definition version is kept once no deployment references it, as a Go duration. "" means it is never deleted automatically.
+	Ttl string `json:"ttl"`
+
 	// Type The Resource Type.
 	Type string `json:"type"`
 
@@ -2564,6 +2582,9 @@ type ResourceDefinitionVersion struct {
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource.
 	Provision map[string]ProvisionDependenciesResponse `json:"provision"`
+
+	// Ttl The minimum time an Active Resource provisioned from this definition version is kept once no deployment references it, as a Go duration. "" means it is never deleted automatically.
+	Ttl string `json:"ttl"`
 
 	// Type The Resource Type.
 	Type string `json:"type"`
@@ -3059,6 +3080,9 @@ type UpdateResourceDefinitionRequestRequest struct {
 
 	// Provision (Optional) A map where the keys are resType#resId (if resId is omitted, the same id of the current resource definition is used) of the resources that should be provisioned when the current resource is provisioned. This also specifies if the resources have a dependency on the current resource or if they have the same dependent resources.
 	Provision *map[string]ProvisionDependenciesRequest `json:"provision,omitempty"`
+
+	// Ttl (Optional) The minimum time an Active Resource provisioned from this definition version is kept once no deployment references it, as a Go duration in whole seconds (e.g. "0s", "336h"). Omitted or "" means it is never deleted automatically.
+	Ttl *string `json:"ttl,omitempty"`
 }
 
 // UpdateResourceTypeRequestRequest defines model for UpdateResourceTypeRequestRequest.
